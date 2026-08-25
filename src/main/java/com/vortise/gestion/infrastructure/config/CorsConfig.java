@@ -23,10 +23,10 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                    .allowedOriginPatterns("*")
-                    .allowedMethods(new String[]{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"})
-                    .allowedHeaders(new String[]{"*"})
-                    .allowCredentials(true);
+                    .allowedOriginPatterns("https://*.vercel.app", "http://localhost:3000", "http://127.0.0.1:3000")
+                    .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                    .allowedHeaders("*")
+                    .allowCredentials(false);
             }
         };
     }
