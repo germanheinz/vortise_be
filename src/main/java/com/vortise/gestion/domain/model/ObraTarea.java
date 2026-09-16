@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "obra_tareas")
@@ -29,6 +30,13 @@ public class ObraTarea {
     private String cumplimiento;
     private String causaNoCumplimiento;
     private String comentario;
+    private Double horasOficiales;
+    private Double horasAyudantes;
+    private Double cantidadPrevista;
+    private Double cantidadReal;
+    private String medidaCorrectiva;
+    private String descripcion;
+    private LocalDate fecha;
 
     public Long getId() {
         return id;
@@ -117,4 +125,19 @@ public class ObraTarea {
     public void setComentario(String comentario) {
         this.comentario = comentario;
     }
+
+    public Double getHorasOficiales() { return horasOficiales; }
+    public void setHorasOficiales(Double horasOficiales) { this.horasOficiales = horasOficiales; }
+    public Double getHorasAyudantes() { return horasAyudantes; }
+    public void setHorasAyudantes(Double horasAyudantes) { this.horasAyudantes = horasAyudantes; }
+    public Double getCantidadPrevista() { return cantidadPrevista; }
+    public void setCantidadPrevista(Double cantidadPrevista) { this.cantidadPrevista = cantidadPrevista; }
+    public Double getCantidadReal() { return cantidadReal; }
+    public void setCantidadReal(Double cantidadReal) { this.cantidadReal = cantidadReal; }
+    public String getMedidaCorrectiva() { return medidaCorrectiva; }
+    public void setMedidaCorrectiva(String medidaCorrectiva) { this.medidaCorrectiva = medidaCorrectiva; }
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    public LocalDate getFecha() { return fecha; }
+    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
 }

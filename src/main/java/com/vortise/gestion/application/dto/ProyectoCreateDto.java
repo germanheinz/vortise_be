@@ -8,6 +8,7 @@ package com.vortise.gestion.application.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
+import java.time.LocalDate;
 
 public record ProyectoCreateDto(
 	@NotBlank String nombre,
@@ -15,7 +16,13 @@ public record ProyectoCreateDto(
 	Double presupuestoUsd,
 	@NotBlank String direccion,
 	@NotBlank String numeroProyecto,
-	@NotBlank String empresa,
+	LocalDate fechaInicio,
+	LocalDate fechaFin,
+	String responsablesObra,
+	String categoriasManoObra,
+	Integer cantidadSectores,
+	Long empresaId,
+	String empresa,
 	Double horasPrevistas,
 	Double horasReales,
 	List<PlantaCreateDto> plantas,

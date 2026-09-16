@@ -31,15 +31,33 @@ public class UpdateRegistroHorasUseCase {
         registroHoras.setRubro(dto.rubro());
         registroHoras.setSubRubro(dto.subRubro());
         registroHoras.setResponsable(dto.responsable());
+        registroHoras.setEtapa(dto.etapa());
+        registroHoras.setCantidadPrevista(dto.cantidadPrevista());
+        registroHoras.setCantidadReal(dto.cantidadReal());
+        registroHoras.setHorasPrevistas(dto.horasPrevistas());
+        registroHoras.setHorasOficiales(dto.horasOficiales());
+        registroHoras.setHorasAyudantes(dto.horasAyudantes());
+        registroHoras.setCausaNoCumplimiento(dto.causaNoCumplimiento());
+        registroHoras.setMedidaCorrectiva(dto.medidaCorrectiva());
         registroHoras.setInicio(dto.inicio());
         registroHoras.setFin(dto.fin());
-        registroHoras.setHoras(roundHours(Duration.between(dto.inicio(), dto.fin()).toMinutes() / 60.0));
+        double horasCuadrilla = (dto.horasOficiales() == null ? 0 : dto.horasOficiales()) + (dto.horasAyudantes() == null ? 0 : dto.horasAyudantes());
+        registroHoras.setHoras(horasCuadrilla > 0 ? roundHours(horasCuadrilla) : roundHours(Duration.between(dto.inicio(), dto.fin()).toMinutes() / 60.0));
+        registroHoras.setProductividadPresupuesto(findProductividadPresupuesto(registroHoras.getProyecto(), dto.numeroRubro(), dto.rubro()));
         registroHoras.setDescripcion(dto.descripcion());
-
         RegistroHoras saved = registroHorasRepository.save(registroHoras);
         Long proyectoId = saved.getProyecto().getId();
         recalcularHorasReales(proyectoId);
         return RegistroHorasMapper.toDto(saved);
+    }
+
+    private Double findProductividadPresupuesto(Proyecto proyecto, String numeroRubro, String rubro) {
+        return proyecto.getRubros() == null ? null : proyecto.getRubros().stream()
+            .filter(item -> numeroRubro == null || numeroRubro.equals(item.getnRubro()))
+            .filter(item -> rubro == null || rubro.equalsIgnoreCase(item.getRubro()))
+            .map(item -> item.getProductividad())
+            .findFirst()
+            .orElse(null);
     }
 
     private void recalcularHorasReales(Long proyectoId) {

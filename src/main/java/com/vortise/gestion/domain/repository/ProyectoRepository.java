@@ -17,4 +17,8 @@ public interface ProyectoRepository {
     public void deleteById(Long var1);
 
     public long count();
+
+    public long countByEmpresaRelacionadaId(Long empresaId);
+
+    public List<Proyecto> findByEmpresaRelacionadaId(Long empresaId);
 }

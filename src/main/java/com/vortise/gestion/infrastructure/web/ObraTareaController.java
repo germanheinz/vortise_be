@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,6 +43,11 @@ public class ObraTareaController {
     @PostMapping
     public ResponseEntity<ObraTareaDto> create(@PathVariable Long proyectoId, @Valid @RequestBody ObraTareaCreateDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(createObraTareaUseCase.execute(proyectoId, dto));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ObraTareaDto> update(@PathVariable Long proyectoId, @PathVariable Long id, @Valid @RequestBody ObraTareaCreateDto dto) {
+        return ResponseEntity.ok(createObraTareaUseCase.update(proyectoId, id, dto));
     }
 
     @DeleteMapping("/{id}")

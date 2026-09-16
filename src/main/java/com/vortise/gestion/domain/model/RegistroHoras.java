@@ -22,10 +22,19 @@ public class RegistroHoras {
     @JoinColumn(name = "proyecto_id", nullable = false)
     private Proyecto proyecto;
 
-    private Integer numeroRubro;
+    private String numeroRubro;
     private String rubro;
     private String subRubro;
     private String responsable;
+    private String etapa;
+    private Double cantidadPrevista;
+    private Double cantidadReal;
+    private Double horasPrevistas;
+    private Double horasOficiales;
+    private Double horasAyudantes;
+    private Double productividadPresupuesto;
+    private String causaNoCumplimiento;
+    private String medidaCorrectiva;
 
     @Column(nullable = false)
     private OffsetDateTime inicio;
@@ -54,11 +63,11 @@ public class RegistroHoras {
         this.proyecto = proyecto;
     }
 
-    public Integer getNumeroRubro() {
+    public String getNumeroRubro() {
         return numeroRubro;
     }
 
-    public void setNumeroRubro(Integer numeroRubro) {
+    public void setNumeroRubro(String numeroRubro) {
         this.numeroRubro = numeroRubro;
     }
 
@@ -84,6 +93,78 @@ public class RegistroHoras {
 
     public void setResponsable(String responsable) {
         this.responsable = responsable;
+    }
+
+    public String getEtapa() {
+        return etapa;
+    }
+
+    public void setEtapa(String etapa) {
+        this.etapa = etapa;
+    }
+
+    public Double getCantidadPrevista() {
+        return cantidadPrevista;
+    }
+
+    public void setCantidadPrevista(Double cantidadPrevista) {
+        this.cantidadPrevista = cantidadPrevista;
+    }
+
+    public Double getCantidadReal() {
+        return cantidadReal;
+    }
+
+    public void setCantidadReal(Double cantidadReal) {
+        this.cantidadReal = cantidadReal;
+    }
+
+    public Double getHorasPrevistas() {
+        return horasPrevistas;
+    }
+
+    public void setHorasPrevistas(Double horasPrevistas) {
+        this.horasPrevistas = horasPrevistas;
+    }
+
+    public Double getHorasOficiales() {
+        return horasOficiales;
+    }
+
+    public void setHorasOficiales(Double horasOficiales) {
+        this.horasOficiales = horasOficiales;
+    }
+
+    public Double getHorasAyudantes() {
+        return horasAyudantes;
+    }
+
+    public void setHorasAyudantes(Double horasAyudantes) {
+        this.horasAyudantes = horasAyudantes;
+    }
+
+    public Double getProductividadPresupuesto() {
+        return productividadPresupuesto;
+    }
+
+    public void setProductividadPresupuesto(Double productividadPresupuesto) {
+        this.productividadPresupuesto = productividadPresupuesto;
+    }
+
+    public String getCausaNoCumplimiento() {
+        return causaNoCumplimiento;
+    }
+
+    public void setCausaNoCumplimiento(String causaNoCumplimiento) {
+        this.causaNoCumplimiento = causaNoCumplimiento;
+    }
+
+    public String getMedidaCorrectiva() {
+        return medidaCorrectiva;
+    }
+
+    public void setMedidaCorrectiva(String medidaCorrectiva) {
+        this.medidaCorrectiva = medidaCorrectiva;
     }
 
     public OffsetDateTime getInicio() {

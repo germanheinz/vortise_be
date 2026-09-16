@@ -18,12 +18,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(value={IllegalArgumentException.class})
     public ResponseEntity<ErrorResponseDto> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.status((HttpStatusCode)HttpStatus.NOT_FOUND).body(new ErrorResponseDto(404, "Not Found", ex.getMessage()));
+    }
+
+    @ExceptionHandler(value={IllegalStateException.class})
+    public ResponseEntity<ErrorResponseDto> handleIllegalState(IllegalStateException ex) {
+        return ResponseEntity.status((HttpStatusCode)HttpStatus.CONFLICT).body(new ErrorResponseDto(409, "Conflict", ex.getMessage()));
+    }
+
+    @ExceptionHandler(value={AccessDeniedException.class})
+    public ResponseEntity<ErrorResponseDto> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity.status((HttpStatusCode)HttpStatus.FORBIDDEN).body(new ErrorResponseDto(403, "Forbidden", ex.getMessage()));
     }
 
     @ExceptionHandler(value={MethodArgumentNotValidException.class})

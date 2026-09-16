@@ -11,6 +11,7 @@ package com.vortise.gestion.infrastructure.config;
 
 import com.vortise.gestion.domain.model.Entrega;
 import com.vortise.gestion.domain.model.GastoFijo;
+import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.Ingreso;
 import com.vortise.gestion.domain.model.ObraTarea;
 import com.vortise.gestion.domain.model.Planta;
@@ -22,14 +23,25 @@ import com.vortise.gestion.domain.model.Rendimiento;
 import com.vortise.gestion.domain.model.RubroObra;
 import com.vortise.gestion.domain.model.StatusTarea;
 import com.vortise.gestion.domain.model.Tarea;
+import com.vortise.gestion.domain.model.CalendarioLaboralEmpresa;
+import com.vortise.gestion.domain.model.CatalogoEmpresa;
+import com.vortise.gestion.domain.model.CategoriaManoObraEmpresa;
+import com.vortise.gestion.domain.model.ResponsableEmpresa;
+import com.vortise.gestion.domain.model.UnidadMetricaEmpresa;
 import com.vortise.gestion.domain.repository.EntregaRepository;
 import com.vortise.gestion.domain.repository.GastoFijoRepository;
+import com.vortise.gestion.domain.repository.EmpresaRepository;
 import com.vortise.gestion.domain.repository.IngresoRepository;
 import com.vortise.gestion.domain.repository.PlantaRepository;
 import com.vortise.gestion.domain.repository.PresupuestoLineaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.RendimientoRepository;
 import com.vortise.gestion.domain.repository.TareaRepository;
+import com.vortise.gestion.domain.repository.CalendarioLaboralEmpresaRepository;
+import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
+import com.vortise.gestion.domain.repository.CategoriaManoObraEmpresaRepository;
+import com.vortise.gestion.domain.repository.ResponsableEmpresaRepository;
+import com.vortise.gestion.domain.repository.UnidadMetricaEmpresaRepository;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -53,14 +65,30 @@ implements CommandLineRunner {
     private final IngresoRepository ingresoRepository;
     private final GastoFijoRepository gastoFijoRepository;
     private final PresupuestoLineaRepository presupuestoLineaRepository;
+    private final ResponsableEmpresaRepository responsableEmpresaRepository;
+    private final UnidadMetricaEmpresaRepository unidadMetricaEmpresaRepository;
+    private final CatalogoEmpresaRepository catalogoEmpresaRepository;
+    private final CategoriaManoObraEmpresaRepository categoriaManoObraEmpresaRepository;
+    private final CalendarioLaboralEmpresaRepository calendarioLaboralEmpresaRepository;
+
+    private final EmpresaRepository empresaRepository;
 
     @Override
     public void run(String ... args) {
+        Empresa empresaDemo = ensureEmpresaSeedData();
         boolean demoProjectExists = this.proyectoRepository.findAll()
             .stream()
             .anyMatch(proyecto -> "PROYECTO DEMO CRONOGRAMA".equals(proyecto.getNombre()));
 
         if (demoProjectExists) {
+            this.proyectoRepository.findAll().stream()
+                .filter(proyecto -> "PROYECTO DEMO CRONOGRAMA".equals(proyecto.getNombre()))
+                .forEach(proyecto -> {
+                    if (proyecto.getEmpresaRelacionada() == null || !empresaDemo.getId().equals(proyecto.getEmpresaRelacionada().getId())) {
+                        proyecto.setEmpresaRelacionada(empresaDemo);
+                        this.proyectoRepository.save(proyecto);
+                    }
+                });
             log.info("Demo project already seeded. Ensuring report seed data exists.");
             this.ensureRendimientoSeedData();
             return;
@@ -73,7 +101,7 @@ implements CommandLineRunner {
     @Transactional
     public void resetDemoData() {
         log.info("Resetting demo seed data...");
-
+        this.ensureEmpresaSeedData();
         this.proyectoRepository.findAll()
             .stream()
             .filter(proyecto -> "PROYECTO DEMO CRONOGRAMA".equals(proyecto.getNombre()))
@@ -82,6 +110,57 @@ implements CommandLineRunner {
         this.gastoFijoRepository.findAll().forEach(gasto -> this.gastoFijoRepository.deleteById(gasto.getId()));
 
         this.seedDemoProject();
+        this.ensureRendimientoSeedData();
+    }
+
+    private Empresa ensureEmpresaSeedData() {
+        Empresa empresa = this.empresaRepository.findByNombreIgnoreCase("Constructora Norte")
+            .orElseGet(() -> this.empresaRepository.save(new Empresa("Constructora Norte", "DEMO-0001")));
+        empresa.setLimiteUsuarios(25);
+        empresa = this.empresaRepository.save(empresa);
+        this.seedEmpresaConfiguration(empresa);
+        return empresa;
+    }
+
+    private void seedEmpresaConfiguration(Empresa empresa) {
+        if (this.responsableEmpresaRepository.findByEmpresaId(empresa.getId()).isEmpty()) {
+            this.responsableEmpresaRepository.save(new ResponsableEmpresa(empresa, "Director de obra", "Laura Torres", "laura.torres@constructora-norte.test", "+54 341 555-0101"));
+            this.responsableEmpresaRepository.save(new ResponsableEmpresa(empresa, "Jefe de obra", "Javier Ramos", "javier.ramos@constructora-norte.test", "+54 341 555-0102"));
+            this.responsableEmpresaRepository.save(new ResponsableEmpresa(empresa, "Compras", "Marina Sosa", "marina.sosa@constructora-norte.test", "+54 341 555-0103"));
+        }
+        if (this.unidadMetricaEmpresaRepository.findByEmpresaId(empresa.getId()).isEmpty()) {
+            this.unidadMetricaEmpresaRepository.save(new UnidadMetricaEmpresa(empresa, "m3", "Metro cubico"));
+            this.unidadMetricaEmpresaRepository.save(new UnidadMetricaEmpresa(empresa, "m2", "Metro cuadrado"));
+            this.unidadMetricaEmpresaRepository.save(new UnidadMetricaEmpresa(empresa, "ml", "Metro lineal"));
+            this.unidadMetricaEmpresaRepository.save(new UnidadMetricaEmpresa(empresa, "un", "Unidad"));
+        }
+        if (this.catalogoEmpresaRepository.findByEmpresaIdAndTipo(empresa.getId(), "SUBCONTRATISTA").isEmpty()) {
+            this.catalogoEmpresaRepository.save(new CatalogoEmpresa(empresa, "SUBCONTRATISTA", "SUB-HID", "Hidrosur Instalaciones"));
+            this.catalogoEmpresaRepository.save(new CatalogoEmpresa(empresa, "SUBCONTRATISTA", "SUB-ELE", "Electro Delta"));
+        }
+        if (this.catalogoEmpresaRepository.findByEmpresaIdAndTipo(empresa.getId(), "TIPO_RESTRICCION").isEmpty()) {
+            String[][] tipos = {{"DOC", "Documentacion"}, {"MAT", "Materiales"}, {"MO", "Mano de obra"}, {"EQ", "Equipos"}};
+            for (String[] tipo : tipos) this.catalogoEmpresaRepository.save(new CatalogoEmpresa(empresa, "TIPO_RESTRICCION", tipo[0], tipo[1]));
+        }
+        if (this.catalogoEmpresaRepository.findByEmpresaIdAndTipo(empresa.getId(), "CAUSA_NO_CUMPLIMIENTO").isEmpty()) {
+            String[][] causas = {{"DOC-INC", "Documentacion inconsistente"}, {"MAT-FAL", "Falta de materiales"}, {"MO-FAL", "Falta de mano de obra/subcontrato"}, {"PLAN", "Mala planificacion"}, {"PROV", "Falla del proveedor"}, {"ADM", "Problemas administrativos"}, {"CLI", "Clima"}};
+            for (String[] causa : causas) this.catalogoEmpresaRepository.save(new CatalogoEmpresa(empresa, "CAUSA_NO_CUMPLIMIENTO", causa[0], causa[1]));
+        }
+        if (this.categoriaManoObraEmpresaRepository.findByEmpresaId(empresa.getId()).isEmpty()) {
+            this.categoriaManoObraEmpresaRepository.save(new CategoriaManoObraEmpresa(empresa, "OFICIAL", 5881.81, true));
+            this.categoriaManoObraEmpresaRepository.save(new CategoriaManoObraEmpresa(empresa, "AYUDANTE", 4210.50, true));
+            this.categoriaManoObraEmpresaRepository.save(new CategoriaManoObraEmpresa(empresa, "CAPATAZ", 7350.00, true));
+        }
+        if (this.calendarioLaboralEmpresaRepository.findByEmpresaId(empresa.getId()).isEmpty()) {
+            CalendarioLaboralEmpresa calendario = new CalendarioLaboralEmpresa(empresa);
+            calendario.setHorasLunesAViernes(8.0);
+            calendario.setHorasSabado(4.0);
+            calendario.setTrabajaDomingo(false);
+            calendario.setPagaDobleFeriado(true);
+            calendario.setPagaDobleSabado(false);
+            calendario.setPagaDobleNoLaborable(true);
+            this.calendarioLaboralEmpresaRepository.save(calendario);
+        }
     }
 
     private void ensureRendimientoSeedData() {
@@ -119,7 +198,13 @@ implements CommandLineRunner {
             .build();
         demoCronograma.setDireccion("Calle Mitre 1250, Rosario");
         demoCronograma.setNumeroProyecto("P-2026-101");
-        demoCronograma.setEmpresa("Constructora Norte");
+        demoCronograma.setFechaInicio(LocalDate.of(2026, 8, 1));
+        demoCronograma.setFechaFin(LocalDate.of(2027, 2, 28));
+        demoCronograma.setResponsablesObra("Laura Torres, Javier Ramos");
+        demoCronograma.setCategoriasManoObra("OFICIAL, AYUDANTE, CAPATAZ");
+        demoCronograma.setCantidadSectores(4);
+        demoCronograma.setEmpresaRelacionada(this.empresaRepository.findByNombreIgnoreCase("Constructora Norte")
+            .orElseThrow(() -> new IllegalStateException("Empresa demo no encontrada")));
         demoCronograma.setPresupuestoUsd(2450000.0);
         demoCronograma.setHorasPrevistas(0.0);
         demoCronograma.setHorasReales(0.0);
@@ -137,17 +222,28 @@ implements CommandLineRunner {
         String[] subRubros = new String[]{"Fundación", "Planta Baja", "Piso 1", "Piso 2", "Sanitarios", "Eléctricas"};
         Double[] cantidades = new Double[]{145.0, 118.0, 96.5, 430.0, 220.0, 180.0};
         String[] unidades = new String[]{"m3", "m3", "m3", "m2", "m2", "m2"};
+        String[] nivelesRubros = new String[]{"FUNDACION", "PB", "P1", "P2", "PB", "P1"};
         Double[] productividades = new Double[]{38.5, 35.0, 24.5, 13.4, 17.2, 15.8};
+        Double[] hhOficiales = new Double[]{2800.0, 1900.0, 1100.0, 0.0, 0.0, 0.0};
+        Double[] hhAyudantes = new Double[]{2782.5, 2230.0, 1269.25, 5762.0, 3784.0, 2844.0};
+        Integer[] personasPorRubro = new Integer[]{8, 6, 5, 10, 6, 5};
+        List<CatalogoEmpresa> subcontratistas = this.catalogoEmpresaRepository.findByEmpresaIdAndTipo(demoCronograma.getEmpresaRelacionada().getId(), "SUBCONTRATISTA");
         for (int i = 0; i < rubrosNombre.length; ++i) {
             RubroObra rubro = new RubroObra();
             rubro.setProyecto(demoCronograma);
-            rubro.setnRubro(rubrosNumero[i]);
+            rubro.setnRubro(String.valueOf(rubrosNumero[i]));
             rubro.setRubro(rubrosNombre[i]);
+            rubro.setNivel(nivelesRubros[i]);
             rubro.setSubRubro(subRubros[i]);
             rubro.setCantidad(cantidades[i]);
             rubro.setUnidad(unidades[i]);
             rubro.setProductividad(productividades[i]);
             rubro.setEmpresa("Constructora Norte");
+            rubro.setTipoContratista(i >= 4 ? "SUBCONTRATO" : "PROPIA");
+            if (i >= 4 && !subcontratistas.isEmpty()) rubro.setSubcontratista(subcontratistas.get((i - 4) % subcontratistas.size()));
+            rubro.setHorasOficialesPrevistas(hhOficiales[i]);
+            rubro.setHorasAyudantesPrevistas(hhAyudantes[i]);
+            rubro.setCantidadPersonas(personasPorRubro[i]);
             demoCronograma.getRubros().add(rubro);
         }
 
@@ -265,7 +361,7 @@ implements CommandLineRunner {
             for (int j = 0; j < 4; ++j) {
                 RegistroHoras registro = new RegistroHoras();
                 registro.setProyecto(demoCronograma);
-                registro.setNumeroRubro(rubrosNumero[i]);
+                registro.setNumeroRubro(String.valueOf(rubrosNumero[i]));
                 registro.setRubro(rubrosNombre[i]);
                 registro.setSubRubro(subRubros[i]);
                 registro.setResponsable(responsables[(i + j) % responsables.length]);
@@ -286,7 +382,7 @@ implements CommandLineRunner {
         log.info("Data seeded successfully with realistic productivity, projected loss, and hour logs.");
     }
 
-    public DataSeeder(ProyectoRepository proyectoRepository, PlantaRepository plantaRepository, EntregaRepository entregaRepository, TareaRepository tareaRepository, RendimientoRepository rendimientoRepository, IngresoRepository ingresoRepository, GastoFijoRepository gastoFijoRepository, PresupuestoLineaRepository presupuestoLineaRepository) {
+    public DataSeeder(ProyectoRepository proyectoRepository, PlantaRepository plantaRepository, EntregaRepository entregaRepository, TareaRepository tareaRepository, RendimientoRepository rendimientoRepository, IngresoRepository ingresoRepository, GastoFijoRepository gastoFijoRepository, PresupuestoLineaRepository presupuestoLineaRepository, EmpresaRepository empresaRepository, ResponsableEmpresaRepository responsableEmpresaRepository, UnidadMetricaEmpresaRepository unidadMetricaEmpresaRepository, CatalogoEmpresaRepository catalogoEmpresaRepository, CategoriaManoObraEmpresaRepository categoriaManoObraEmpresaRepository, CalendarioLaboralEmpresaRepository calendarioLaboralEmpresaRepository) {
         this.proyectoRepository = proyectoRepository;
         this.plantaRepository = plantaRepository;
         this.entregaRepository = entregaRepository;
@@ -295,5 +391,11 @@ implements CommandLineRunner {
         this.ingresoRepository = ingresoRepository;
         this.gastoFijoRepository = gastoFijoRepository;
         this.presupuestoLineaRepository = presupuestoLineaRepository;
+        this.empresaRepository = empresaRepository;
+        this.responsableEmpresaRepository = responsableEmpresaRepository;
+        this.unidadMetricaEmpresaRepository = unidadMetricaEmpresaRepository;
+        this.catalogoEmpresaRepository = catalogoEmpresaRepository;
+        this.categoriaManoObraEmpresaRepository = categoriaManoObraEmpresaRepository;
+        this.calendarioLaboralEmpresaRepository = calendarioLaboralEmpresaRepository;
     }
 }

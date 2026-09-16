@@ -13,11 +13,6 @@
  */
 package com.vortise.gestion.domain.model;
 
-import com.vortise.gestion.domain.model.CostoIndirecto;
-import com.vortise.gestion.domain.model.Entrega;
-import com.vortise.gestion.domain.model.Ingreso;
-import com.vortise.gestion.domain.model.Planta;
-import com.vortise.gestion.domain.model.RegistroHoras;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,6 +23,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
 
 @Entity
 @Table(name="proyectos")
@@ -41,6 +37,14 @@ public class Proyecto {
     private Double presupuestoUsd;
     private String direccion;
     private String numeroProyecto;
+    private LocalDate fechaInicio;
+    private LocalDate fechaFin;
+    private String responsablesObra;
+    private String categoriasManoObra;
+    private Integer cantidadSectores;
+    @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @jakarta.persistence.JoinColumn(name = "empresa_id")
+    private Empresa empresaRelacionada;
     private String empresa;
     private Double horasPrevistas;
     private Double horasReales;
@@ -105,8 +109,32 @@ public class Proyecto {
         return this.numeroProyecto;
     }
 
+    public LocalDate getFechaInicio() {
+        return this.fechaInicio;
+    }
+
+    public LocalDate getFechaFin() {
+        return this.fechaFin;
+    }
+
+    public String getResponsablesObra() {
+        return this.responsablesObra;
+    }
+
+    public String getCategoriasManoObra() {
+        return this.categoriasManoObra;
+    }
+
+    public Integer getCantidadSectores() {
+        return this.cantidadSectores;
+    }
+
     public String getEmpresa() {
         return this.empresa;
+    }
+
+    public Empresa getEmpresaRelacionada() {
+        return this.empresaRelacionada;
     }
 
     public Double getHorasPrevistas() {
@@ -173,8 +201,35 @@ public class Proyecto {
         this.numeroProyecto = numeroProyecto;
     }
 
+    public void setFechaInicio(LocalDate fechaInicio) {
+        this.fechaInicio = fechaInicio;
+    }
+
+    public void setFechaFin(LocalDate fechaFin) {
+        this.fechaFin = fechaFin;
+    }
+
+    public void setResponsablesObra(String responsablesObra) {
+        this.responsablesObra = responsablesObra;
+    }
+
+    public void setCategoriasManoObra(String categoriasManoObra) {
+        this.categoriasManoObra = categoriasManoObra;
+    }
+
+    public void setCantidadSectores(Integer cantidadSectores) {
+        this.cantidadSectores = cantidadSectores;
+    }
+
     public void setEmpresa(String empresa) {
         this.empresa = empresa;
+    }
+
+    public void setEmpresaRelacionada(Empresa empresaRelacionada) {
+        this.empresaRelacionada = empresaRelacionada;
+        if (empresaRelacionada != null) {
+            this.empresa = empresaRelacionada.getNombre();
+        }
     }
 
     public void setHorasPrevistas(Double horasPrevistas) {
@@ -273,7 +328,6 @@ public class Proyecto {
     }
 
     public int hashCode() {
-        int PRIME = 59;
         int result = 1;
         Long $id = this.getId();
         result = result * 59 + ($id == null ? 43 : ((Object)$id).hashCode());

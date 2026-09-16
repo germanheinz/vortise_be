@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "rubros_obra")
@@ -20,14 +21,25 @@ public class RubroObra {
     @JoinColumn(name = "proyecto_id", nullable = false)
     private Proyecto proyecto;
 
-    private Integer nRubro;
+    private String nRubro;
     private String rubro;
+    private String nivel;
     private Integer subNumeroRubro;
     private String subRubro;
     private Double cantidad;
     private String unidad;
     private Double productividad;
     private String empresa;
+    private String tipoContratista = "PROPIA";
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subcontratista_id")
+    private CatalogoEmpresa subcontratista;
+    private Double horasOficialesPrevistas;
+    private Double horasAyudantesPrevistas;
+    private Integer cantidadPersonas;
+    private LocalDate fechaInicioPlanificada;
+    private LocalDate fechaFinPlanificada;
+    private boolean cronogramaManual;
 
     public Long getId() {
         return id;
@@ -45,11 +57,11 @@ public class RubroObra {
         this.proyecto = proyecto;
     }
 
-    public Integer getnRubro() {
+    public String getnRubro() {
         return nRubro;
     }
 
-    public void setnRubro(Integer nRubro) {
+    public void setnRubro(String nRubro) {
         this.nRubro = nRubro;
     }
 
@@ -57,8 +69,16 @@ public class RubroObra {
         return rubro;
     }
 
+    public String getNivel() {
+        return nivel;
+    }
+
     public void setRubro(String rubro) {
         this.rubro = rubro;
+    }
+
+    public void setNivel(String nivel) {
+        this.nivel = nivel;
     }
 
     public Integer getSubNumeroRubro() {
@@ -108,4 +128,51 @@ public class RubroObra {
     public void setEmpresa(String empresa) {
         this.empresa = empresa;
     }
+
+    public String getTipoContratista() {
+        return tipoContratista;
+    }
+
+    public void setTipoContratista(String tipoContratista) {
+        this.tipoContratista = tipoContratista;
+    }
+
+    public CatalogoEmpresa getSubcontratista() {
+        return subcontratista;
+    }
+
+    public void setSubcontratista(CatalogoEmpresa subcontratista) {
+        this.subcontratista = subcontratista;
+    }
+
+    public Double getHorasOficialesPrevistas() {
+        return horasOficialesPrevistas;
+    }
+
+    public void setHorasOficialesPrevistas(Double horasOficialesPrevistas) {
+        this.horasOficialesPrevistas = horasOficialesPrevistas;
+    }
+
+    public Double getHorasAyudantesPrevistas() {
+        return horasAyudantesPrevistas;
+    }
+
+    public void setHorasAyudantesPrevistas(Double horasAyudantesPrevistas) {
+        this.horasAyudantesPrevistas = horasAyudantesPrevistas;
+    }
+
+    public Integer getCantidadPersonas() {
+        return cantidadPersonas;
+    }
+
+    public void setCantidadPersonas(Integer cantidadPersonas) {
+        this.cantidadPersonas = cantidadPersonas;
+    }
+
+    public LocalDate getFechaInicioPlanificada() { return fechaInicioPlanificada; }
+    public void setFechaInicioPlanificada(LocalDate fechaInicioPlanificada) { this.fechaInicioPlanificada = fechaInicioPlanificada; }
+    public LocalDate getFechaFinPlanificada() { return fechaFinPlanificada; }
+    public void setFechaFinPlanificada(LocalDate fechaFinPlanificada) { this.fechaFinPlanificada = fechaFinPlanificada; }
+    public boolean isCronogramaManual() { return cronogramaManual; }
+    public void setCronogramaManual(boolean cronogramaManual) { this.cronogramaManual = cronogramaManual; }
 }
