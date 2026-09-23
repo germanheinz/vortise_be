@@ -22,7 +22,9 @@ public class SecurityConfig {
         return http.csrf(csrf -> csrf.disable())
             .cors(cors -> { })
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth.requestMatchers("/api/auth/**", "/actuator/health", "/h2-console/**").permitAll().anyRequest().authenticated())
+            .authorizeHttpRequests(auth -> auth.requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/api/auth/**", "/actuator/health", "/h2-console/**").permitAll()
+                .anyRequest().authenticated())
             .headers(headers -> headers.frameOptions(frame -> frame.disable()))
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
