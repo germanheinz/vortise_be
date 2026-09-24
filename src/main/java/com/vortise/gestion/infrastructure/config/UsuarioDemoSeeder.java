@@ -23,8 +23,9 @@ public class UsuarioDemoSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        Empresa empresa = empresaRepository.findByNombreIgnoreCase("Constructora Norte").orElse(null);
-        if (empresa == null || usuarioRepository.findByEmail("admin@constructora-norte.demo").isPresent()) return;
+        Empresa empresa = empresaRepository.findByNombreIgnoreCase("Constructora Norte")
+            .orElseGet(() -> empresaRepository.save(new Empresa("Constructora Norte", "DEMO-0001")));
+        if (usuarioRepository.findByEmail("admin@constructora-norte.demo").isPresent()) return;
         usuarioRepository.save(new UsuarioEmpresa(empresa, "admin@constructora-norte.demo", "Administrador demo", passwordEncoder.encode("demo1234"), RolEmpresa.ADMINISTRADOR));
     }
 }
