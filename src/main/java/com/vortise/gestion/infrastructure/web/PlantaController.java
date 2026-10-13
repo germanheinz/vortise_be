@@ -60,7 +60,7 @@ public class PlantaController {
 
     @PutMapping(value={"/{id}"})
     public ResponseEntity<PlantaDto> update(@PathVariable Long proyectoId, @PathVariable Long id, @Valid @RequestBody PlantaDto dto) {
-        Planta planta = this.plantaRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Planta no encontrada"));
+        Planta planta = this.requirePlantaInProyecto(proyectoId, id);
         planta.setNivel(dto.nivel());
         planta.setSuperficie(dto.superficie());
         planta.setSupCubierta(dto.supCubierta());
@@ -72,8 +72,19 @@ public class PlantaController {
 
     @DeleteMapping(value={"/{id}"})
     public ResponseEntity<Void> delete(@PathVariable Long proyectoId, @PathVariable Long id) {
-        this.plantaRepository.deleteById(id);
+        Planta planta = this.requirePlantaInProyecto(proyectoId, id);
+        this.plantaRepository.deleteById(planta.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    private Planta requirePlantaInProyecto(Long proyectoId, Long id) {
+        Planta planta = this.plantaRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Planta no encontrada"));
+        Proyecto proyecto = planta.getProyecto();
+        if (proyecto == null || proyecto.getId() == null || !proyecto.getId().equals(proyectoId)) {
+            throw new IllegalArgumentException("Planta no encontrada");
+        }
+        return planta;
     }
 
     public PlantaController(PlantaRepository plantaRepository, ProyectoRepository proyectoRepository) {

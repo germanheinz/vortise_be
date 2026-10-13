@@ -1,0 +1,21 @@
+# Missing explicit isolation properties must abort startup, including standalone
+# profile activation. The main-source guard validates before DataSource/JPA.
+spring:
+  datasource:
+    url: ${app.test-isolation.datasource-url:ISOLATION_CONFIGURATION_REQUIRED}
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  sql:
+    init:
+      mode: never
+  h2:
+    console:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+app:
+  security:
+    jwt-secret: ${app.test-isolation.jwt-secret:ISOLATION_CONFIGURATION_REQUIRED}
