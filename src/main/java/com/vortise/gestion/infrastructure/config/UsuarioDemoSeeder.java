@@ -23,8 +23,13 @@ public class UsuarioDemoSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        Empresa empresa = empresaRepository.findByNombreIgnoreCase("Constructora Norte")
-            .orElseGet(() -> empresaRepository.save(new Empresa("Constructora Norte", "DEMO-0001")));
+        Empresa empresa = empresaRepository.findByIdentificacionFiscal("DEMO-0001")
+            .orElseGet(() -> {
+                if (empresaRepository.findByNombreIgnoreCase("Constructora Norte").isPresent()) {
+                    throw new IllegalStateException("El nombre de la empresa demo pertenece a otra identificación fiscal");
+                }
+                return empresaRepository.save(new Empresa("Constructora Norte", "DEMO-0001"));
+            });
         if (usuarioRepository.findByEmail("admin@constructora-norte.demo").isPresent()) return;
         usuarioRepository.save(new UsuarioEmpresa(empresa, "admin@constructora-norte.demo", "Administrador demo", passwordEncoder.encode("demo1234"), RolEmpresa.ADMINISTRADOR));
     }

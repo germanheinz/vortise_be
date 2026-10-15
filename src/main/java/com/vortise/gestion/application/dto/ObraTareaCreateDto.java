@@ -20,6 +20,7 @@ public record ObraTareaCreateDto(
     Double cantidadReal,
     String medidaCorrectiva,
     String descripcion,
-    LocalDate fecha
+    LocalDate fecha,
+    Long rubroId
 ) {
 }

@@ -21,6 +21,12 @@ public class ObraTarea {
     @JoinColumn(name = "proyecto_id", nullable = false)
     private Proyecto proyecto;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rubro_id")
+    private RubroObra actividad;
+    public Long getRubroId() { return actividad == null ? null : actividad.getId(); }
+    public void setActividad(RubroObra value) { actividad = value; }
+
     private String nombre;
     private String sector;
     private String nivel;

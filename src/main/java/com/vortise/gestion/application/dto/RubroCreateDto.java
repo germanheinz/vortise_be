@@ -19,6 +19,9 @@ public record RubroCreateDto(
     Integer cantidadPersonas,
     LocalDate fechaInicioPlanificada,
     LocalDate fechaFinPlanificada,
-    boolean cronogramaManual
+    boolean cronogramaManual,
+    Long id,
+    Double rendimientoOficial,
+    Double rendimientoAyudante
 ) {
 }

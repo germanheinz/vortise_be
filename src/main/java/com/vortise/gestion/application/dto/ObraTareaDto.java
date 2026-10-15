@@ -24,6 +24,7 @@ public record ObraTareaDto(
     Double productividadPresupuesto,
     Double productividadReal,
     Double rendimiento,
-    Double desvio
+    Double desvio,
+    Long rubroId
 ) {
 }

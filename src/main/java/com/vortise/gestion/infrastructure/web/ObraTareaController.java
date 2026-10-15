@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/proyectos/{proyectoId}/obra-tareas")
 public class ObraTareaController {
+    private final com.vortise.gestion.application.usecase.GetPrevistoRealUseCase comparison;
     private final GetObraTareasUseCase getObraTareasUseCase;
     private final CreateObraTareaUseCase createObraTareaUseCase;
     private final DeleteObraTareaUseCase deleteObraTareaUseCase;
@@ -28,11 +29,18 @@ public class ObraTareaController {
     public ObraTareaController(
         GetObraTareasUseCase getObraTareasUseCase,
         CreateObraTareaUseCase createObraTareaUseCase,
-        DeleteObraTareaUseCase deleteObraTareaUseCase
+        DeleteObraTareaUseCase deleteObraTareaUseCase,
+        com.vortise.gestion.application.usecase.GetPrevistoRealUseCase comparison
     ) {
+        this.comparison = comparison;
         this.getObraTareasUseCase = getObraTareasUseCase;
         this.createObraTareaUseCase = createObraTareaUseCase;
         this.deleteObraTareaUseCase = deleteObraTareaUseCase;
+    }
+
+    @GetMapping("/indicadores")
+    public com.vortise.gestion.application.usecase.GetPrevistoRealUseCase.Summary indicadores(@PathVariable Long proyectoId) {
+        return comparison.execute(proyectoId);
     }
 
     @GetMapping

@@ -16,12 +16,17 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 @Service
+@org.springframework.transaction.annotation.Transactional
 public class UpdateProyectoUseCase {
+    private final com.vortise.gestion.domain.repository.ObraTareaRepository taskRepository;
+    private final com.vortise.gestion.infrastructure.security.CurrentTenantService currentTenant;
     private final ProyectoRepository proyectoRepository;
     private final EmpresaRepository empresaRepository;
     private final CatalogoEmpresaRepository catalogoRepository;
 
-    public UpdateProyectoUseCase(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository) {
+    public UpdateProyectoUseCase(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository, com.vortise.gestion.domain.repository.ObraTareaRepository taskRepository, com.vortise.gestion.infrastructure.security.CurrentTenantService currentTenant) {
+        this.taskRepository = taskRepository;
+        this.currentTenant = currentTenant;
         this.proyectoRepository = proyectoRepository;
         this.empresaRepository = empresaRepository;
         this.catalogoRepository = catalogoRepository;
@@ -29,6 +34,7 @@ public class UpdateProyectoUseCase {
 
     public ProyectoDto execute(Long proyectoId, ProyectoCreateDto dto) {
         validateDates(dto);
+        if (dto.empresaId() != null) currentTenant.requireEmpresa(dto.empresaId());
         Proyecto proyecto = proyectoRepository.findById(proyectoId)
             .orElseThrow(() -> new IllegalArgumentException("Proyecto no encontrado"));
 
@@ -60,8 +66,28 @@ public class UpdateProyectoUseCase {
         if (proyecto.getRubros() == null) {
             proyecto.setRubros(new ArrayList<>());
         }
-        proyecto.getRubros().clear();
-        proyecto.getRubros().addAll(mapRubros(dto.rubros(), proyecto));
+        var linkedIds = taskRepository.findByProyectoId(proyectoId).stream().map(t -> t.getRubroId())
+            .filter(java.util.Objects::nonNull).collect(java.util.stream.Collectors.toSet());
+        if (dto.rubros() != null) {
+            for (var requested : dto.rubros()) {
+                if (requested.id() == null || !linkedIds.contains(requested.id())) continue;
+                var existing = proyecto.getRubros().stream().filter(r -> requested.id().equals(r.getId())).findFirst().orElseThrow();
+                if (!java.util.Objects.equals(existing.getUnidad(), requested.unidad())) {
+                    throw new IllegalArgumentException("No se puede cambiar la unidad de una actividad con tareas vinculadas");
+                }
+            }
+        }
+        List<RubroObra> updated = mapRubros(dto.rubros(), proyecto);
+        var retainedIds = updated.stream().map(RubroObra::getId).filter(java.util.Objects::nonNull).toList();
+        if (linkedIds.stream().anyMatch(id -> !retainedIds.contains(id))) {
+            throw new IllegalArgumentException("No se puede eliminar una actividad con tareas vinculadas");
+        }
+        proyecto.getRubros().removeIf(r -> !updated.contains(r));
+        updated.stream().filter(r -> !proyecto.getRubros().contains(r)).forEach(proyecto.getRubros()::add);
+        if (!updated.isEmpty()) proyecto.setHorasPrevistas(updated.stream().mapToDouble(r ->
+            r.getHorasOficialesPrevistas() != null && r.getHorasAyudantesPrevistas() != null
+                ? r.getHorasOficialesPrevistas() + r.getHorasAyudantesPrevistas()
+                : (r.getCantidad() == null ? 0 : r.getCantidad()) * (r.getProductividad() == null ? 0 : r.getProductividad())).sum());
 
         Proyecto saved = proyectoRepository.save(proyecto);
         return ProyectoMapper.toDetailDto(saved);
@@ -99,8 +125,12 @@ public class UpdateProyectoUseCase {
         }
 
         List<RubroObra> result = new ArrayList<>();
+        java.util.Set<Long> seen = new java.util.HashSet<>();
         for (RubroCreateDto rubroDto : rubros) {
-            RubroObra rubro = new RubroObra();
+            if (rubroDto.id() != null && !seen.add(rubroDto.id())) throw new IllegalArgumentException("Actividad duplicada");
+            RubroObra rubro = rubroDto.id() == null ? new RubroObra() : proyecto.getRubros().stream()
+                .filter(r -> rubroDto.id().equals(r.getId())).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("La actividad no pertenece a la obra"));
             rubro.setProyecto(proyecto);
             rubro.setnRubro(rubroDto.nRubro());
             rubro.setRubro(rubroDto.rubro());
@@ -119,6 +149,7 @@ public class UpdateProyectoUseCase {
             rubro.setFechaInicioPlanificada(rubroDto.fechaInicioPlanificada());
             rubro.setFechaFinPlanificada(rubroDto.fechaFinPlanificada());
             rubro.setCronogramaManual(rubroDto.cronogramaManual());
+            RubroPlanning.apply(rubro, rubroDto);
             result.add(rubro);
         }
         return result;

@@ -74,21 +74,18 @@ implements CommandLineRunner {
     private final EmpresaRepository empresaRepository;
 
     @Override
+    @Transactional
     public void run(String ... args) {
         Empresa empresaDemo = ensureEmpresaSeedData();
-        boolean demoProjectExists = this.proyectoRepository.findAll()
-            .stream()
-            .anyMatch(proyecto -> "PROYECTO DEMO CRONOGRAMA".equals(proyecto.getNombre()));
-
-        if (demoProjectExists) {
-            this.proyectoRepository.findAll().stream()
-                .filter(proyecto -> "PROYECTO DEMO CRONOGRAMA".equals(proyecto.getNombre()))
-                .forEach(proyecto -> {
-                    if (proyecto.getEmpresaRelacionada() == null || !empresaDemo.getId().equals(proyecto.getEmpresaRelacionada().getId())) {
-                        proyecto.setEmpresaRelacionada(empresaDemo);
-                        this.proyectoRepository.save(proyecto);
-                    }
-                });
+        ensureFixedCosts();
+        var demoProjects = this.proyectoRepository.findAll().stream()
+            .filter(p -> p.getEmpresaRelacionada() != null && empresaDemo.getId().equals(p.getEmpresaRelacionada().getId()))
+            .filter(p -> "P-2026-101".equals(p.getNumeroProyecto()) || "PROYECTO DEMO CRONOGRAMA".equals(p.getNombre())).toList();
+        if (!demoProjects.isEmpty()) {
+            for (var proyecto : demoProjects) {
+                if (DemoOperationalSeed.complete(proyecto, demoJornada(empresaDemo))) this.proyectoRepository.save(proyecto);
+                ensureFinancialSeedData(proyecto);
+            }
             log.info("Demo project already seeded. Ensuring report seed data exists.");
             this.ensureRendimientoSeedData();
             return;
@@ -96,6 +93,119 @@ implements CommandLineRunner {
 
         this.seedDemoProject();
         this.ensureRendimientoSeedData();
+    }
+
+    /** Backfill only identified demo fixtures; existing non-null amounts remain authoritative. */
+    static boolean completeDemoMonthlyProgress(Proyecto proyecto) {
+        if (!"PROYECTO DEMO CRONOGRAMA".equals(proyecto.getNombre())
+                || !"P-2026-101".equals(proyecto.getNumeroProyecto())
+                || proyecto.getEmpresaRelacionada() == null
+                || !"DEMO-0001".equals(proyecto.getEmpresaRelacionada().getIdentificacionFiscal())) return false;
+        String description = "Jornada real de obra: seguimiento de productividad y costo";
+        String[] names = {"Hormigón armado", "Vaciado de losas", "Mampostería", "Pintura", "Instalaciones sanitarias", "Instalaciones eléctricas"};
+        String[] subNames = {"Fundación", "Planta Baja", "Piso 1", "Piso 2", "Sanitarios", "Eléctricas"};
+        double[] completion = {1.0, 0.85, 0.60, 0.40, 0.25, 0.10};
+        boolean changed = false;
+        LocalDate previousEnd = null;
+        for (int i = 0; i < names.length; i++) {
+            final int index = i;
+            RubroObra rubro = proyecto.getRubros().stream()
+                .filter(r -> String.valueOf(5000 + index).equals(r.getnRubro())
+                    && names[index].equals(r.getRubro()) && subNames[index].equals(r.getSubRubro()))
+                .findFirst().orElse(null);
+            if (rubro == null || rubro.getCantidad() == null || rubro.getCantidad() <= 0) continue;
+            LocalDate plannedStart = rubro.getFechaInicioPlanificada() != null ? rubro.getFechaInicioPlanificada()
+                : previousEnd != null ? previousEnd.plusDays(1) : proyecto.getFechaInicio();
+            double plannedHours = (rubro.getHorasOficialesPrevistas() == null ? 0 : rubro.getHorasOficialesPrevistas())
+                + (rubro.getHorasAyudantesPrevistas() == null ? 0 : rubro.getHorasAyudantesPrevistas());
+            if (plannedHours == 0) plannedHours = rubro.getCantidad() * (rubro.getProductividad() == null ? 0 : rubro.getProductividad());
+            long days = rubro.getCantidadPersonas() != null && rubro.getCantidadPersonas() > 0 && plannedHours > 0
+                ? Math.max(1, (long) Math.ceil(plannedHours / (rubro.getCantidadPersonas() * 8.0))) : 1;
+            LocalDate plannedEnd = rubro.isCronogramaManual() && rubro.getFechaFinPlanificada() != null
+                ? rubro.getFechaFinPlanificada() : plannedStart == null ? null : plannedStart.plusDays(days - 1);
+            previousEnd = plannedEnd;
+            if (plannedStart == null || plannedEnd == null || plannedEnd.isBefore(plannedStart)) continue;
+            List<RegistroHoras> matching = proyecto.getRegistrosHoras().stream()
+                .filter(r -> java.util.Objects.equals(rubro.getnRubro(), r.getNumeroRubro())
+                    && java.util.Objects.equals(rubro.getRubro(), r.getRubro())
+                    && java.util.Objects.equals(rubro.getSubRubro(), r.getSubRubro())).toList();
+            // Do not mix generated quantities with manually entered records.
+            if (matching.stream().anyMatch(r -> !description.equals(r.getDescripcion()))) continue;
+            if (matching.isEmpty()) {
+                for (int j = 0; j < 4; j++) {
+                    RegistroHoras record = new RegistroHoras();
+                    record.setProyecto(proyecto);
+                    record.setNumeroRubro(rubro.getnRubro());
+                    record.setRubro(rubro.getRubro());
+                    record.setSubRubro(rubro.getSubRubro());
+                    record.setResponsable("Equipo demo");
+                    record.setInicio(demoProgressStart(plannedStart, plannedEnd, i, j));
+                    record.setFin(record.getInicio().plusHours(8));
+                    record.setHoras(8.0);
+                    record.setCantidadPrevista(rubro.getCantidad() / 4.0);
+                    record.setCantidadReal(rubro.getCantidad() * completion[i] / 4.0);
+                    record.setDescripcion(description);
+                    proyecto.getRegistrosHoras().add(record);
+                }
+                changed = true;
+            } else {
+                // Migrate only complete four-record batches with known generated timestamps.
+                // Edited timestamps and mixed/manual batches are not eligible.
+                List<RegistroHoras> ordered = matching.stream()
+                    .sorted(java.util.Comparator.comparing(RegistroHoras::getInicio,
+                        java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()))).toList();
+                boolean generatedBatch = ordered.size() == 4;
+                for (int j = 0; generatedBatch && j < 4; j++) {
+                    generatedBatch = knownDemoTiming(ordered.get(j), i, j);
+                }
+                if (generatedBatch) {
+                    for (int j = 0; j < 4; j++) {
+                        RegistroHoras record = ordered.get(j);
+                        java.time.Duration duration = java.time.Duration.between(record.getInicio(), record.getFin());
+                        OffsetDateTime start = demoProgressStart(plannedStart, plannedEnd, i, j);
+                        if (!start.equals(record.getInicio())) {
+                            record.setInicio(start);
+                            record.setFin(start.plus(duration));
+                            changed = true;
+                        }
+                    }
+                }
+                List<RegistroHoras> missing = matching.stream()
+                    .filter(r -> r.getCantidadReal() == null && r.getFin() != null).toList();
+                double recorded = matching.stream().filter(r -> r.getCantidadReal() != null)
+                    .mapToDouble(RegistroHoras::getCantidadReal).sum();
+                double remaining = Math.max(0, rubro.getCantidad() * completion[i] - recorded);
+                for (RegistroHoras record : missing) {
+                    record.setCantidadReal(remaining / missing.size());
+                    if (record.getCantidadPrevista() == null) record.setCantidadPrevista(rubro.getCantidad() / matching.size());
+                    changed = true;
+                }
+            }
+        }
+        if (changed) proyecto.setHorasReales(proyecto.getRegistrosHoras().stream()
+            .mapToDouble(r -> r.getHoras() == null ? 0 : r.getHoras()).sum());
+        return changed;
+    }
+
+    /** Four synthetic progress checkpoints distributed across the plan, with small delays. */
+    static OffsetDateTime demoProgressStart(LocalDate start, LocalDate end, int activity, int checkpoint) {
+        long span = java.time.temporal.ChronoUnit.DAYS.between(start, end);
+        long offset = Math.round(span * (checkpoint + 1) / 4.0);
+        // Foundation finishes on plan; later activities illustrate increasing delays.
+        return start.plusDays(offset + activity * 3L).atTime(8, 0).atOffset(ZoneOffset.of("-03:00"));
+    }
+
+    static boolean knownDemoTiming(RegistroHoras record, int activity, int checkpoint) {
+        if (record.getInicio() == null || record.getFin() == null) return false;
+        OffsetDateTime base = OffsetDateTime.of(2026, 8, 3, 8, 0, 0, 0, ZoneOffset.of("-03:00"));
+        OffsetDateTime legacy = base.plusDays(activity * 3L + checkpoint).plusHours((checkpoint % 3) * 2L);
+        OffsetDateTime recent = base.plusMonths(activity).plusDays(checkpoint * 20L + activity * 5L)
+            .plusHours((checkpoint % 3) * 2L);
+        OffsetDateTime added = base.plusMonths(activity).plusDays(checkpoint * 20L);
+        long hours = 6 + (checkpoint % 3) * 2L;
+        return (legacy.equals(record.getInicio()) && legacy.plusHours(hours).equals(record.getFin()))
+            || (recent.equals(record.getInicio()) && recent.plusHours(hours).equals(record.getFin()))
+            || (added.equals(record.getInicio()) && added.plusHours(8).equals(record.getFin()));
     }
 
     @Transactional
@@ -114,52 +224,119 @@ implements CommandLineRunner {
     }
 
     private Empresa ensureEmpresaSeedData() {
-        Empresa empresa = this.empresaRepository.findByNombreIgnoreCase("Constructora Norte")
-            .orElseGet(() -> this.empresaRepository.save(new Empresa("Constructora Norte", "DEMO-0001")));
-        empresa.setLimiteUsuarios(25);
-        empresa = this.empresaRepository.save(empresa);
+        Empresa empresa = this.empresaRepository.findByIdentificacionFiscal("DEMO-0001")
+            .orElseGet(() -> {
+                if (this.empresaRepository.findByNombreIgnoreCase("Constructora Norte").isPresent()) {
+                    throw new IllegalStateException("El nombre de la empresa demo pertenece a otra identificación fiscal");
+                }
+                Empresa nueva = new Empresa("Constructora Norte", "DEMO-0001");
+                nueva.setLimiteUsuarios(25);
+                return this.empresaRepository.save(nueva);
+            });
         this.seedEmpresaConfiguration(empresa);
         return empresa;
     }
 
     private void seedEmpresaConfiguration(Empresa empresa) {
-        if (this.responsableEmpresaRepository.findByEmpresaId(empresa.getId()).isEmpty()) {
-            this.responsableEmpresaRepository.save(new ResponsableEmpresa(empresa, "Director de obra", "Laura Torres", "laura.torres@constructora-norte.test", "+54 341 555-0101"));
-            this.responsableEmpresaRepository.save(new ResponsableEmpresa(empresa, "Jefe de obra", "Javier Ramos", "javier.ramos@constructora-norte.test", "+54 341 555-0102"));
-            this.responsableEmpresaRepository.save(new ResponsableEmpresa(empresa, "Compras", "Marina Sosa", "marina.sosa@constructora-norte.test", "+54 341 555-0103"));
+        var responsables = responsableEmpresaRepository.findByEmpresaId(empresa.getId());
+        String[][] contacts = {{"Director de obra", "Laura Torres", "laura.torres@constructora-norte.test", "+54 341 555-0101"},
+            {"Jefe de obra", "Javier Ramos", "javier.ramos@constructora-norte.test", "+54 341 555-0102"},
+            {"Compras", "Marina Sosa", "marina.sosa@constructora-norte.test", "+54 341 555-0103"}};
+        for (var c : contacts) if (responsables.stream().noneMatch(r -> c[0].equalsIgnoreCase(r.getRol())))
+            responsableEmpresaRepository.save(new ResponsableEmpresa(empresa,c[0],c[1],c[2],c[3]));
+        var unidades = unidadMetricaEmpresaRepository.findByEmpresaId(empresa.getId());
+        String[][] units = {{"ML","Metro lineal"},{"M2","Metro cuadrado"},{"M3","Metro cúbico"},{"GLOBAL","Global"},
+            {"MES","Mes"},{"LTS","Litros"},{"TON","Tonelada"},{"KG","Kilogramo"},{"BOLSA","Bolsa"},
+            {"PAQ","Paquete"},{"LATA","Lata"},{"UN","Unidad"}};
+        for (var u : units) if (unidades.stream().noneMatch(r -> u[0].equalsIgnoreCase(r.getCodigo())))
+            unidadMetricaEmpresaRepository.save(new UnidadMetricaEmpresa(empresa,u[0],u[1]));
+        ensureCatalog(empresa,"SUBCONTRATISTA",new String[][]{{"SUB-HID","Hidrosur Instalaciones"},{"SUB-ELE","Electro Delta"}});
+        ensureCatalog(empresa,"TIPO_RESTRICCION",new String[][]{{"DOC","Documentacion"},{"MAT","Materiales"},{"MO","Mano de obra"},{"EQ","Equipos"}});
+        ensureCatalog(empresa,"CAUSA_INCUMPLIMIENTO",new String[][]{{"DOC-INC","Documentacion inconsistente"},
+            {"MAT-FAL","Falta de materiales"},{"MO-FAL","Falta de mano de obra/subcontrato"},{"PLAN","Mala planificacion"},
+            {"PROV","Falla del proveedor"},{"ADM","Problemas administrativos"},{"CLI","Clima"}});
+        var categories = categoriaManoObraEmpresaRepository.findByEmpresaId(empresa.getId());
+        String[] names = {"OFICIAL","AYUDANTE","CAPATAZ"};
+        double[] costs = {2000.,1000.,2500.};
+        for (int i = 0; i < names.length; i++) {
+            String name = names[i];
+            var existing = categories.stream().filter(c -> name.equals(c.getNombre())).findFirst();
+            if (existing.isEmpty()) categoriaManoObraEmpresaRepository.save(new CategoriaManoObraEmpresa(empresa,name,costs[i],true));
+            else if (existing.get().getCostoHora() == null) {
+                existing.get().setCostoHora(costs[i]);
+                categoriaManoObraEmpresaRepository.save(existing.get());
+            }
         }
-        if (this.unidadMetricaEmpresaRepository.findByEmpresaId(empresa.getId()).isEmpty()) {
-            this.unidadMetricaEmpresaRepository.save(new UnidadMetricaEmpresa(empresa, "m3", "Metro cubico"));
-            this.unidadMetricaEmpresaRepository.save(new UnidadMetricaEmpresa(empresa, "m2", "Metro cuadrado"));
-            this.unidadMetricaEmpresaRepository.save(new UnidadMetricaEmpresa(empresa, "ml", "Metro lineal"));
-            this.unidadMetricaEmpresaRepository.save(new UnidadMetricaEmpresa(empresa, "un", "Unidad"));
+        if (calendarioLaboralEmpresaRepository.findByEmpresaId(empresa.getId()).isEmpty()) {
+            var calendar = new CalendarioLaboralEmpresa(empresa);
+            calendar.setHorasLunesAViernes(8.0); calendar.setHorasSabado(0.0); calendar.setTrabajaDomingo(false);
+            calendarioLaboralEmpresaRepository.save(calendar);
         }
-        if (this.catalogoEmpresaRepository.findByEmpresaIdAndTipo(empresa.getId(), "SUBCONTRATISTA").isEmpty()) {
-            this.catalogoEmpresaRepository.save(new CatalogoEmpresa(empresa, "SUBCONTRATISTA", "SUB-HID", "Hidrosur Instalaciones"));
-            this.catalogoEmpresaRepository.save(new CatalogoEmpresa(empresa, "SUBCONTRATISTA", "SUB-ELE", "Electro Delta"));
+    }
+
+    private void ensureCatalog(Empresa empresa, String type, String[][] rows) {
+        var existing = catalogoEmpresaRepository.findByEmpresaIdAndTipo(empresa.getId(),type);
+        for (var row : rows) if (existing.stream().noneMatch(c -> row[0].equalsIgnoreCase(c.getCodigo())))
+            catalogoEmpresaRepository.save(new CatalogoEmpresa(empresa,type,row[0],row[1]));
+    }
+
+    private double demoJornada(Empresa empresa) {
+        return calendarioLaboralEmpresaRepository.findByEmpresaId(empresa.getId())
+            .map(CalendarioLaboralEmpresa::getHorasLunesAViernes).filter(h -> h != null && Double.isFinite(h) && h > 0).orElse(8.0);
+    }
+
+    private void ensureFixedCosts() {
+        var existing = gastoFijoRepository.findAll();
+        for (Object[] row : new Object[][]{{"Alquiler oficina",350000.0,"ESTUDIO"},{"Sueldos staff",2000000.0,"ESTUDIO"},
+                {"Servicios",180000.0,"ESTUDIO"},{"Otros",90000.0,"ESTUDIO"},{"Marketing",150000.0,"MARKETING"}}) {
+            if (existing.stream().noneMatch(g -> row[0].equals(g.getConcepto())))
+                gastoFijoRepository.save(GastoFijo.builder().concepto((String)row[0]).monto((Double)row[1]).categoria((String)row[2]).mes(null).build());
         }
-        if (this.catalogoEmpresaRepository.findByEmpresaIdAndTipo(empresa.getId(), "TIPO_RESTRICCION").isEmpty()) {
-            String[][] tipos = {{"DOC", "Documentacion"}, {"MAT", "Materiales"}, {"MO", "Mano de obra"}, {"EQ", "Equipos"}};
-            for (String[] tipo : tipos) this.catalogoEmpresaRepository.save(new CatalogoEmpresa(empresa, "TIPO_RESTRICCION", tipo[0], tipo[1]));
+    }
+
+    private void ensureFinancialSeedData(Proyecto proyecto) {
+        if (!DemoOperationalSeed.isDemo(proyecto) || proyecto.getRubros().isEmpty()) return;
+        var categories = categoriaManoObraEmpresaRepository.findByEmpresaId(proyecto.getEmpresaRelacionada().getId());
+        Double official = categories.stream().filter(c -> "OFICIAL".equals(c.getNombre()) && c.isHabilitada())
+            .map(CategoriaManoObraEmpresa::getCostoHora).filter(java.util.Objects::nonNull).findFirst().orElse(null);
+        Double helper = categories.stream().filter(c -> "AYUDANTE".equals(c.getNombre()) && c.isHabilitada())
+            .map(CategoriaManoObraEmpresa::getCostoHora).filter(java.util.Objects::nonNull).findFirst().orElse(null);
+        if (official == null || helper == null || !Double.isFinite(official) || !Double.isFinite(helper) || official < 0 || helper < 0) return;
+        String prefix = "DEMO PVR · ";
+        var budgets = presupuestoLineaRepository.findByProyectoId(proyecto.getId());
+        // A user-created budget is authoritative; do not add a second simulated budget to it.
+        boolean demoBudget = budgets.stream().allMatch(b -> b.getEtapa() != null && b.getEtapa().startsWith(prefix));
+        if (demoBudget) for (var r : proyecto.getRubros()) {
+            String key = prefix + r.getnRubro();
+            if (budgets.stream().anyMatch(b -> key.equals(b.getEtapa()))) continue;
+            double hoursOf = r.getHorasOficialesPrevistas() == null ? 0 : r.getHorasOficialesPrevistas();
+            double hoursAy = r.getHorasAyudantesPrevistas() == null ? 0 : r.getHorasAyudantesPrevistas();
+            double hours = hoursOf + hoursAy;
+            double area = proyecto.getPlantas().stream().filter(p -> java.util.Objects.equals(p.getNivel(),r.getNivel()))
+                .map(Planta::getSuperficie).filter(java.util.Objects::nonNull).mapToDouble(Double::doubleValue).sum();
+            if (!Double.isFinite(hours) || hours <= 0 || !Double.isFinite(area) || area <= 0) continue;
+            // Existing budget API is per m2: normalize the activity HH over its actual floor area.
+            int month = proyecto.getFechaInicio() == null || r.getFechaInicioPlanificada() == null ? 1
+                : (int)java.time.temporal.ChronoUnit.MONTHS.between(proyecto.getFechaInicio().withDayOfMonth(1),r.getFechaInicioPlanificada().withDayOfMonth(1))+1;
+            presupuestoLineaRepository.save(PresupuestoLinea.builder().proyecto(proyecto).etapa(key)
+                .tipoSuperficie("CUBIERTA").funcion(r.getSubRubro()).sistema(r.getRubro()).m2(area)
+                .hhPorM2(hours/area).precioPorHh((hoursOf*official+hoursAy*helper)/hours)
+                .mes(Math.max(1,month)).build());
         }
-        if (this.catalogoEmpresaRepository.findByEmpresaIdAndTipo(empresa.getId(), "CAUSA_NO_CUMPLIMIENTO").isEmpty()) {
-            String[][] causas = {{"DOC-INC", "Documentacion inconsistente"}, {"MAT-FAL", "Falta de materiales"}, {"MO-FAL", "Falta de mano de obra/subcontrato"}, {"PLAN", "Mala planificacion"}, {"PROV", "Falla del proveedor"}, {"ADM", "Problemas administrativos"}, {"CLI", "Clima"}};
-            for (String[] causa : causas) this.catalogoEmpresaRepository.save(new CatalogoEmpresa(empresa, "CAUSA_NO_CUMPLIMIENTO", causa[0], causa[1]));
-        }
-        if (this.categoriaManoObraEmpresaRepository.findByEmpresaId(empresa.getId()).isEmpty()) {
-            this.categoriaManoObraEmpresaRepository.save(new CategoriaManoObraEmpresa(empresa, "OFICIAL", 5881.81, true));
-            this.categoriaManoObraEmpresaRepository.save(new CategoriaManoObraEmpresa(empresa, "AYUDANTE", 4210.50, true));
-            this.categoriaManoObraEmpresaRepository.save(new CategoriaManoObraEmpresa(empresa, "CAPATAZ", 7350.00, true));
-        }
-        if (this.calendarioLaboralEmpresaRepository.findByEmpresaId(empresa.getId()).isEmpty()) {
-            CalendarioLaboralEmpresa calendario = new CalendarioLaboralEmpresa(empresa);
-            calendario.setHorasLunesAViernes(8.0);
-            calendario.setHorasSabado(4.0);
-            calendario.setTrabajaDomingo(false);
-            calendario.setPagaDobleFeriado(true);
-            calendario.setPagaDobleSabado(false);
-            calendario.setPagaDobleNoLaborable(true);
-            this.calendarioLaboralEmpresaRepository.save(calendario);
+        var ingresos = ingresoRepository.findByProyectoId(proyecto.getId());
+        if (!demoBudget || ingresos.stream().anyMatch(i -> i.getConcepto() == null || !i.getConcepto().startsWith(prefix))) return;
+        // Monetary units match company hourly costs; never infer a USD conversion from presupuestoUsd.
+        double labor = proyecto.getRubros().stream().mapToDouble(r ->
+            (r.getHorasOficialesPrevistas()==null?0:r.getHorasOficialesPrevistas())*official
+            +(r.getHorasAyudantesPrevistas()==null?0:r.getHorasAyudantesPrevistas())*helper).sum();
+        if (!Double.isFinite(labor) || labor <= 0) return;
+        int months = proyecto.getFechaInicio()==null || proyecto.getFechaFin()==null ? 7
+            : (int)java.time.temporal.ChronoUnit.MONTHS.between(proyecto.getFechaInicio().withDayOfMonth(1),proyecto.getFechaFin().withDayOfMonth(1))+1;
+        for (int month=1; month<=Math.max(1,months); month++) {
+            String key = prefix+"Certificado mes "+month;
+            if (ingresos.stream().noneMatch(i -> key.equals(i.getConcepto())))
+                ingresoRepository.save(Ingreso.builder().proyecto(proyecto).concepto(key).mes(month)
+                    .monto(labor*1.25/Math.max(1,months)).build());
         }
     }
 
@@ -187,10 +364,6 @@ implements CommandLineRunner {
     private void seedDemoProject() {
         log.info("Seeding initial data...");
 
-        for (Object[] row : new Object[][]{{"Alquiler oficina", 350000.0, "ESTUDIO"}, {"Sueldos staff", 2000000.0, "ESTUDIO"}, {"Servicios", 180000.0, "ESTUDIO"}, {"Otros", 90000.0, "ESTUDIO"}, {"Marketing", 150000.0, "MARKETING"}}) {
-            this.gastoFijoRepository.save(GastoFijo.builder().concepto((String)row[0]).monto((Double)row[1]).categoria((String)row[2]).mes(null).build());
-        }
-
         Proyecto demoCronograma = Proyecto.builder()
             .nombre("PROYECTO DEMO CRONOGRAMA")
             .descripcion("Obra de prueba con cronograma completo y productividad real para análisis de obra")
@@ -203,7 +376,7 @@ implements CommandLineRunner {
         demoCronograma.setResponsablesObra("Laura Torres, Javier Ramos");
         demoCronograma.setCategoriasManoObra("OFICIAL, AYUDANTE, CAPATAZ");
         demoCronograma.setCantidadSectores(4);
-        demoCronograma.setEmpresaRelacionada(this.empresaRepository.findByNombreIgnoreCase("Constructora Norte")
+        demoCronograma.setEmpresaRelacionada(this.empresaRepository.findByIdentificacionFiscal("DEMO-0001")
             .orElseThrow(() -> new IllegalStateException("Empresa demo no encontrada")));
         demoCronograma.setPresupuestoUsd(2450000.0);
         demoCronograma.setHorasPrevistas(0.0);
@@ -220,12 +393,11 @@ implements CommandLineRunner {
         String[] rubrosNombre = new String[]{"Hormigón armado", "Vaciado de losas", "Mampostería", "Pintura", "Instalaciones sanitarias", "Instalaciones eléctricas"};
         Integer[] rubrosNumero = new Integer[]{5000, 5001, 5002, 5003, 5004, 5005};
         String[] subRubros = new String[]{"Fundación", "Planta Baja", "Piso 1", "Piso 2", "Sanitarios", "Eléctricas"};
-        Double[] cantidades = new Double[]{145.0, 118.0, 96.5, 430.0, 220.0, 180.0};
+        Double[] cantidades = new Double[]{155.4, 118.0, 96.5, 430.0, 220.0, 180.0};
         String[] unidades = new String[]{"m3", "m3", "m3", "m2", "m2", "m2"};
         String[] nivelesRubros = new String[]{"FUNDACION", "PB", "P1", "P2", "PB", "P1"};
-        Double[] productividades = new Double[]{38.5, 35.0, 24.5, 13.4, 17.2, 15.8};
-        Double[] hhOficiales = new Double[]{2800.0, 1900.0, 1100.0, 0.0, 0.0, 0.0};
-        Double[] hhAyudantes = new Double[]{2782.5, 2230.0, 1269.25, 5762.0, 3784.0, 2844.0};
+        Double[] hhOficiales = new Double[]{4000.0, 2700.0, 1400.0, 4000.0, 2600.0, 1900.0};
+        Double[] hhAyudantes = new Double[]{1881.5, 1430.0, 969.25, 1762.0, 1184.0, 944.0};
         Integer[] personasPorRubro = new Integer[]{8, 6, 5, 10, 6, 5};
         List<CatalogoEmpresa> subcontratistas = this.catalogoEmpresaRepository.findByEmpresaIdAndTipo(demoCronograma.getEmpresaRelacionada().getId(), "SUBCONTRATISTA");
         for (int i = 0; i < rubrosNombre.length; ++i) {
@@ -237,18 +409,22 @@ implements CommandLineRunner {
             rubro.setSubRubro(subRubros[i]);
             rubro.setCantidad(cantidades[i]);
             rubro.setUnidad(unidades[i]);
-            rubro.setProductividad(productividades[i]);
-            rubro.setEmpresa("Constructora Norte");
+            rubro.setProductividad((hhOficiales[i] + hhAyudantes[i]) / cantidades[i]);
+            rubro.setEmpresa(demoCronograma.getEmpresaRelacionada().getNombre());
             rubro.setTipoContratista(i >= 4 ? "SUBCONTRATO" : "PROPIA");
             if (i >= 4 && !subcontratistas.isEmpty()) rubro.setSubcontratista(subcontratistas.get((i - 4) % subcontratistas.size()));
             rubro.setHorasOficialesPrevistas(hhOficiales[i]);
             rubro.setHorasAyudantesPrevistas(hhAyudantes[i]);
             rubro.setCantidadPersonas(personasPorRubro[i]);
+            // Two calendar months per activity, for planned/actual comparison.
+            LocalDate inicioPrevisto = LocalDate.of(2026, 8, 1).plusMonths(i);
+            rubro.setFechaInicioPlanificada(inicioPrevisto);
+            rubro.setFechaFinPlanificada(inicioPrevisto.plusMonths(2).minusDays(1));
+            rubro.setCronogramaManual(true);
             demoCronograma.getRubros().add(rubro);
         }
 
-        double[] horasPlanificadasPorRubro = new double[]{5582.5, 4130.0, 2369.25, 5762.0, 3784.0, 2844.0};
-        double[] horasRealesPorRubro = new double[]{6430.0, 4890.0, 2890.0, 6960.0, 4560.0, 3320.0};
+        double[] horasPlanificadasPorRubro = new double[]{5881.5, 4130.0, 2369.25, 5762.0, 3784.0, 2844.0};
         double horasPrevistasTotales = 0.0;
         for (int i = 0; i < horasPlanificadasPorRubro.length; ++i) {
             horasPrevistasTotales += horasPlanificadasPorRubro[i];
@@ -310,43 +486,25 @@ implements CommandLineRunner {
         demoCronograma.getEntregas().add(entregaEstructura);
         demoCronograma.getEntregas().add(entregaInstalaciones);
 
-        String[] tareasObra = new String[]{"Corte de soga", "Apertura de accesos", "Replanteo de eje", "Preparación de encofrado", "Verificación de plomada", "Prueba de presión"};
-        String[] sectores = new String[]{"Fundación", "Planta baja", "Piso 1", "Piso 2", "Instalaciones", "Acabado"};
-        String[] niveles = new String[]{"N-1", "PB", "P1", "P2", "Sanitarios", "Cocina"};
-        Double[] cumplimiento = new Double[]{94.0, 88.0, 91.0, 76.0, 68.0, 58.0};
-        for (int i = 0; i < tareasObra.length; ++i) {
-            ObraTarea obraTarea = new ObraTarea();
-            obraTarea.setProyecto(demoCronograma);
-            obraTarea.setNombre(tareasObra[i]);
-            obraTarea.setSector(sectores[i]);
-            obraTarea.setNivel(niveles[i]);
-            obraTarea.setUnidad("m2");
-            obraTarea.setRubro(rubrosNombre[i % rubrosNombre.length]);
-            obraTarea.setPorcentajeCumplimiento(cumplimiento[i]);
-            obraTarea.setCumplimiento(cumplimiento[i] >= 80.0 ? "OK" : "ATENCION");
-            obraTarea.setCausaNoCumplimiento(cumplimiento[i] < 80.0 ? "Demora en entrega de materiales y clima" : "Sin incidencia");
-            obraTarea.setComentario("Seguimiento de avance para control de obra");
-            demoCronograma.getObraTareas().add(obraTarea);
-        }
-
         String[] restriccionesTexto = new String[]{"Retiro de caja de escaleras", "Pedido de acero para vigas", "Hidrosanitario nivel P1", "Acondicionamiento de cerramiento", "Aprobación de pintura exterior"};
-        String[] tipos = new String[]{"Logística", "Materiales", "Instalación", "Ejecutivo", "Calidad"};
+        String[] tipos = new String[]{"Equipos", "Materiales", "Documentacion", "Mano de obra", "Documentacion"};
         String[] sectoresRestriccion = new String[]{"Fundación", "Estructura", "P1", "PB", "Fachada"};
         String[] prioridad = new String[]{"ALTA", "MEDIA", "ALTA", "MEDIA", "BAJA"};
-        String[] estado = new String[]{"PENDIENTE", "EN_PROCESO", "PENDIENTE", "EN_PROCESO", "RESUELTO"};
+        String[] estado = new String[]{"RESUELTO", "RESUELTO", "PENDIENTE", "PENDIENTE", "PENDIENTE"};
         for (int i = 0; i < restriccionesTexto.length; ++i) {
             RestriccionObra restriccion = new RestriccionObra();
             restriccion.setProyecto(demoCronograma);
             restriccion.setRestriccion(restriccionesTexto[i]);
             restriccion.setTipo(tipos[i]);
             restriccion.setSector(sectoresRestriccion[i]);
-            restriccion.setNivel(i % 2 == 0 ? "N-1" : "P1");
-            restriccion.setUnidad("u");
+            restriccion.setNivel(demoCronograma.getRubros().get(i).getNivel());
+            restriccion.setUnidad(demoCronograma.getRubros().get(i).getUnidad());
             restriccion.setRubro(rubrosNombre[i % rubrosNombre.length]);
-            restriccion.setResponsable(i % 2 == 0 ? "Supervisión" : "Compras");
-            restriccion.setFechaSolicitud(LocalDate.of(2026, 8, 5 + i));
-            restriccion.setFechaMaximaEntrega(LocalDate.of(2026, 8, 15 + i * 4));
-            restriccion.setFechaRealEntrega(i == 4 ? LocalDate.of(2026, 8, 20) : null);
+            restriccion.setResponsable(i % 2 == 0 ? "Laura Torres" : "Marina Sosa");
+            LocalDate requested = demoCronograma.getRubros().get(i).getFechaInicioPlanificada();
+            restriccion.setFechaSolicitud(requested);
+            restriccion.setFechaMaximaEntrega(requested.plusDays(7));
+            restriccion.setFechaRealEntrega(i < 2 ? requested.plusDays(5) : null);
             restriccion.setCarga(String.valueOf(12 + i * 3));
             restriccion.setPrioridad(prioridad[i]);
             restriccion.setEstado(estado[i]);
@@ -354,32 +512,13 @@ implements CommandLineRunner {
             demoCronograma.getRestricciones().add(restriccion);
         }
 
-        demoCronograma.setRegistrosHoras(new ArrayList<>());
-        OffsetDateTime base = OffsetDateTime.of(2026, 8, 3, 8, 0, 0, 0, ZoneOffset.of("-03:00"));
-        String[] responsables = new String[]{"L. Torres", "J. Ramos", "M. Sosa", "V. Díaz", "A. Costa", "R. Silva", "N. Cruz"};
-        for (int i = 0; i < rubrosNombre.length; ++i) {
-            for (int j = 0; j < 4; ++j) {
-                RegistroHoras registro = new RegistroHoras();
-                registro.setProyecto(demoCronograma);
-                registro.setNumeroRubro(String.valueOf(rubrosNumero[i]));
-                registro.setRubro(rubrosNombre[i]);
-                registro.setSubRubro(subRubros[i]);
-                registro.setResponsable(responsables[(i + j) % responsables.length]);
-                OffsetDateTime inicio = base.plusDays((long)i * 3L + (long)j).plusHours((j % 3) * 2L);
-                OffsetDateTime fin = inicio.plusHours(6 + (j % 3) * 2L);
-                double horas = horasRealesPorRubro[i] / 4.0;
-                registro.setInicio(inicio);
-                registro.setFin(fin);
-                registro.setHoras(horas);
-                registro.setDescripcion("Jornada real de obra: seguimiento de productividad y costo");
-                demoCronograma.getRegistrosHoras().add(registro);
-            }
-        }
-
-        demoCronograma.setHorasReales(demoCronograma.getRegistrosHoras().stream().mapToDouble(r -> r.getHoras() == null ? 0.0 : r.getHoras()).sum());
+        // Persist activities before linking newly created daily loads to them.
+        demoCronograma = this.proyectoRepository.save(demoCronograma);
+        DemoOperationalSeed.complete(demoCronograma, demoJornada(demoCronograma.getEmpresaRelacionada()));
 
         this.proyectoRepository.save(demoCronograma);
-        log.info("Data seeded successfully with realistic productivity, projected loss, and hour logs.");
+        ensureFinancialSeedData(demoCronograma);
+        log.info("Demo operational and report fixtures ensured.");
     }
 
     public DataSeeder(ProyectoRepository proyectoRepository, PlantaRepository plantaRepository, EntregaRepository entregaRepository, TareaRepository tareaRepository, RendimientoRepository rendimientoRepository, IngresoRepository ingresoRepository, GastoFijoRepository gastoFijoRepository, PresupuestoLineaRepository presupuestoLineaRepository, EmpresaRepository empresaRepository, ResponsableEmpresaRepository responsableEmpresaRepository, UnidadMetricaEmpresaRepository unidadMetricaEmpresaRepository, CatalogoEmpresaRepository catalogoEmpresaRepository, CategoriaManoObraEmpresaRepository categoriaManoObraEmpresaRepository, CalendarioLaboralEmpresaRepository calendarioLaboralEmpresaRepository) {

@@ -103,6 +103,7 @@ public class CreateProyectoUseCase {
             rubro.setFechaInicioPlanificada(rubroDto.fechaInicioPlanificada());
             rubro.setFechaFinPlanificada(rubroDto.fechaFinPlanificada());
             rubro.setCronogramaManual(rubroDto.cronogramaManual());
+            RubroPlanning.apply(rubro, rubroDto);
             result.add(rubro);
         }
         return result;
