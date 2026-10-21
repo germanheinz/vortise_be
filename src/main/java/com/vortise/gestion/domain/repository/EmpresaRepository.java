@@ -13,6 +13,8 @@ public interface EmpresaRepository {
 
     Optional<Empresa> findByIdentificacionFiscal(String identificacionFiscal);
 
+    List<Empresa> findByCreadoPorUsuarioId(Long usuarioId);
+
     Empresa save(Empresa empresa);
 
     void deleteById(Long id);

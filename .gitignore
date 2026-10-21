@@ -1,3 +1,7 @@
 # build output
 /target/
 **/target/
+
+# local secrets and user uploads
+.env
+/data/uploads/

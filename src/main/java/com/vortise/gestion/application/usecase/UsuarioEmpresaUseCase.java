@@ -14,11 +14,15 @@ public class UsuarioEmpresaUseCase {
     private final EmpresaRepository empresaRepository;
     private final UsuarioEmpresaRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SuscripcionConsultaService suscripciones;
 
-    public UsuarioEmpresaUseCase(EmpresaRepository empresaRepository, UsuarioEmpresaRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    public UsuarioEmpresaUseCase(EmpresaRepository empresaRepository, UsuarioEmpresaRepository usuarioRepository, PasswordEncoder passwordEncoder,
+            SuscripcionConsultaService suscripciones) {
         this.empresaRepository = empresaRepository; this.usuarioRepository = usuarioRepository; this.passwordEncoder = passwordEncoder;
+        this.suscripciones = suscripciones;
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<UsuarioEmpresaDto> getAll(Long empresaId) { requireEmpresa(empresaId); return usuarioRepository.findByEmpresaId(empresaId).stream().map(this::toDto).toList(); }
     public UsuarioEmpresaDto create(Long empresaId, UsuarioEmpresaDto dto) {
         Empresa empresa = requireEmpresa(empresaId);
@@ -43,5 +47,5 @@ public class UsuarioEmpresaUseCase {
     public void delete(Long empresaId, Long id) { requireEmpresa(empresaId); UsuarioEmpresa usuario = findOwned(empresaId, id); usuario.setActivo(false); usuarioRepository.save(usuario); }
     private Empresa requireEmpresa(Long id) { return empresaRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Empresa no encontrada")); }
     private UsuarioEmpresa findOwned(Long empresaId, Long id) { UsuarioEmpresa usuario = usuarioRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado")); if (!usuario.getEmpresa().getId().equals(empresaId)) throw new IllegalArgumentException("El usuario no pertenece a la empresa"); return usuario; }
-    private UsuarioEmpresaDto toDto(UsuarioEmpresa u) { return new UsuarioEmpresaDto(u.getId(), u.getEmail(), u.getNombre(), u.getRol(), u.isActivo(), null); }
+    private UsuarioEmpresaDto toDto(UsuarioEmpresa u) { return new UsuarioEmpresaDto(u.getId(), u.getEmail(), u.getNombre(), u.getRol(), u.isActivo(), null, suscripciones.resumenUsuario(u)); }
 }

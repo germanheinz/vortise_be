@@ -14,7 +14,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final AutenticacionUseCase autenticacionUseCase;
-    public AuthController(AutenticacionUseCase autenticacionUseCase) { this.autenticacionUseCase = autenticacionUseCase; }
+    private final com.vortise.gestion.application.usecase.RegistroUseCase registroUseCase;
+    public AuthController(AutenticacionUseCase autenticacionUseCase, com.vortise.gestion.application.usecase.RegistroUseCase registroUseCase) {
+        this.autenticacionUseCase = autenticacionUseCase; this.registroUseCase = registroUseCase;
+    }
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto request) { return ResponseEntity.ok(autenticacionUseCase.login(request)); }
+    @PostMapping("/registro")
+    public ResponseEntity<LoginResponseDto> registro(@Valid @RequestBody com.vortise.gestion.application.dto.RegistroRequestDto request) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(registroUseCase.registrar(request));
+    }
 }

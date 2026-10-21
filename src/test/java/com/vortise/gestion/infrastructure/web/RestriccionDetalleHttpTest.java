@@ -43,6 +43,7 @@ class RestriccionDetalleHttpTest {
     @PersistenceContext EntityManager em;
     @MockBean DataSeeder dataSeeder;
     @MockBean UsuarioDemoSeeder usuarioDemoSeeder;
+    @MockBean com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
     private Proyecto own, other;
     private Long restrictionId, foreignRestrictionId;
     private String token;
@@ -61,8 +62,9 @@ class RestriccionDetalleHttpTest {
         try (var connection = source.getConnection()) {
             assertEquals(BASE_URL, connection.getMetaData().getURL().split(";",2)[0]);
         }
-        var a = new Empresa("Comparison A","CMP-A-"+UUID.randomUUID()); em.persist(a);
-        var b = new Empresa("Comparison B","CMP-B-"+UUID.randomUUID()); em.persist(b);
+        // Fixtures are committed per test, so unique company names must differ per run.
+        var a = new Empresa("Comparison A-"+UUID.randomUUID(),"CMP-A-"+UUID.randomUUID()); em.persist(a);
+        var b = new Empresa("Comparison B-"+UUID.randomUUID(),"CMP-B-"+UUID.randomUUID()); em.persist(b);
         own = project(a,"A"); other = project(b,"B");
         restrictionId = restriction(own); foreignRestrictionId = restriction(other);
         em.persist(new CategoriaManoObraEmpresa(a,"OFICIAL",2000.,true));

@@ -42,6 +42,7 @@ class PrevistoRealHttpTest {
     @PersistenceContext EntityManager em;
     @MockBean DataSeeder dataSeeder;
     @MockBean UsuarioDemoSeeder usuarioDemoSeeder;
+    @MockBean com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
     private Proyecto own, other;
     private RubroObra activity, foreignActivity;
     private String token;

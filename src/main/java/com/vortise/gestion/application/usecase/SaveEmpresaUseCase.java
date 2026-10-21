@@ -4,23 +4,25 @@ import com.vortise.gestion.application.dto.EmpresaCreateDto;
 import com.vortise.gestion.application.dto.EmpresaDto;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
+import com.vortise.gestion.infrastructure.security.CurrentTenantService;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SaveEmpresaUseCase {
     private final EmpresaRepository empresaRepository;
+    private final CurrentTenantService currentTenant;
 
-    public SaveEmpresaUseCase(EmpresaRepository empresaRepository) {
+    public SaveEmpresaUseCase(EmpresaRepository empresaRepository, CurrentTenantService currentTenant) {
         this.empresaRepository = empresaRepository;
+        this.currentTenant = currentTenant;
     }
 
     public EmpresaDto create(EmpresaCreateDto dto) {
         ensureNameAvailable(dto.nombre(), null);
         ensureTaxIdAvailable(dto.identificacionFiscal(), null);
-        return EmpresaMapper.toDto(empresaRepository.save(new Empresa(
-            dto.nombre().trim(),
-            normalize(dto.identificacionFiscal())
-        )));
+        Empresa empresa = new Empresa(dto.nombre().trim(), normalize(dto.identificacionFiscal()));
+        empresa.setCreadoPorUsuarioId(currentTenant.usuarioId());
+        return EmpresaMapper.toDto(empresaRepository.save(empresa));
     }
 
     public EmpresaDto update(Long id, EmpresaCreateDto dto) {

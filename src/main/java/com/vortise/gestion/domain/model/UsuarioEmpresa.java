@@ -24,6 +24,7 @@ public class UsuarioEmpresa {
     @Column(nullable = false) private String passwordHash;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private RolEmpresa rol;
     @Column(nullable = false) private boolean activo = true;
+    @Column(nullable = false) private boolean superAdmin = false;
 
     protected UsuarioEmpresa() { }
     public UsuarioEmpresa(Empresa empresa, String email, String nombre, String passwordHash, RolEmpresa rol) { this.empresa = empresa; this.email = email; this.nombre = nombre; this.passwordHash = passwordHash; this.rol = rol; }
@@ -34,6 +35,8 @@ public class UsuarioEmpresa {
     public String getPasswordHash() { return passwordHash; }
     public RolEmpresa getRol() { return rol; }
     public boolean isActivo() { return activo; }
+    public boolean isSuperAdmin() { return superAdmin; }
+    public void setSuperAdmin(boolean value) { superAdmin = value; }
     public void setNombre(String value) { nombre = value; }
     public void setPasswordHash(String value) { passwordHash = value; }
     public void setRol(RolEmpresa value) { rol = value; }

@@ -12,6 +12,10 @@
 package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.ErrorResponseDto;
+import com.vortise.gestion.application.exception.PagosNoConfiguradosException;
+import com.vortise.gestion.application.exception.ProveedorPagoException;
+import com.vortise.gestion.application.exception.SolicitudInvalidaException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +45,26 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleValidation(MethodArgumentNotValidException ex) {
         String msg = ex.getBindingResult().getFieldErrors().stream().map(fe -> fe.getField() + ": " + fe.getDefaultMessage()).findFirst().orElse("Validation error");
         return ResponseEntity.status((HttpStatusCode)HttpStatus.BAD_REQUEST).body(new ErrorResponseDto(400, "Bad Request", msg));
+    }
+
+    @ExceptionHandler(value={SolicitudInvalidaException.class})
+    public ResponseEntity<ErrorResponseDto> handleSolicitudInvalida(SolicitudInvalidaException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponseDto(400, "Bad Request", ex.getMessage()));
+    }
+
+    @ExceptionHandler(value={PagosNoConfiguradosException.class})
+    public ResponseEntity<ErrorResponseDto> handlePagosNoConfigurados(PagosNoConfiguradosException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ErrorResponseDto(503, "Service Unavailable", ex.getMessage()));
+    }
+
+    @ExceptionHandler(value={ProveedorPagoException.class})
+    public ResponseEntity<ErrorResponseDto> handleProveedorPago(ProveedorPagoException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(new ErrorResponseDto(502, "Bad Gateway", ex.getMessage()));
+    }
+
+    @ExceptionHandler(value={MaxUploadSizeExceededException.class})
+    public ResponseEntity<ErrorResponseDto> handleMaxUpload(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(new ErrorResponseDto(413, "Payload Too Large", "El archivo es demasiado grande"));
     }
 
     @ExceptionHandler(value={Exception.class})

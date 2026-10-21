@@ -20,8 +20,13 @@ public class JwtService {
     }
 
     public String generate(Long userId, Long empresaId, String email, String rol) {
+        return generate(userId, empresaId, email, rol, false);
+    }
+
+    public String generate(Long userId, Long empresaId, String email, String rol, boolean superAdmin) {
         Date now = new Date();
         return Jwts.builder().subject(email).claim("userId", userId).claim("empresaId", empresaId).claim("rol", rol)
+            .claim("superAdmin", superAdmin)
             .issuedAt(now).expiration(new Date(now.getTime() + expirationMs)).signWith(signingKey).compact();
     }
 

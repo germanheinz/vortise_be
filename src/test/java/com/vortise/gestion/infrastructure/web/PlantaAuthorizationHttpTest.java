@@ -105,6 +105,9 @@ class PlantaAuthorizationHttpTest {
     @MockBean
     private UsuarioDemoSeeder usuarioDemoSeeder;
 
+    @MockBean
+    private com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
+
     @DynamicPropertySource
     static void isolatedProperties(DynamicPropertyRegistry registry) {
         registry.add("app.test-isolation.datasource-url", () -> JDBC_URL);
@@ -277,9 +280,9 @@ class PlantaAuthorizationHttpTest {
     enum TokenDenial { MISSING, MALFORMED, EXPIRED, WRONG_KEY }
 
     static Stream<Arguments> projectDenials() {
+        // Spec 003: ADMINISTRADOR is denied companies they did not create.
         return Stream.of(RolEmpresa.values()).flatMap(role -> Stream.of(Operation.values())
             .flatMap(operation -> Stream.of(ProjectDenial.values())
-                .filter(denial -> denial != ProjectDenial.INACCESSIBLE || role != RolEmpresa.ADMINISTRADOR)
                 .map(denial -> Arguments.of(role, operation, denial))));
     }
 
@@ -340,12 +343,31 @@ class PlantaAuthorizationHttpTest {
         assertDeniedState(before, true);
     }
 
+    enum ForeignGrant { CREATOR_ADMIN, SUPER_ADMIN }
+
+    static Stream<Arguments> foreignGrants() {
+        return Stream.of(Operation.values()).flatMap(operation -> Stream.of(ForeignGrant.values())
+            .map(grant -> Arguments.of(operation, grant)));
+    }
+
     @ParameterizedTest
-    @EnumSource(Operation.class)
-    void administratorCanMutateCorrectlyAddressedForeignCompany(Operation operation) throws Exception {
+    @MethodSource("foreignGrants")
+    void creatorAdminOrSuperAdminCanMutateCorrectlyAddressedForeignCompany(Operation operation, ForeignGrant grant)
+            throws Exception {
+        String bearer;
+        if (grant == ForeignGrant.CREATOR_ADMIN) {
+            transaction().executeWithoutResult(status -> {
+                requireIsolatedDatabaseUnchecked();
+                entityManager.createQuery("update Empresa e set e.creadoPorUsuarioId = 1 where e.identificacionFiscal = 'AUTH-TEST-B'")
+                    .executeUpdate();
+            });
+            bearer = token(RolEmpresa.ADMINISTRADOR);
+        } else {
+            bearer = jwtService.generate(1L, fixtures.companyId(), "test@example.invalid", RolEmpresa.ADMINISTRADOR.name(), true);
+        }
         DatabaseState before = snapshot();
         clearInvocations(plantaRepository);
-        ResultActions result = request(token(RolEmpresa.ADMINISTRADOR), operation,
+        ResultActions result = request(bearer, operation,
             fixtures.foreignProjectId(), fixtures.foreignCompanyId(), validBody());
         List<PlantaDto> expected = new ArrayList<>(before.plantas());
         if (operation == Operation.PUT) {

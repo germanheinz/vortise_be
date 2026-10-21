@@ -27,6 +27,8 @@ public class Empresa {
     @Column(nullable = false)
     private LocalDateTime creadoEn = LocalDateTime.now();
 
+    private Long creadoPorUsuarioId;
+
     protected Empresa() {
     }
 
@@ -65,5 +67,13 @@ public class Empresa {
 
     public void setIdentificacionFiscal(String identificacionFiscal) {
         this.identificacionFiscal = identificacionFiscal;
+    }
+
+    public Long getCreadoPorUsuarioId() {
+        return creadoPorUsuarioId;
+    }
+
+    public void setCreadoPorUsuarioId(Long creadoPorUsuarioId) {
+        this.creadoPorUsuarioId = creadoPorUsuarioId;
     }
 }
