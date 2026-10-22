@@ -56,6 +56,20 @@ class SuperAdminSeederTest {
     }
 
     @Test
+    void createsConfiguredSuperAdminWhenDatabaseIsAlreadyInitialized() {
+        when(usuarios.findByEmail(EMAIL)).thenReturn(Optional.empty());
+        when(empresas.findByIdentificacionFiscal(SuperAdminSeeder.PLATFORM_TAX_ID)).thenReturn(Optional.empty());
+        when(empresas.findByNombreIgnoreCase(SuperAdminSeeder.PLATFORM_NAME)).thenReturn(Optional.empty());
+        when(empresas.save(any(Empresa.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(encoder.encode(PASSWORD)).thenReturn("hash");
+
+        new SuperAdminSeeder(empresas, usuarios, encoder, EMAIL, PASSWORD, () -> false).run();
+
+        verify(usuarios).save(argThat(user -> user.isSuperAdmin() && EMAIL.equals(user.getEmail())
+            && "hash".equals(user.getPasswordHash())));
+    }
+
+    @Test
     void existingSuperAdminIsLeftUntouched() {
         UsuarioEmpresa existing = mock(UsuarioEmpresa.class);
         when(existing.isSuperAdmin()).thenReturn(true);

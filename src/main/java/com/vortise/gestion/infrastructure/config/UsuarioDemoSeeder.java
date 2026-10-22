@@ -6,6 +6,7 @@ import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -16,13 +17,22 @@ public class UsuarioDemoSeeder implements CommandLineRunner {
     private final EmpresaRepository empresaRepository;
     private final UsuarioEmpresaRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SeedRunPolicy seedRunPolicy;
 
     public UsuarioDemoSeeder(EmpresaRepository empresaRepository, UsuarioEmpresaRepository usuarioRepository, PasswordEncoder passwordEncoder) {
-        this.empresaRepository = empresaRepository; this.usuarioRepository = usuarioRepository; this.passwordEncoder = passwordEncoder;
+        this(empresaRepository, usuarioRepository, passwordEncoder, () -> true);
+    }
+
+    @Autowired
+    public UsuarioDemoSeeder(EmpresaRepository empresaRepository, UsuarioEmpresaRepository usuarioRepository,
+            PasswordEncoder passwordEncoder, SeedRunPolicy seedRunPolicy) {
+        this.empresaRepository = empresaRepository; this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder; this.seedRunPolicy = seedRunPolicy;
     }
 
     @Override
     public void run(String... args) {
+        if (!seedRunPolicy.shouldRunSeeders()) return;
         Empresa empresa = empresaRepository.findByIdentificacionFiscal("DEMO-0001")
             .orElseGet(() -> {
                 if (empresaRepository.findByNombreIgnoreCase("Constructora Norte").isPresent()) {

@@ -13,7 +13,6 @@ import com.vortise.gestion.domain.model.Entrega;
 import com.vortise.gestion.domain.model.GastoFijo;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.Ingreso;
-import com.vortise.gestion.domain.model.ObraTarea;
 import com.vortise.gestion.domain.model.Planta;
 import com.vortise.gestion.domain.model.PresupuestoLinea;
 import com.vortise.gestion.domain.model.Proyecto;
@@ -51,6 +50,7 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -70,12 +70,17 @@ implements CommandLineRunner {
     private final CatalogoEmpresaRepository catalogoEmpresaRepository;
     private final CategoriaManoObraEmpresaRepository categoriaManoObraEmpresaRepository;
     private final CalendarioLaboralEmpresaRepository calendarioLaboralEmpresaRepository;
+    private final SeedRunPolicy seedRunPolicy;
 
     private final EmpresaRepository empresaRepository;
 
     @Override
     @Transactional
     public void run(String ... args) {
+        if (!seedRunPolicy.shouldRunSeeders()) {
+            log.info("Existing database detected; demo seed data is left unchanged.");
+            return;
+        }
         Empresa empresaDemo = ensureEmpresaSeedData();
         ensureFixedCosts();
         var demoProjects = this.proyectoRepository.findAll().stream()
@@ -521,7 +526,8 @@ implements CommandLineRunner {
         log.info("Demo operational and report fixtures ensured.");
     }
 
-    public DataSeeder(ProyectoRepository proyectoRepository, PlantaRepository plantaRepository, EntregaRepository entregaRepository, TareaRepository tareaRepository, RendimientoRepository rendimientoRepository, IngresoRepository ingresoRepository, GastoFijoRepository gastoFijoRepository, PresupuestoLineaRepository presupuestoLineaRepository, EmpresaRepository empresaRepository, ResponsableEmpresaRepository responsableEmpresaRepository, UnidadMetricaEmpresaRepository unidadMetricaEmpresaRepository, CatalogoEmpresaRepository catalogoEmpresaRepository, CategoriaManoObraEmpresaRepository categoriaManoObraEmpresaRepository, CalendarioLaboralEmpresaRepository calendarioLaboralEmpresaRepository) {
+    @Autowired
+    public DataSeeder(ProyectoRepository proyectoRepository, PlantaRepository plantaRepository, EntregaRepository entregaRepository, TareaRepository tareaRepository, RendimientoRepository rendimientoRepository, IngresoRepository ingresoRepository, GastoFijoRepository gastoFijoRepository, PresupuestoLineaRepository presupuestoLineaRepository, EmpresaRepository empresaRepository, ResponsableEmpresaRepository responsableEmpresaRepository, UnidadMetricaEmpresaRepository unidadMetricaEmpresaRepository, CatalogoEmpresaRepository catalogoEmpresaRepository, CategoriaManoObraEmpresaRepository categoriaManoObraEmpresaRepository, CalendarioLaboralEmpresaRepository calendarioLaboralEmpresaRepository, SeedRunPolicy seedRunPolicy) {
         this.proyectoRepository = proyectoRepository;
         this.plantaRepository = plantaRepository;
         this.entregaRepository = entregaRepository;
@@ -536,5 +542,10 @@ implements CommandLineRunner {
         this.catalogoEmpresaRepository = catalogoEmpresaRepository;
         this.categoriaManoObraEmpresaRepository = categoriaManoObraEmpresaRepository;
         this.calendarioLaboralEmpresaRepository = calendarioLaboralEmpresaRepository;
+        this.seedRunPolicy = seedRunPolicy;
+    }
+
+    public DataSeeder(ProyectoRepository proyectoRepository, PlantaRepository plantaRepository, EntregaRepository entregaRepository, TareaRepository tareaRepository, RendimientoRepository rendimientoRepository, IngresoRepository ingresoRepository, GastoFijoRepository gastoFijoRepository, PresupuestoLineaRepository presupuestoLineaRepository, EmpresaRepository empresaRepository, ResponsableEmpresaRepository responsableEmpresaRepository, UnidadMetricaEmpresaRepository unidadMetricaEmpresaRepository, CatalogoEmpresaRepository catalogoEmpresaRepository, CategoriaManoObraEmpresaRepository categoriaManoObraEmpresaRepository, CalendarioLaboralEmpresaRepository calendarioLaboralEmpresaRepository) {
+        this(proyectoRepository, plantaRepository, entregaRepository, tareaRepository, rendimientoRepository, ingresoRepository, gastoFijoRepository, presupuestoLineaRepository, empresaRepository, responsableEmpresaRepository, unidadMetricaEmpresaRepository, catalogoEmpresaRepository, categoriaManoObraEmpresaRepository, calendarioLaboralEmpresaRepository, () -> true);
     }
 }

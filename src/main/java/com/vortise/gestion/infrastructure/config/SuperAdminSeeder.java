@@ -8,6 +8,7 @@ import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,20 +27,31 @@ public class SuperAdminSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final String email;
     private final String password;
+        private final SeedRunPolicy seedRunPolicy;
 
+        @Autowired
     public SuperAdminSeeder(EmpresaRepository empresaRepository, UsuarioEmpresaRepository usuarioRepository,
             PasswordEncoder passwordEncoder,
             @Value("${app.superadmin.email:}") String email,
-            @Value("${app.superadmin.password:}") String password) {
+            @Value("${app.superadmin.password:}") String password, SeedRunPolicy seedRunPolicy) {
         this.empresaRepository = empresaRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.email = email == null ? "" : email.trim().toLowerCase();
         this.password = password == null ? "" : password;
+        this.seedRunPolicy = seedRunPolicy;
+    }
+
+    public SuperAdminSeeder(EmpresaRepository empresaRepository, UsuarioEmpresaRepository usuarioRepository,
+            PasswordEncoder passwordEncoder, String email, String password) {
+        this(empresaRepository, usuarioRepository, passwordEncoder, email, password, () -> true);
     }
 
     @Override
     public void run(String... args) {
+        if (!seedRunPolicy.shouldRunSeeders()) {
+            log.info("Database already initialized; checking only the explicitly configured super-admin account");
+        }
         if (email.isEmpty()) return;
         if (password.length() < MIN_PASSWORD_LENGTH) {
             log.warn("Super admin not created: APP_SUPERADMIN_PASSWORD must have at least {} characters", MIN_PASSWORD_LENGTH);

@@ -8,6 +8,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -21,17 +22,25 @@ public class PlanSuscripcionSeeder implements CommandLineRunner {
     private final PlanSuscripcionRepository planes;
     private final StripeGateway stripe;
     private final Map<String, String> preciosConfigurados;
+    private final SeedRunPolicy seedRunPolicy;
 
+    @Autowired
     public PlanSuscripcionSeeder(PlanSuscripcionRepository planes, StripeGateway stripe,
             @Value("${app.stripe.price-basic:}") String priceBasic,
-            @Value("${app.stripe.price-pro:}") String pricePro) {
+            @Value("${app.stripe.price-pro:}") String pricePro, SeedRunPolicy seedRunPolicy) {
         this.planes = planes;
         this.stripe = stripe;
         this.preciosConfigurados = Map.of("BASIC", priceBasic == null ? "" : priceBasic.trim(), "PRO", pricePro == null ? "" : pricePro.trim());
+        this.seedRunPolicy = seedRunPolicy;
+    }
+
+    public PlanSuscripcionSeeder(PlanSuscripcionRepository planes, StripeGateway stripe, String priceBasic, String pricePro) {
+        this(planes, stripe, priceBasic, pricePro, () -> true);
     }
 
     @Override
     public void run(String... args) {
+        if (!seedRunPolicy.shouldRunSeeders()) return;
         asegurar(new PlanSuscripcion("BASIC", "Basic", 100, "usd", 7, 1, List.of(
             "Gestión de empresas y obras",
             "Cronograma y Gantt",

@@ -15,6 +15,7 @@ import com.vortise.gestion.application.dto.ErrorResponseDto;
 import com.vortise.gestion.application.exception.PagosNoConfiguradosException;
 import com.vortise.gestion.application.exception.ProveedorPagoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
+import com.vortise.gestion.infrastructure.backup.BackupValidationException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -26,6 +27,11 @@ import org.springframework.security.access.AccessDeniedException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(value={BackupValidationException.class})
+    public ResponseEntity<ErrorResponseDto> handleBackupValidation(BackupValidationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponseDto(400, "Bad Request", ex.getMessage()));
+    }
+
     @ExceptionHandler(value={IllegalArgumentException.class})
     public ResponseEntity<ErrorResponseDto> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.status((HttpStatusCode)HttpStatus.NOT_FOUND).body(new ErrorResponseDto(404, "Not Found", ex.getMessage()));

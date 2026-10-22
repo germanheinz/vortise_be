@@ -9,8 +9,10 @@ import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.Rendimiento;
 import com.vortise.gestion.domain.repository.*;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -34,10 +36,16 @@ class DataSeederTest {
     @Mock CatalogoEmpresaRepository catalogos;
     @Mock CategoriaManoObraEmpresaRepository categorias;
     @Mock CalendarioLaboralEmpresaRepository calendarios;
+    @Mock SeedRunPolicy seedRunPolicy;
     @InjectMocks DataSeeder seeder;
 
+    @BeforeEach
+    void allowSeedRunsByDefault() {
+        lenient().when(seedRunPolicy.shouldRunSeeders()).thenReturn(true);
+    }
+
     private void existingProject(Empresa empresa) {
-        ReflectionTestUtils.setField(empresa, "id", 1L);
+        ReflectionTestUtils.setField(Objects.requireNonNull(empresa), "id", 1L);
         Proyecto project = new Proyecto();
         project.setNombre("PROYECTO DEMO CRONOGRAMA");
         project.setEmpresaRelacionada(empresa);
@@ -83,5 +91,29 @@ class DataSeederTest {
         verify(empresas, never()).save(any());
         verifyNoInteractions(proyectos, plantas, entregas, tareas, rendimientos, ingresos,
             gastos, presupuestos, responsables, unidades, catalogos, categorias, calendarios);
+    }
+
+    @Test void explicitDemoResetStillRunsWhenStartupSeedingIsDisabled() {
+        lenient().when(seedRunPolicy.shouldRunSeeders()).thenReturn(false);
+        Empresa empresa = new Empresa("Constructora Norte", "DEMO-0001");
+        ReflectionTestUtils.setField(empresa, "id", 1L);
+        when(empresas.findByIdentificacionFiscal("DEMO-0001")).thenReturn(Optional.of(empresa));
+        when(responsables.findByEmpresaId(1L)).thenReturn(List.of());
+        when(unidades.findByEmpresaId(1L)).thenReturn(List.of());
+        when(catalogos.findByEmpresaIdAndTipo(1L, "SUBCONTRATISTA")).thenReturn(List.of());
+        when(catalogos.findByEmpresaIdAndTipo(1L, "TIPO_RESTRICCION")).thenReturn(List.of());
+        when(catalogos.findByEmpresaIdAndTipo(1L, "CAUSA_INCUMPLIMIENTO")).thenReturn(List.of());
+        when(categorias.findByEmpresaId(1L)).thenReturn(List.of());
+        when(calendarios.findByEmpresaId(1L)).thenReturn(Optional.empty());
+        when(calendarios.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(proyectos.findAll()).thenReturn(List.of());
+        when(proyectos.save(any(Proyecto.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(gastos.findAll()).thenReturn(List.of());
+        when(rendimientos.findAll()).thenReturn(List.of());
+
+        seeder.resetDemoData();
+
+        verify(seedRunPolicy, never()).shouldRunSeeders();
+        verify(proyectos, atLeastOnce()).save(any(Proyecto.class));
     }
 }
