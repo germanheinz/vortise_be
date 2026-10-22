@@ -135,7 +135,8 @@ class SuscripcionUseCaseTest {
         var listed = useCase.planes();
         assertEquals(List.of("BASIC", "PRO"), listed.stream().map(p -> p.codigo()).toList());
         assertFalse(listed.get(0).disponible());
-        assertEquals(new java.math.BigDecimal("1.00"), listed.get(0).precioMensual());
+        assertEquals(new java.math.BigDecimal("9.00"), listed.get(0).precioMensual());
+        assertEquals(new java.math.BigDecimal("19.00"), listed.get(1).precioMensual());
     }
 
     @Test
@@ -162,7 +163,8 @@ class SuscripcionUseCaseTest {
     }
 
     private static PlanSuscripcion plan(String codigo, int diasPrueba, int nivel, String priceId) {
-        PlanSuscripcion plan = new PlanSuscripcion(codigo, codigo, 100L * nivel, "usd", diasPrueba, nivel, List.of("Beneficio"));
+        long precioCentavos = "BASIC".equals(codigo) ? 900 : "PRO".equals(codigo) ? 1900 : 0;
+        PlanSuscripcion plan = new PlanSuscripcion(codigo, codigo, precioCentavos, "usd", diasPrueba, nivel, List.of("Beneficio"));
         plan.setStripePriceId(priceId);
         return plan;
     }

@@ -4,10 +4,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 
-import com.vortise.gestion.application.port.StripeGateway;
 import com.vortise.gestion.domain.repository.CalendarioLaboralEmpresaRepository;
 import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
 import com.vortise.gestion.domain.repository.CategoriaManoObraEmpresaRepository;
@@ -70,11 +70,14 @@ class SeedersSkipOnInitializedDatabaseTest {
             && "password-hash".equals(user.getPasswordHash())));
 
         PlanSuscripcionRepository planes = mock(PlanSuscripcionRepository.class);
-        StripeGateway stripe = mock(StripeGateway.class);
-        new PlanSuscripcionSeeder(planes, stripe, "", "", skipSeeders).run();
+        new PlanSuscripcionSeeder(planes, "", "", skipSeeders).run();
+        verify(planes).findByCodigo("BASIC");
+        verify(planes).findByCodigo("PRO");
+        verifyNoMoreInteractions(planes);
 
         verifyNoInteractions(proyectos, plantas, entregas, tareas, rendimientos, ingresos, gastos,
             presupuestos, empresas, responsables, unidades, catalogos, categorias, calendarios,
-            demoEmpresas, demoUsuarios, encoder, planes, stripe);
+            demoEmpresas, demoUsuarios, encoder);
     }
+
 }

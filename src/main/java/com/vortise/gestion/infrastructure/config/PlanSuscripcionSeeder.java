@@ -1,6 +1,5 @@
 package com.vortise.gestion.infrastructure.config;
 
-import com.vortise.gestion.application.port.StripeGateway;
 import com.vortise.gestion.domain.model.PlanSuscripcion;
 import com.vortise.gestion.domain.repository.PlanSuscripcionRepository;
 import java.util.List;
@@ -13,67 +12,86 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-/** Creates the plan catalog once and links Stripe prices; never overwrites edited plans. */
+/** Seeds the initial plan catalog and migrates only recognized legacy prices. */
 @Component
 @Order(40)
 public class PlanSuscripcionSeeder implements CommandLineRunner {
     private static final Logger log = LoggerFactory.getLogger(PlanSuscripcionSeeder.class);
 
     private final PlanSuscripcionRepository planes;
-    private final StripeGateway stripe;
     private final Map<String, String> preciosConfigurados;
     private final SeedRunPolicy seedRunPolicy;
 
     @Autowired
-    public PlanSuscripcionSeeder(PlanSuscripcionRepository planes, StripeGateway stripe,
+    public PlanSuscripcionSeeder(PlanSuscripcionRepository planes,
             @Value("${app.stripe.price-basic:}") String priceBasic,
             @Value("${app.stripe.price-pro:}") String pricePro, SeedRunPolicy seedRunPolicy) {
         this.planes = planes;
-        this.stripe = stripe;
         this.preciosConfigurados = Map.of("BASIC", priceBasic == null ? "" : priceBasic.trim(), "PRO", pricePro == null ? "" : pricePro.trim());
         this.seedRunPolicy = seedRunPolicy;
     }
 
-    public PlanSuscripcionSeeder(PlanSuscripcionRepository planes, StripeGateway stripe, String priceBasic, String pricePro) {
-        this(planes, stripe, priceBasic, pricePro, () -> true);
+    public PlanSuscripcionSeeder(PlanSuscripcionRepository planes, String priceBasic, String pricePro) {
+        this(planes, priceBasic, pricePro, () -> true);
     }
 
     @Override
     public void run(String... args) {
-        if (!seedRunPolicy.shouldRunSeeders()) return;
-        asegurar(new PlanSuscripcion("BASIC", "Basic", 100, "usd", 7, 1, List.of(
+        boolean crearPlanesAusentes = seedRunPolicy.shouldRunSeeders();
+        sincronizar(new PlanSuscripcion("BASIC", "Basic", 900, "usd", 7, 1, List.of(
             "Gestión de empresas y obras",
             "Cronograma y Gantt",
             "Restricciones y tareas",
             "Registro de horas",
             "Dashboard de obra",
-            "7 días de prueba gratis")));
-        asegurar(new PlanSuscripcion("PRO", "Pro", 200, "usd", 0, 2, List.of(
+            "7 días de prueba gratis")), 100, crearPlanesAusentes);
+        sincronizar(new PlanSuscripcion("PRO", "Pro", 1900, "usd", 0, 2, List.of(
             "Todo lo incluido en Basic",
             "Reportes y rendimientos",
             "Importación desde Excel",
             "Gastos fijos y cashflow",
-            "Soporte prioritario")));
-        if (stripe.isConfigured()) planes.findByActivoTrueOrderByNivelAsc().forEach(this::vincularPrecio);
+            "Soporte prioritario")), 200, crearPlanesAusentes);
     }
 
-    private void asegurar(PlanSuscripcion plan) {
-        if (planes.findByCodigo(plan.getCodigo()).isEmpty()) planes.save(plan);
-    }
-
-    private void vincularPrecio(PlanSuscripcion plan) {
-        String configurado = preciosConfigurados.getOrDefault(plan.getCodigo(), "");
-        try {
-            String priceId = !configurado.isEmpty() ? configurado
-                : plan.getStripePriceId() != null ? plan.getStripePriceId()
-                : stripe.asegurarPrecioMensual("gestion_" + plan.getCodigo().toLowerCase() + "_mensual",
-                    "Gestión de Obras " + plan.getNombre(), plan.getPrecioMensualCentavos(), plan.getMoneda());
-            if (!priceId.equals(plan.getStripePriceId())) {
-                plan.setStripePriceId(priceId);
-                planes.save(plan);
+    private void sincronizar(PlanSuscripcion oferta, long precioLegacy, boolean crearSiFalta) {
+        PlanSuscripcion plan = planes.findByCodigo(oferta.getCodigo()).orElse(null);
+        if (plan == null) {
+            if (!crearSiFalta) return;
+            plan = oferta;
+            plan.setStripePriceId(precioConfigurado(plan.getCodigo()));
+            planes.save(plan);
+        } else {
+            boolean precioLegacyReconocido = plan.getPrecioMensualCentavos() == precioLegacy;
+            boolean precioOficial = plan.getPrecioMensualCentavos() == oferta.getPrecioMensualCentavos()
+                && oferta.getMoneda().equalsIgnoreCase(plan.getMoneda());
+            if (precioLegacyReconocido || precioOficial) {
+                String priceId = precioConfigurado(plan.getCodigo());
+                boolean changed = false;
+                if (precioLegacyReconocido) {
+                    plan.setPrecioMensualCentavos(oferta.getPrecioMensualCentavos());
+                    plan.setMoneda(oferta.getMoneda());
+                    changed = true;
+                }
+                if (!java.util.Objects.equals(plan.getStripePriceId(), priceId)) {
+                    plan.setStripePriceId(priceId);
+                    changed = true;
+                }
+                if (changed) planes.save(plan);
             }
-        } catch (RuntimeException ex) {
-            log.warn("Could not link a Stripe price to plan {}; it stays unavailable until the next startup", plan.getCodigo());
         }
+
+        if (plan.getStripePriceId() == null || plan.getStripePriceId().isBlank()) {
+            log.warn("Plan {} has no Stripe Price ID; configure {} before enabling checkout",
+                plan.getCodigo(), variablePrecio(plan.getCodigo()));
+        }
+    }
+
+    private String precioConfigurado(String codigo) {
+        String configurado = preciosConfigurados.getOrDefault(codigo, "");
+        return configurado.isEmpty() ? null : configurado;
+    }
+
+    private String variablePrecio(String codigo) {
+        return "STRIPE_PRICE_" + codigo;
     }
 }

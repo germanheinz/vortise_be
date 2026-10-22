@@ -42,5 +42,7 @@ public class PlanSuscripcion {
     public List<String> getBeneficios() { return beneficios.isBlank() ? List.of() : Arrays.asList(beneficios.split("\n")); }
     public String getStripePriceId() { return stripePriceId; }
     public boolean isActivo() { return activo; }
+    public void setPrecioMensualCentavos(long value) { precioMensualCentavos = value; }
+    public void setMoneda(String value) { moneda = value; }
     public void setStripePriceId(String value) { stripePriceId = value; }
 }
