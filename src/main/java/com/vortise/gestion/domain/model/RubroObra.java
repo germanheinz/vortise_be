@@ -36,6 +36,8 @@ public class RubroObra {
     private CatalogoEmpresa subcontratista;
     private Double horasOficialesPrevistas;
     private Double horasAyudantesPrevistas;
+    private Double rendimientoOficial;
+    private Double rendimientoAyudante;
     private Integer cantidadPersonas;
     private LocalDate fechaInicioPlanificada;
     private LocalDate fechaFinPlanificada;
@@ -159,6 +161,22 @@ public class RubroObra {
 
     public void setHorasAyudantesPrevistas(Double horasAyudantesPrevistas) {
         this.horasAyudantesPrevistas = horasAyudantesPrevistas;
+    }
+
+    public Double getRendimientoOficial() {
+        return rendimientoOficial;
+    }
+
+    public void setRendimientoOficial(Double rendimientoOficial) {
+        this.rendimientoOficial = rendimientoOficial;
+    }
+
+    public Double getRendimientoAyudante() {
+        return rendimientoAyudante;
+    }
+
+    public void setRendimientoAyudante(Double rendimientoAyudante) {
+        this.rendimientoAyudante = rendimientoAyudante;
     }
 
     public Integer getCantidadPersonas() {

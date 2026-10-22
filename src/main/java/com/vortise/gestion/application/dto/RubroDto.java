@@ -19,6 +19,8 @@ public record RubroDto(
     String subcontratistaNombre,
     Double horasOficialesPrevistas,
     Double horasAyudantesPrevistas,
+    Double rendimientoOficial,
+    Double rendimientoAyudante,
     Integer cantidadPersonas,
     LocalDate fechaInicioPlanificada,
     LocalDate fechaFinPlanificada,

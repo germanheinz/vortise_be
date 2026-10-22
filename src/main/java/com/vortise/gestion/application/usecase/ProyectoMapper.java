@@ -89,6 +89,8 @@ final class ProyectoMapper {
             rubro.getSubcontratista() == null ? null : rubro.getSubcontratista().getNombre(),
             rubro.getHorasOficialesPrevistas(),
             rubro.getHorasAyudantesPrevistas(),
+            rubro.getRendimientoOficial(),
+            rubro.getRendimientoAyudante(),
             rubro.getCantidadPersonas(),
             rubro.getFechaInicioPlanificada(),
             rubro.getFechaFinPlanificada(),

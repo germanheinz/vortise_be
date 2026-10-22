@@ -19,6 +19,8 @@ class RubroPlanningTest {
         assertEquals(4000.,r.getHorasOficialesPrevistas(),1e-8);
         assertEquals(1881.5,r.getHorasAyudantesPrevistas(),1e-8);
         assertEquals(37.8474903475,r.getProductividad(),1e-8);
+        assertEquals(4000. / 155.4,r.getRendimientoOficial(),1e-8);
+        assertEquals(1881.5 / 155.4,r.getRendimientoAyudante(),1e-8);
     }
     @Test void rejectsPartialNegativeAndNonfiniteRates() {
         for (Double n : new Double[]{null,-1.,Double.NaN,Double.POSITIVE_INFINITY}) {
@@ -28,6 +30,54 @@ class RubroPlanningTest {
     @Test void acceptsExplicitZeroHelperRate() {
         var r = new RubroObra(); RubroPlanning.apply(r,row(null,10.,0.));
         assertEquals(0.,r.getHorasAyudantesPrevistas());
+        assertEquals(10.,r.getRendimientoOficial());
+        assertEquals(0.,r.getRendimientoAyudante());
+    }
+    @Test void ratesAreStoredEvenWhenIncomingHoursAreAbsent() {
+        var r = new RubroObra();
+        var dto = new RubroCreateDto("5000","Hormigón",null,null,"Fundación",2.,"m3",null,null,"PROPIA",null,
+            null,null,null,null,null,false,null,25.74,12.107);
+        RubroPlanning.apply(r,dto);
+        assertEquals(25.74,r.getRendimientoOficial());
+        assertEquals(12.107,r.getRendimientoAyudante());
+        assertEquals(51.48,r.getHorasOficialesPrevistas());
+        assertEquals(24.214,r.getHorasAyudantesPrevistas());
+    }
+    @Test void ratesAreStoredWithoutQuantityAndHoursRemainUnavailable() {
+        var r = new RubroObra();
+        var dto = new RubroCreateDto("5000","Hormigón",null,null,"Fundación",null,"m3",null,null,"PROPIA",null,
+            null,null,null,null,null,false,null,25.74,12.107);
+        RubroPlanning.apply(r,dto);
+        assertEquals(25.74,r.getRendimientoOficial());
+        assertEquals(12.107,r.getRendimientoAyudante());
+        assertNull(r.getHorasOficialesPrevistas());
+        assertNull(r.getHorasAyudantesPrevistas());
+    }
+    @Test void ratesAreStoredWithZeroQuantityAndHoursRemainUnavailable() {
+        var r = new RubroObra();
+        var dto = new RubroCreateDto("5000","Hormigón",null,null,"Fundación",0.,"m3",null,null,"PROPIA",null,
+            null,null,null,null,null,false,null,25.74,12.107);
+        RubroPlanning.apply(r,dto);
+        assertEquals(25.74,r.getRendimientoOficial());
+        assertEquals(12.107,r.getRendimientoAyudante());
+        assertNull(r.getHorasOficialesPrevistas());
+        assertNull(r.getHorasAyudantesPrevistas());
+    }
+    @Test void omittedRatesKeepExistingRatesOnUpdate() {
+        var r = new RubroObra();
+        r.setRendimientoOficial(25.74);
+        r.setRendimientoAyudante(12.107);
+        var dto = new RubroCreateDto("5000","Hormigón",null,null,"Fundación",null,"m3",null,null,"PROPIA",null,
+            null,null,null,null,null,false,1L,null,null);
+        RubroPlanning.apply(r,dto);
+        assertEquals(25.74,r.getRendimientoOficial());
+        assertEquals(12.107,r.getRendimientoAyudante());
+    }
+    @Test void legacyHoursWithoutRatesAreConvertedToUnitRates() {
+        var r = new RubroObra();
+        RubroPlanning.apply(r,row(1L,null,null));
+        assertEquals(1. / 155.4,r.getRendimientoOficial(),1e-8);
+        assertEquals(2. / 155.4,r.getRendimientoAyudante(),1e-8);
     }
     private ProyectoCreateDto projectDto(List<RubroCreateDto> rows) {
         return new ProyectoCreateDto("Test",null,null,"Address","P1",null,null,null,null,null,null,null,null,null,List.of(),rows);
