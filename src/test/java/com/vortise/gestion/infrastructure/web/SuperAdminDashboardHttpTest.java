@@ -9,6 +9,8 @@ import com.vortise.gestion.infrastructure.config.DataSeeder;
 import com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder;
 import com.vortise.gestion.infrastructure.config.SuperAdminSeeder;
 import com.vortise.gestion.infrastructure.config.UsuarioDemoSeeder;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -25,9 +27,9 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc(addFilters = true)
 @ActiveProfiles("planta-authorization-test")
 class SuperAdminDashboardHttpTest {
-    private static final String DATABASE_URL = "jdbc:h2:mem:superadmin_" + UUID.randomUUID();
+    private static final String DATABASE_URL = "jdbc:h2:mem:planta_auth_" + UUID.randomUUID();
     private static final String JDBC_URL = DATABASE_URL + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
-    private static final String JWT_SECRET = "superadmin-http-test-key-with-enough-length-123456789";
+    private static final String JWT_SECRET = generateTestSigningKey();
     private static final List<String> ENDPOINTS = List.of("/api/admin/dashboard", "/api/admin/empresas", "/api/admin/usuarios",
         "/api/admin/suscripciones", "/api/admin/pagos");
 
@@ -75,5 +77,11 @@ class SuperAdminDashboardHttpTest {
 
     private String bearer(boolean superAdmin) {
         return "Bearer " + jwtService.generate(1L, 1L, "platform-test@example.invalid", "ADMINISTRADOR", superAdmin);
+    }
+
+    private static String generateTestSigningKey() {
+        byte[] keyBytes = new byte[64];
+        new SecureRandom().nextBytes(keyBytes);
+        return Base64.getEncoder().encodeToString(keyBytes);
     }
 }

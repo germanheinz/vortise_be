@@ -39,7 +39,9 @@ public class Proyecto {
     private String numeroProyecto;
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
+    @Column(length = 1000)
     private String responsablesObra;
+    @Column(length = 1000)
     private String categoriasManoObra;
     private Integer cantidadSectores;
     @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)

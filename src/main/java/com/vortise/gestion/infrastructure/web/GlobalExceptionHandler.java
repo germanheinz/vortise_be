@@ -12,7 +12,9 @@
 package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.ErrorResponseDto;
+import com.vortise.gestion.application.dto.FeatureUnavailableDto;
 import com.vortise.gestion.application.exception.PagosNoConfiguradosException;
+import com.vortise.gestion.application.exception.FeatureUnavailableException;
 import com.vortise.gestion.application.exception.ProveedorPagoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.infrastructure.backup.BackupValidationException;
@@ -61,6 +63,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value={PagosNoConfiguradosException.class})
     public ResponseEntity<ErrorResponseDto> handlePagosNoConfigurados(PagosNoConfiguradosException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new ErrorResponseDto(503, "Service Unavailable", ex.getMessage()));
+    }
+
+    @ExceptionHandler(value={FeatureUnavailableException.class})
+    public ResponseEntity<FeatureUnavailableDto> handleFeatureUnavailable(FeatureUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+            .body(new FeatureUnavailableDto(503, "Service Unavailable", FeatureUnavailableException.CODE, ex.getMessage()));
     }
 
     @ExceptionHandler(value={ProveedorPagoException.class})

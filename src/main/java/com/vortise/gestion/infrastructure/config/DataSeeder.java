@@ -49,13 +49,11 @@ import java.util.List;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DataSeeder
-implements CommandLineRunner {
+public class DataSeeder {
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
     private final ProyectoRepository proyectoRepository;
     private final PlantaRepository plantaRepository;
@@ -74,7 +72,6 @@ implements CommandLineRunner {
 
     private final EmpresaRepository empresaRepository;
 
-    @Override
     @Transactional
     public void run(String ... args) {
         if (!seedRunPolicy.shouldRunSeeders()) {

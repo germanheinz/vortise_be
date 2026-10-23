@@ -30,8 +30,8 @@ import java.util.Optional;
 
 class SeedersSkipOnInitializedDatabaseTest {
     @Test
-    void allStartupSeedersSkipWhenDatabaseWasAlreadyInitialized() {
-        SeedRunPolicy skipSeeders = () -> false;
+    void stagingSkipsDemoSeedersAndPreservesExplicitSuperAdminBootstrap() {
+        SeedRunPolicy skipSeeders = new StagingSeedRunPolicy();
         ProyectoRepository proyectos = mock(ProyectoRepository.class);
         PlantaRepository plantas = mock(PlantaRepository.class);
         EntregaRepository entregas = mock(EntregaRepository.class);

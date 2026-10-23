@@ -21,6 +21,8 @@ import com.vortise.gestion.domain.repository.IngresoRepository;
 import com.vortise.gestion.domain.repository.PresupuestoLineaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.TareaRepository;
+import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
+import com.vortise.gestion.infrastructure.security.CurrentTenantService;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -35,9 +37,15 @@ public class GetDashboardUseCase {
     private final IngresoRepository ingresoRepository;
     private final GastoFijoRepository gastoFijoRepository;
     private final PresupuestoLineaRepository presupuestoLineaRepository;
+    private final CurrentTenantService tenant;
+    private final ProductionFeaturePolicy featurePolicy;
 
     public DashboardDto execute(Long proyectoId) {
         Proyecto proyecto = this.proyectoRepository.findById(proyectoId).orElseThrow(() -> new IllegalArgumentException("Proyecto no encontrado: " + proyectoId));
+        if (proyecto.getEmpresaRelacionada() == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Obra no encontrada o sin acceso");
+        }
+        tenant.requireEmpresa(proyecto.getEmpresaRelacionada().getId());
         List<Tarea> tareas = this.tareaRepository.findByEntregaProyectoId(proyectoId);
         DashboardKpisDto kpis = this.buildKpis(tareas, proyecto.getId());
         List<EstadoDocDto> estadoDoc = this.buildEstadoDocumentos(tareas);
@@ -61,28 +69,35 @@ public class GetDashboardUseCase {
             return l.getM2() * l.getHhPorM2() * l.getPrecioPorHh();
         }).sum();
         double ingresoTotal = this.ingresoRepository.findByProyectoId(proyectoId).stream().mapToDouble(i -> i.getMonto()).sum();
-        double costoIndTotal = this.gastoFijoRepository.findAll().stream().mapToDouble(g -> g.getMonto()).sum();
-        double balance = ingresoTotal - costoTotal - costoIndTotal;
-        return new DashboardKpisDto(total, ejecutadas, enProceso, pendientes, (double)Math.round(avancePct * 10.0) / 10.0, costoTotal, costoIndTotal, ingresoTotal, balance);
+        Double costoIndTotal = null;
+        Double balance = null;
+        boolean costoIndirectoDisponible = featurePolicy.gastosFijosEnabled();
+        if (costoIndirectoDisponible) {
+            costoIndTotal = this.gastoFijoRepository.findAll().stream().mapToDouble(g -> g.getMonto()).sum();
+            balance = ingresoTotal - costoTotal - costoIndTotal;
+        }
+        return new DashboardKpisDto(total, ejecutadas, enProceso, pendientes,
+            (double)Math.round(avancePct * 10.0) / 10.0, costoTotal, costoIndTotal, ingresoTotal, balance,
+            costoIndirectoDisponible);
     }
 
     private List<EstadoDocDto> buildEstadoDocumentos(List<Tarea> tareas) {
-        Map<StatusTarea, Long> counts = tareas.stream().collect(Collectors.groupingBy(Tarea::getStatus, Collectors.counting()));
+        Map<StatusTarea, Long> counts = tareas.stream().collect(Collectors.groupingBy(tarea -> tarea.getStatus(), Collectors.counting()));
         return List.of(new EstadoDocDto("PENDIENTE", counts.getOrDefault(StatusTarea.PENDIENTE, 0L).intValue()), new EstadoDocDto("EN_PROCESO", counts.getOrDefault(StatusTarea.EN_PROCESO, 0L).intValue()), new EstadoDocDto("EJECUTADO", counts.getOrDefault(StatusTarea.EJECUTADO, 0L).intValue()));
     }
 
     private List<AvanceSistemaDto> buildAvancePorSistema(List<Tarea> tareas) {
-        Map<String, List<Tarea>> bySistema = tareas.stream().filter(t -> t.getSistema() != null).collect(Collectors.groupingBy(Tarea::getSistema));
+        Map<String, List<Tarea>> bySistema = tareas.stream().filter(t -> t.getSistema() != null).collect(Collectors.groupingBy(tarea -> tarea.getSistema()));
         return bySistema.entrySet().stream().map(e -> {
             List<Tarea> ts = e.getValue();
             long ejecutadas = ts.stream().filter(t -> t.getStatus() == StatusTarea.EJECUTADO).count();
             double pct = ts.isEmpty() ? 0.0 : (double)ejecutadas / (double)ts.size() * 100.0;
             return new AvanceSistemaDto(e.getKey(), (double)Math.round(pct * 10.0) / 10.0);
-        }).sorted(Comparator.comparingDouble(AvanceSistemaDto::avancePct).reversed()).toList();
+        }).sorted(Comparator.comparingDouble((AvanceSistemaDto dto) -> dto.avancePct()).reversed()).toList();
     }
 
     private List<DocsSistemaDto> buildDocsPorSistema(List<Tarea> tareas) {
-        Map<String, List<Tarea>> bySistema = tareas.stream().filter(t -> t.getSistema() != null).collect(Collectors.groupingBy(Tarea::getSistema));
+        Map<String, List<Tarea>> bySistema = tareas.stream().filter(t -> t.getSistema() != null).collect(Collectors.groupingBy(tarea -> tarea.getSistema()));
         return bySistema.entrySet().stream().map(e -> {
             List<Tarea> ts = e.getValue();
             int pend = (int)ts.stream().filter(t -> t.getStatus() == StatusTarea.PENDIENTE).count();
@@ -95,7 +110,7 @@ public class GetDashboardUseCase {
     private List<CostoPrecioEntregaDto> buildCostoPorEntrega(List<Tarea> tareas) {
         Map<String, List<Tarea>> byEntrega = tareas.stream().filter(t -> t.getEntrega() != null).collect(Collectors.groupingBy(t -> t.getEntrega().getNombre()));
         return byEntrega.entrySet().stream().map(e -> {
-            double costo = e.getValue().stream().filter(t -> t.getCosto() != null).mapToDouble(Tarea::getCosto).sum();
+            double costo = e.getValue().stream().filter(t -> t.getCosto() != null).mapToDouble(tarea -> tarea.getCosto()).sum();
             return new CostoPrecioEntregaDto(e.getKey(), costo, costo * 1.2);
         }).toList();
     }
@@ -120,11 +135,15 @@ public class GetDashboardUseCase {
         return sugerencias;
     }
 
-    public GetDashboardUseCase(ProyectoRepository proyectoRepository, TareaRepository tareaRepository, IngresoRepository ingresoRepository, GastoFijoRepository gastoFijoRepository, PresupuestoLineaRepository presupuestoLineaRepository) {
+    public GetDashboardUseCase(ProyectoRepository proyectoRepository, TareaRepository tareaRepository, IngresoRepository ingresoRepository,
+            GastoFijoRepository gastoFijoRepository, PresupuestoLineaRepository presupuestoLineaRepository,
+            CurrentTenantService tenant, ProductionFeaturePolicy featurePolicy) {
         this.proyectoRepository = proyectoRepository;
         this.tareaRepository = tareaRepository;
         this.ingresoRepository = ingresoRepository;
         this.gastoFijoRepository = gastoFijoRepository;
         this.presupuestoLineaRepository = presupuestoLineaRepository;
+        this.tenant = tenant;
+        this.featurePolicy = featurePolicy;
     }
 }

@@ -22,6 +22,8 @@ import com.vortise.gestion.application.usecase.GetProyectoByIdUseCase;
 import com.vortise.gestion.application.usecase.GetProyectosUseCase;
 import com.vortise.gestion.application.usecase.UpdateProyectoUseCase;
 import com.vortise.gestion.infrastructure.config.DataSeeder;
+import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
+import com.vortise.gestion.application.exception.FeatureUnavailableException;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -45,6 +47,7 @@ public class ProyectoController {
     private final UpdateProyectoUseCase updateProyectoUseCase;
     private final DeleteProyectoUseCase deleteProyectoUseCase;
     private final DataSeeder dataSeeder;
+    private final ProductionFeaturePolicy featurePolicy;
 
     @GetMapping
     public ResponseEntity<List<ProyectoDto>> getAll() {
@@ -73,7 +76,11 @@ public class ProyectoController {
     }
 
     @PostMapping(value="/reset-demo")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<String> resetDemo() {
+        if (!featurePolicy.demoResetEnabled()) {
+            throw new FeatureUnavailableException("El reset demo está deshabilitado hasta confirmar un entorno de datos sintéticos aislado.");
+        }
         this.dataSeeder.resetDemoData();
         return ResponseEntity.ok("Demo seed reset successfully");
     }
@@ -84,7 +91,8 @@ public class ProyectoController {
         CreateProyectoUseCase createProyectoUseCase,
         UpdateProyectoUseCase updateProyectoUseCase,
         DeleteProyectoUseCase deleteProyectoUseCase,
-        DataSeeder dataSeeder
+        DataSeeder dataSeeder,
+        ProductionFeaturePolicy featurePolicy
     ) {
         this.getProyectosUseCase = getProyectosUseCase;
         this.getProyectoByIdUseCase = getProyectoByIdUseCase;
@@ -92,5 +100,6 @@ public class ProyectoController {
         this.updateProyectoUseCase = updateProyectoUseCase;
         this.deleteProyectoUseCase = deleteProyectoUseCase;
         this.dataSeeder = dataSeeder;
+        this.featurePolicy = featurePolicy;
     }
 }

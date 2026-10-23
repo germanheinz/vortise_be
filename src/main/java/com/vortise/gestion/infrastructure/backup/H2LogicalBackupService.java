@@ -38,10 +38,12 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Profile("!staging")
 public class H2LogicalBackupService {
     private static final int FORMAT_VERSION = 1;
     public static final int MAX_BACKUP_BYTES = 50 * 1024 * 1024;

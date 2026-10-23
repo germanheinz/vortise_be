@@ -7,11 +7,13 @@ import com.vortise.gestion.domain.repository.EmpresaRepository;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!staging")
 @Order(20)
 public class UsuarioDemoSeeder implements CommandLineRunner {
     private final EmpresaRepository empresaRepository;

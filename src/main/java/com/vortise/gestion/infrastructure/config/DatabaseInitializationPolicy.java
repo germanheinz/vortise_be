@@ -6,9 +6,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!staging")
 public class DatabaseInitializationPolicy implements SeedRunPolicy, SmartInitializingSingleton {
     private final DataSource dataSource;
     private volatile boolean freshDatabase;

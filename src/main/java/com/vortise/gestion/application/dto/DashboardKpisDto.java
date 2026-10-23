@@ -3,5 +3,7 @@
  */
 package com.vortise.gestion.application.dto;
 
-public record DashboardKpisDto(int totalTareas, int tareasEjecutadas, int tareasEnProceso, int tareasPendientes, double avanceGlobalPct, double costoTotalArs, double costoIndirectoArs, double ingresoTotalArs, double balanceArs) {
+public record DashboardKpisDto(int totalTareas, int tareasEjecutadas, int tareasEnProceso, int tareasPendientes,
+	double avanceGlobalPct, double costoTotalArs, Double costoIndirectoArs, double ingresoTotalArs,
+	Double balanceArs, boolean costoIndirectoDisponible) {
 }

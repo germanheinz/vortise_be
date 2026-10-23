@@ -1,6 +1,7 @@
 package com.vortise.gestion.domain.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.Column;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -40,7 +41,9 @@ public class ObraTarea {
     private Double horasAyudantes;
     private Double cantidadPrevista;
     private Double cantidadReal;
+    @Column(length = 2000)
     private String medidaCorrectiva;
+    @Column(length = 2000)
     private String descripcion;
     private LocalDate fecha;
 

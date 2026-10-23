@@ -6,16 +6,19 @@ spring:
     password:
   sql:
     init:
+      # Legacy schema.sql is retained for local H2 only; staging disables script initialization.
       mode: always
   h2:
     console:
-      enabled: true
+      enabled: false
       path: /h2-console
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
     show-sql: false
+  flyway:
+    enabled: false
   servlet:
     multipart:
       max-file-size: 50MB
@@ -24,6 +27,15 @@ server:
   port: ${PORT:8080}
   address: 0.0.0.0
 app:
+  security:
+    jwt-secret: ${APP_JWT_SECRET:}
+  environment:
+    synthetic-data: ${APP_SYNTHETIC_DATA:false}
+    storage-isolated: ${APP_STORAGE_ISOLATED:false}
+  features:
+    gastos-fijos-enabled: ${APP_GASTOS_FIJOS_ENABLED:false}
+  demo:
+    reset-enabled: ${APP_DEMO_RESET_ENABLED:false}
   superadmin:
     email: ${APP_SUPERADMIN_EMAIL:}
     password: ${APP_SUPERADMIN_PASSWORD:}

@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -21,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
+@Profile("!staging")
 @RequestMapping("/api/admin/backup")
 @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
 public class AdminBackupController {

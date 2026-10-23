@@ -8,12 +8,17 @@ package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.domain.repository.PresupuestoLineaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DeletePresupuestoLineaUseCase {
     private final PresupuestoLineaRepository presupuestoLineaRepository;
 
-    public void execute(Long id) {
+    @Transactional
+    public void execute(Long proyectoId, Long id) {
+        this.presupuestoLineaRepository.findById(id)
+            .filter(linea -> linea.getProyecto() != null && proyectoId.equals(linea.getProyecto().getId()))
+            .orElseThrow(() -> new IllegalArgumentException("Presupuesto no encontrado"));
         this.presupuestoLineaRepository.deleteById(id);
     }
 

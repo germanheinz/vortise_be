@@ -1,3 +1,4 @@
+-- Legacy incremental H2-local schema adjustments only. PostgreSQL staging is managed exclusively by Flyway.
 ALTER TABLE IF EXISTS empresas ADD COLUMN IF NOT EXISTS limite_usuarios INTEGER DEFAULT 5 NOT NULL;
 ALTER TABLE IF EXISTS proyectos ADD COLUMN IF NOT EXISTS responsables_obra VARCHAR(1000);
 ALTER TABLE IF EXISTS proyectos ADD COLUMN IF NOT EXISTS categorias_mano_obra VARCHAR(1000);

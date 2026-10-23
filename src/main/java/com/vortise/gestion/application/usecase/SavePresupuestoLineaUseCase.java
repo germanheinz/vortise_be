@@ -12,15 +12,33 @@ import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.repository.PresupuestoLineaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SavePresupuestoLineaUseCase {
     private final PresupuestoLineaRepository presupuestoLineaRepository;
     private final ProyectoRepository proyectoRepository;
 
+    @Transactional
     public PresupuestoLineaDto execute(PresupuestoLineaDto dto) {
         Proyecto proyecto = this.proyectoRepository.findById(dto.proyectoId()).orElseThrow(() -> new IllegalArgumentException("Proyecto no encontrado: " + dto.proyectoId()));
-        PresupuestoLinea linea = PresupuestoLinea.builder().id(dto.id()).proyecto(proyecto).etapa(dto.etapa()).tipoSuperficie(dto.tipoSuperficie()).funcion(dto.funcion()).sistema(dto.sistema()).m2(dto.m2()).hhPorM2(dto.hhPorM2()).precioPorHh(dto.precioPorHh()).precioPorHhUsd(dto.precioPorHhUsd()).mes(dto.mes()).build();
+        PresupuestoLinea linea;
+        if (dto.id() == null) {
+            linea = PresupuestoLinea.builder().proyecto(proyecto).build();
+        } else {
+            linea = presupuestoLineaRepository.findById(dto.id())
+                .filter(existing -> existing.getProyecto() != null && proyecto.getId().equals(existing.getProyecto().getId()))
+                .orElseThrow(() -> new IllegalArgumentException("Presupuesto no encontrado"));
+        }
+        linea.setEtapa(dto.etapa());
+        linea.setTipoSuperficie(dto.tipoSuperficie());
+        linea.setFuncion(dto.funcion());
+        linea.setSistema(dto.sistema());
+        linea.setM2(dto.m2());
+        linea.setHhPorM2(dto.hhPorM2());
+        linea.setPrecioPorHh(dto.precioPorHh());
+        linea.setPrecioPorHhUsd(dto.precioPorHhUsd());
+        linea.setMes(dto.mes());
         PresupuestoLinea saved = this.presupuestoLineaRepository.save(linea);
         return this.toDto(saved);
     }

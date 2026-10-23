@@ -13,8 +13,11 @@ public class JwtService {
     private final Key signingKey;
     private final long expirationMs;
 
-    public JwtService(@Value("${app.security.jwt-secret:dev-only-change-this-secret-key-1234567890}") String secret,
+    public JwtService(@Value("${app.security.jwt-secret}") String secret,
             @Value("${app.security.jwt-expiration-ms:86400000}") long expirationMs) {
+        if (secret == null || secret.isBlank() || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("app.security.jwt-secret must be explicitly configured with at least 32 bytes");
+        }
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;
     }

@@ -21,6 +21,8 @@ import com.vortise.gestion.application.dto.GastoFijoDto;
 import com.vortise.gestion.application.usecase.DeleteGastoFijoUseCase;
 import com.vortise.gestion.application.usecase.GetGastosFijosUseCase;
 import com.vortise.gestion.application.usecase.SaveGastoFijoUseCase;
+import com.vortise.gestion.application.exception.FeatureUnavailableException;
+import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -41,33 +43,46 @@ public class GastoFijoController {
     private final GetGastosFijosUseCase getGastosFijosUseCase;
     private final SaveGastoFijoUseCase saveGastoFijoUseCase;
     private final DeleteGastoFijoUseCase deleteGastoFijoUseCase;
+    private final ProductionFeaturePolicy featurePolicy;
+
+    private void requireFeatureEnabled() {
+        if (!featurePolicy.gastosFijosEnabled()) {
+            throw new FeatureUnavailableException("La gestión de gastos fijos está temporalmente deshabilitada hasta completar el aislamiento por empresa.");
+        }
+    }
 
     @GetMapping
     public ResponseEntity<List<GastoFijoDto>> getAll() {
+        requireFeatureEnabled();
         return ResponseEntity.ok(this.getGastosFijosUseCase.execute());
     }
 
     @PostMapping
     public ResponseEntity<GastoFijoDto> create(@Valid @RequestBody GastoFijoDto dto) {
+        requireFeatureEnabled();
         GastoFijoDto sinId = new GastoFijoDto(null, dto.concepto(), dto.monto(), dto.categoria(), dto.mes());
         return ResponseEntity.status((HttpStatusCode)HttpStatus.CREATED).body(this.saveGastoFijoUseCase.execute(sinId));
     }
 
     @PutMapping(value={"/{id}"})
     public ResponseEntity<GastoFijoDto> update(@PathVariable Long id, @Valid @RequestBody GastoFijoDto dto) {
+        requireFeatureEnabled();
         GastoFijoDto conId = new GastoFijoDto(id, dto.concepto(), dto.monto(), dto.categoria(), dto.mes());
         return ResponseEntity.ok(this.saveGastoFijoUseCase.execute(conId));
     }
 
     @DeleteMapping(value={"/{id}"})
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+        requireFeatureEnabled();
         this.deleteGastoFijoUseCase.execute(id);
         return ResponseEntity.noContent().build();
     }
 
-    public GastoFijoController(GetGastosFijosUseCase getGastosFijosUseCase, SaveGastoFijoUseCase saveGastoFijoUseCase, DeleteGastoFijoUseCase deleteGastoFijoUseCase) {
+    public GastoFijoController(GetGastosFijosUseCase getGastosFijosUseCase, SaveGastoFijoUseCase saveGastoFijoUseCase,
+            DeleteGastoFijoUseCase deleteGastoFijoUseCase, ProductionFeaturePolicy featurePolicy) {
         this.getGastosFijosUseCase = getGastosFijosUseCase;
         this.saveGastoFijoUseCase = saveGastoFijoUseCase;
         this.deleteGastoFijoUseCase = deleteGastoFijoUseCase;
+        this.featurePolicy = featurePolicy;
     }
 }

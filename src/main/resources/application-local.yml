@@ -1,0 +1,28 @@
+# Local-only PostgreSQL profile. Point it only at a disposable local database.
+spring:
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:15432/gestion_local
+    username: gestion_local
+    password: gestion_local_only
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: never
+  h2:
+    console:
+      enabled: false
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  flyway:
+    enabled: true
+
+server:
+  address: 127.0.0.1
+
+# Set APP_JWT_SECRET in your local environment; do not commit the secret.
+app:
+  security:
+    jwt-secret: ${APP_JWT_SECRET:}

@@ -61,7 +61,7 @@ public class PresupuestoLineaController {
 
     @DeleteMapping(value={"/{id}"})
     public ResponseEntity<Void> delete(@PathVariable Long proyectoId, @PathVariable Long id) {
-        this.deletePresupuestoLineaUseCase.execute(id);
+        this.deletePresupuestoLineaUseCase.execute(proyectoId, id);
         return ResponseEntity.noContent().build();
     }
 
