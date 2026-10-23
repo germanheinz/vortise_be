@@ -77,7 +77,7 @@ public class SuperAdminConsultaUseCase {
 
     public PageDto<EmpresaDto> empresas(int page, int size, String q) {
         Long empresaInternaId = empresaInternaId();
-        Page<Empresa> result = empresas.buscarSuperAdmin(empresaInternaId, normalizar(q), pageable(page, size));
+        Page<Empresa> result = empresas.buscarSuperAdmin(empresaInternaId, normalizarBusqueda(q), pageable(page, size));
         return mapPage(result, empresa -> {
             Suscripcion suscripcion = suscripciones.findFirstByEmpresaId(empresa.getId()).orElse(null);
             return new EmpresaDto(empresa.getId(), empresa.getNombre(), empresa.getCreadoEn(),
@@ -88,7 +88,7 @@ public class SuperAdminConsultaUseCase {
     }
 
     public PageDto<UsuarioDto> usuarios(int page, int size, String q, Long empresaId, Boolean activo) {
-        return mapPage(usuarios.buscarSuperAdmin(empresaInternaId(), empresaId, activo, normalizar(q), pageable(page, size)), usuario ->
+        return mapPage(usuarios.buscarSuperAdmin(empresaInternaId(), empresaId, activo, normalizarBusqueda(q), pageable(page, size)), usuario ->
             new UsuarioDto(usuario.getId(), usuario.getEmpresa().getId(), usuario.getEmpresa().getNombre(),
                 usuario.getNombre(), usuario.getEmail(), usuario.getRol().name(), usuario.isActivo()));
     }
@@ -133,6 +133,10 @@ public class SuperAdminConsultaUseCase {
 
     private static String normalizar(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private static String normalizarBusqueda(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private static PageRequest pageable(int page, int size) {

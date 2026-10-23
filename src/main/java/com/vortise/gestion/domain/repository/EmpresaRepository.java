@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface EmpresaRepository {
     long count();
 
-    @Query("select e from Empresa e where (:empresaInternaId is null or e.id <> :empresaInternaId) and (:q is null or lower(e.nombre) like lower(concat('%', :q, '%')))")
+    @Query("select e from Empresa e where (:empresaInternaId is null or e.id <> :empresaInternaId) and (:q = '' or lower(e.nombre) like lower(concat('%', :q, '%')))")
     Page<Empresa> buscarSuperAdmin(@Param("empresaInternaId") Long empresaInternaId, @Param("q") String q, Pageable pageable);
 
     List<Empresa> findAll();

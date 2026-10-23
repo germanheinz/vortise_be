@@ -60,6 +60,30 @@ class SuperAdminConsultaUseCaseTest {
     }
 
     @Test
+    @SuppressWarnings("null")
+    void userListUsesEmptySearchTextWhenQueryIsMissing() {
+        when(empresas.findByIdentificacionFiscal("PLATFORM-0001")).thenReturn(Optional.empty());
+        when(usuarios.buscarSuperAdmin(eq(null), eq(null), eq(null), eq(""), any()))
+            .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+
+        consulta.usuarios(0, 20, null, null, null);
+
+        verify(usuarios).buscarSuperAdmin(eq(null), eq(null), eq(null), eq(""), any());
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    void companyListUsesEmptySearchTextWhenQueryIsBlank() {
+        when(empresas.findByIdentificacionFiscal("PLATFORM-0001")).thenReturn(Optional.empty());
+        when(empresas.buscarSuperAdmin(eq(null), eq(""), any()))
+            .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+
+        consulta.empresas(0, 20, "   ");
+
+        verify(empresas).buscarSuperAdmin(eq(null), eq(""), any());
+    }
+
+    @Test
     void dashboardKeepsPaymentTotalsSeparatedByCurrency() {
         when(empresas.findByIdentificacionFiscal("PLATFORM-0001")).thenReturn(Optional.empty());
         when(empresas.count()).thenReturn(2L);

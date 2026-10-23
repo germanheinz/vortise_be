@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface UsuarioEmpresaRepository {
     @EntityGraph(attributePaths = "empresa")
-        @Query("select u from UsuarioEmpresa u where u.superAdmin = false and (:empresaInternaId is null or u.empresa.id <> :empresaInternaId) and (:empresaId is null or u.empresa.id = :empresaId) and (:activo is null or u.activo = :activo) and (:q is null or lower(u.nombre) like lower(concat('%', :q, '%')) or lower(u.email) like lower(concat('%', :q, '%')))")
+        @Query("select u from UsuarioEmpresa u where u.superAdmin = false and (:empresaInternaId is null or u.empresa.id <> :empresaInternaId) and (:empresaId is null or u.empresa.id = :empresaId) and (:activo is null or u.activo = :activo) and (:q = '' or lower(u.nombre) like lower(concat('%', :q, '%')) or lower(u.email) like lower(concat('%', :q, '%')))")
         Page<UsuarioEmpresa> buscarSuperAdmin(@Param("empresaInternaId") Long empresaInternaId, @Param("empresaId") Long empresaId, @Param("activo") Boolean activo,
             @Param("q") String q, Pageable pageable);
 
