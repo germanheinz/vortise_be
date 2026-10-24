@@ -16,9 +16,10 @@ public final class SuperAdminDtos {
             long suscripcionesPastDue, long suscripcionesInactivas, long pruebasPorVencer, int ventanaPruebasDias,
             String fuentePagos) { }
     public record EmpresaDto(Long id, String nombre, LocalDateTime creadoEn, long usuariosActivos,
-            String planCodigo, String estadoSuscripcion) { }
+            String planCodigo, String estadoSuscripcion, String creadorNombre, String creadorEmail,
+            long usuariosTotales, long obras, long restricciones, long registrosHoras) { }
     public record UsuarioDto(Long id, Long empresaId, String empresaNombre, String nombre, String email,
-            String rol, boolean activo) { }
+            String rol, boolean activo, Instant ultimoLoginExitosoEn) { }
     public record SuscripcionDto(Long id, String titularTipo, String titularNombre, String titularEmail,
             String empresaNombre, String planCodigo, String planNombre, String estado, Instant finPrueba,
             Instant finPeriodoActual, boolean cancelaAlFinal, Instant actualizadoEn) { }

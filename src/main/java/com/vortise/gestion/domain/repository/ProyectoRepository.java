@@ -4,6 +4,9 @@
 package com.vortise.gestion.domain.repository;
 
 import com.vortise.gestion.domain.model.Proyecto;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +22,9 @@ public interface ProyectoRepository {
     public long count();
 
     public long countByEmpresaRelacionadaId(Long empresaId);
+
+    @Query("select p.empresaRelacionada.id as empresaId, count(p) as cantidad from Proyecto p where p.empresaRelacionada.id in :empresaIds group by p.empresaRelacionada.id")
+    List<EmpresaConteoProjection> contarPorEmpresaRelacionada(@Param("empresaIds") Collection<Long> empresaIds);
 
     public List<Proyecto> findByEmpresaRelacionadaId(Long empresaId);
 }

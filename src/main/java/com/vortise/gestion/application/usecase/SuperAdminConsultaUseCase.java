@@ -13,15 +13,25 @@ import com.vortise.gestion.domain.model.PagoSuscripcion;
 import com.vortise.gestion.domain.model.Suscripcion;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
+import com.vortise.gestion.domain.repository.EmpresaConteoProjection;
 import com.vortise.gestion.domain.repository.PagoSuscripcionRepository;
+import com.vortise.gestion.domain.repository.ProyectoRepository;
+import com.vortise.gestion.domain.repository.RegistroHorasRepository;
+import com.vortise.gestion.domain.repository.RestriccionObraRepository;
+import com.vortise.gestion.domain.repository.SuperAdminCreadorProjection;
+import com.vortise.gestion.domain.repository.SuperAdminSuscripcionEmpresaProjection;
 import com.vortise.gestion.domain.repository.SuscripcionRepository;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Comparator;
+import java.util.Collection;
+import java.util.Map;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -39,13 +49,20 @@ public class SuperAdminConsultaUseCase {
 
     private final EmpresaRepository empresas;
     private final UsuarioEmpresaRepository usuarios;
+    private final ProyectoRepository proyectos;
+    private final RestriccionObraRepository restricciones;
+    private final RegistroHorasRepository registrosHoras;
     private final SuscripcionRepository suscripciones;
     private final PagoSuscripcionRepository pagos;
 
     public SuperAdminConsultaUseCase(EmpresaRepository empresas, UsuarioEmpresaRepository usuarios,
+            ProyectoRepository proyectos, RestriccionObraRepository restricciones, RegistroHorasRepository registrosHoras,
             SuscripcionRepository suscripciones, PagoSuscripcionRepository pagos) {
         this.empresas = empresas;
         this.usuarios = usuarios;
+        this.proyectos = proyectos;
+        this.restricciones = restricciones;
+        this.registrosHoras = registrosHoras;
         this.suscripciones = suscripciones;
         this.pagos = pagos;
     }
@@ -75,22 +92,43 @@ public class SuperAdminConsultaUseCase {
             VENTANA_PRUEBAS_DIAS, "Pagos locales sincronizados por webhook; resumen de pagos de los últimos 30 días. No es tiempo real.");
     }
 
+    @SuppressWarnings("null")
     public PageDto<EmpresaDto> empresas(int page, int size, String q) {
         Long empresaInternaId = empresaInternaId();
         Page<Empresa> result = empresas.buscarSuperAdmin(empresaInternaId, normalizarBusqueda(q), pageable(page, size));
+        List<Empresa> content = result.getContent();
+        if (content.isEmpty()) return new PageDto<>(List.of(), result.getNumber(), result.getSize(), result.getTotalElements(), result.getTotalPages());
+
+        List<Long> empresaIds = content.stream().map(Empresa::getId).filter(Objects::nonNull).toList();
+        List<Long> creadorIds = content.stream().map(Empresa::getCreadoPorUsuarioId).filter(Objects::nonNull).distinct().toList();
+        Map<Long, Long> usuariosTotales = counts(usuarios.contarUsuariosPorEmpresa(empresaIds));
+        Map<Long, Long> usuariosActivos = counts(usuarios.contarUsuariosActivosPorEmpresa(empresaIds));
+        Map<Long, Long> obras = counts(proyectos.contarPorEmpresaRelacionada(empresaIds));
+        Map<Long, Long> restriccionesPorEmpresa = counts(restricciones.contarPorEmpresaRelacionada(empresaIds));
+        Map<Long, Long> horas = counts(registrosHoras.contarPorEmpresaRelacionada(empresaIds));
+        Map<Long, SuperAdminCreadorProjection> creadores = creadorIds.isEmpty() ? Map.of()
+            : usuarios.buscarCreadoresSuperAdmin(creadorIds).stream().collect(Collectors.toMap(
+                SuperAdminCreadorProjection::getUsuarioId, Function.identity()));
+        Map<Long, SuperAdminSuscripcionEmpresaProjection> suscripcionesPorEmpresa = suscripciones
+            .buscarResumenEmpresaSuperAdmin(empresaIds).stream().collect(Collectors.toMap(
+                SuperAdminSuscripcionEmpresaProjection::getEmpresaId, Function.identity()));
         return mapPage(result, empresa -> {
-            Suscripcion suscripcion = suscripciones.findFirstByEmpresaId(empresa.getId()).orElse(null);
+            Long creadorId = empresa.getCreadoPorUsuarioId();
+            SuperAdminCreadorProjection creador = creadorId == null ? null : creadores.get(creadorId);
+            SuperAdminSuscripcionEmpresaProjection suscripcion = suscripcionesPorEmpresa.get(empresa.getId());
             return new EmpresaDto(empresa.getId(), empresa.getNombre(), empresa.getCreadoEn(),
-                usuarios.countByEmpresaIdAndActivoTrueAndSuperAdminFalse(empresa.getId()),
-                suscripcion == null || suscripcion.getPlan() == null ? null : suscripcion.getPlan().getCodigo(),
-                suscripcion == null ? null : suscripcion.getEstado());
+                usuariosActivos.getOrDefault(empresa.getId(), 0L),
+                suscripcion == null ? null : suscripcion.getPlanCodigo(), suscripcion == null ? null : suscripcion.getEstado(),
+                creador == null ? null : creador.getNombre(), creador == null ? null : creador.getEmail(),
+                usuariosTotales.getOrDefault(empresa.getId(), 0L), obras.getOrDefault(empresa.getId(), 0L),
+                restriccionesPorEmpresa.getOrDefault(empresa.getId(), 0L), horas.getOrDefault(empresa.getId(), 0L));
         });
     }
 
     public PageDto<UsuarioDto> usuarios(int page, int size, String q, Long empresaId, Boolean activo) {
         return mapPage(usuarios.buscarSuperAdmin(empresaInternaId(), empresaId, activo, normalizarBusqueda(q), pageable(page, size)), usuario ->
             new UsuarioDto(usuario.getId(), usuario.getEmpresa().getId(), usuario.getEmpresa().getNombre(),
-                usuario.getNombre(), usuario.getEmail(), usuario.getRol().name(), usuario.isActivo()));
+                usuario.getNombre(), usuario.getEmail(), usuario.getRol().name(), usuario.isActivo(), usuario.getUltimoLoginExitosoEn()));
     }
 
     public PageDto<SuscripcionDto> suscripciones(int page, int size, String estado, Long empresaId) {
@@ -129,6 +167,11 @@ public class SuperAdminConsultaUseCase {
 
     private Long empresaInternaId() {
         return empresas.findByIdentificacionFiscal(PLATFORM_TAX_ID).map(empresa -> empresa.getId()).orElse(null);
+    }
+
+    @SuppressWarnings("null")
+    private static Map<Long, Long> counts(Collection<EmpresaConteoProjection> rows) {
+        return rows.stream().collect(Collectors.toMap(EmpresaConteoProjection::getEmpresaId, EmpresaConteoProjection::getCantidad));
     }
 
     private static String normalizar(String value) {

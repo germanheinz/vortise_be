@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 public interface SuscripcionRepository {
@@ -33,6 +34,9 @@ public interface SuscripcionRepository {
 
     @EntityGraph(attributePaths = "plan")
     java.util.Optional<Suscripcion> findFirstByEmpresaId(Long empresaId);
+
+    @Query("select s.empresa.id as empresaId, p.codigo as planCodigo, s.estado as estado from Suscripcion s left join s.plan p where s.empresa.id in :empresaIds")
+    List<SuperAdminSuscripcionEmpresaProjection> buscarResumenEmpresaSuperAdmin(@Param("empresaIds") Collection<Long> empresaIds);
 
     Optional<Suscripcion> findByUsuarioId(Long usuarioId);
     Optional<Suscripcion> findByEmpresaId(Long empresaId);

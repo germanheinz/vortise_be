@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.Instant;
 
 @Entity
 @Table(name = "usuarios_empresa")
@@ -25,6 +26,7 @@ public class UsuarioEmpresa {
     @Enumerated(EnumType.STRING) @Column(nullable = false) private RolEmpresa rol;
     @Column(nullable = false) private boolean activo = true;
     @Column(nullable = false) private boolean superAdmin = false;
+    @Column(name = "ultimo_login_exitoso_en", nullable = true) private Instant ultimoLoginExitosoEn;
 
     protected UsuarioEmpresa() { }
     public UsuarioEmpresa(Empresa empresa, String email, String nombre, String passwordHash, RolEmpresa rol) { this.empresa = empresa; this.email = email; this.nombre = nombre; this.passwordHash = passwordHash; this.rol = rol; }
@@ -36,6 +38,8 @@ public class UsuarioEmpresa {
     public RolEmpresa getRol() { return rol; }
     public boolean isActivo() { return activo; }
     public boolean isSuperAdmin() { return superAdmin; }
+    public Instant getUltimoLoginExitosoEn() { return ultimoLoginExitosoEn; }
+    public void setUltimoLoginExitosoEn(Instant value) { ultimoLoginExitosoEn = value; }
     public void setSuperAdmin(boolean value) { superAdmin = value; }
     public void setNombre(String value) { nombre = value; }
     public void setPasswordHash(String value) { passwordHash = value; }

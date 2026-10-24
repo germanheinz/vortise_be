@@ -1,6 +1,7 @@
 package com.vortise.gestion.domain.repository;
 
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
+import java.util.Collection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +21,15 @@ public interface UsuarioEmpresaRepository {
         @Query("select count(u) from UsuarioEmpresa u where u.superAdmin = false and u.activo = false and (:empresaInternaId is null or u.empresa.id <> :empresaInternaId)")
         long contarInactivosSuperAdmin(@Param("empresaInternaId") Long empresaInternaId);
     long countByEmpresaIdAndActivoTrueAndSuperAdminFalse(Long empresaId);
+
+    @Query("select u.empresa.id as empresaId, count(u) as cantidad from UsuarioEmpresa u where u.superAdmin = false and u.empresa.id in :empresaIds group by u.empresa.id")
+    List<EmpresaConteoProjection> contarUsuariosPorEmpresa(@Param("empresaIds") Collection<Long> empresaIds);
+
+    @Query("select u.empresa.id as empresaId, count(u) as cantidad from UsuarioEmpresa u where u.superAdmin = false and u.activo = true and u.empresa.id in :empresaIds group by u.empresa.id")
+    List<EmpresaConteoProjection> contarUsuariosActivosPorEmpresa(@Param("empresaIds") Collection<Long> empresaIds);
+
+    @Query("select u.id as usuarioId, u.nombre as nombre, u.email as email from UsuarioEmpresa u where u.id in :usuarioIds")
+    List<SuperAdminCreadorProjection> buscarCreadoresSuperAdmin(@Param("usuarioIds") Collection<Long> usuarioIds);
 
     Optional<UsuarioEmpresa> findByEmail(String email);
     Optional<UsuarioEmpresa> findById(Long id);

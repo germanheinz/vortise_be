@@ -7,6 +7,7 @@ import com.vortise.gestion.domain.model.Suscripcion;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import java.util.Optional;
+import java.time.Instant;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,12 +29,14 @@ public class AutenticacionUseCase {
         this.fotos = fotos;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public LoginResponseDto login(LoginRequestDto request) {
         UsuarioEmpresa usuario = usuarioRepository.findByEmail(request.email().trim().toLowerCase())
             .filter(item -> item.isActivo())
             .filter(item -> passwordEncoder.matches(request.password(), item.getPasswordHash()))
             .orElseThrow(() -> new IllegalArgumentException("Email o contraseña incorrectos"));
+        usuario.setUltimoLoginExitosoEn(Instant.now());
+        usuarioRepository.save(usuario);
         return sesion(usuario);
     }
 

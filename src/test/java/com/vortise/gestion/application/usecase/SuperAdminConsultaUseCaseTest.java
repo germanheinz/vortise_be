@@ -10,12 +10,19 @@ import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.RolEmpresa;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
+import com.vortise.gestion.domain.repository.EmpresaConteoProjection;
 import com.vortise.gestion.domain.repository.PagoSuscripcionRepository;
+import com.vortise.gestion.domain.repository.ProyectoRepository;
+import com.vortise.gestion.domain.repository.RegistroHorasRepository;
+import com.vortise.gestion.domain.repository.RestriccionObraRepository;
+import com.vortise.gestion.domain.repository.SuperAdminCreadorProjection;
+import com.vortise.gestion.domain.repository.SuperAdminSuscripcionEmpresaProjection;
 import com.vortise.gestion.domain.repository.SuscripcionRepository;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.ArrayList;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,18 +30,22 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class SuperAdminConsultaUseCaseTest {
     @Mock private EmpresaRepository empresas;
     @Mock private UsuarioEmpresaRepository usuarios;
+    @Mock private ProyectoRepository proyectos;
+    @Mock private RestriccionObraRepository restricciones;
+    @Mock private RegistroHorasRepository registrosHoras;
     @Mock private SuscripcionRepository suscripciones;
     @Mock private PagoSuscripcionRepository pagos;
     private SuperAdminConsultaUseCase consulta;
 
     @BeforeEach
     void setUp() {
-        consulta = new SuperAdminConsultaUseCase(empresas, usuarios, suscripciones, pagos);
+        consulta = new SuperAdminConsultaUseCase(empresas, usuarios, proyectos, restricciones, registrosHoras, suscripciones, pagos);
     }
 
     @Test
@@ -42,6 +53,8 @@ class SuperAdminConsultaUseCaseTest {
     void userListMapsOnlyFilteredPageAndKeepsCompanyContext() {
         Empresa empresa = new Empresa("Constructora", null);
         UsuarioEmpresa usuario = new UsuarioEmpresa(empresa, "user@example.invalid", "Usuario", "hash", RolEmpresa.CONSULTA);
+        Instant login = Instant.parse("2026-10-23T10:15:30Z");
+        usuario.setUltimoLoginExitosoEn(login);
         List<UsuarioEmpresa> content = new ArrayList<>();
         content.add(usuario);
         Empresa empresaInterna = org.mockito.Mockito.mock(Empresa.class);
@@ -55,6 +68,7 @@ class SuperAdminConsultaUseCaseTest {
         assertEquals(1, result.content().size());
         assertEquals("Constructora", result.content().get(0).empresaNombre());
         assertEquals("user@example.invalid", result.content().get(0).email());
+        assertEquals(login, result.content().get(0).ultimoLoginExitosoEn());
         assertEquals(1, result.page());
         verify(usuarios).buscarSuperAdmin(eq(99L), eq(42L), eq(true), eq("user"), any());
     }
@@ -84,6 +98,44 @@ class SuperAdminConsultaUseCaseTest {
     }
 
     @Test
+    @SuppressWarnings("null")
+    void companyListMapsBatchedCountsCreatorAndSubscription() {
+        Empresa empresa = new Empresa("Constructora", null);
+        ReflectionTestUtils.setField(empresa, "id", 12L);
+        empresa.setCreadoPorUsuarioId(55L);
+        when(empresas.findByIdentificacionFiscal("PLATFORM-0001")).thenReturn(Optional.empty());
+        when(empresas.buscarSuperAdmin(eq(null), eq(""), any()))
+            .thenReturn(new PageImpl<>(List.of(empresa), PageRequest.of(0, 20), 1));
+        when(usuarios.contarUsuariosPorEmpresa(List.of(12L))).thenReturn(List.of(count(12L, 8)));
+        when(usuarios.contarUsuariosActivosPorEmpresa(List.of(12L))).thenReturn(List.of(count(12L, 6)));
+        when(proyectos.contarPorEmpresaRelacionada(List.of(12L))).thenReturn(List.of(count(12L, 4)));
+        when(restricciones.contarPorEmpresaRelacionada(List.of(12L))).thenReturn(List.of(count(12L, 3)));
+        when(registrosHoras.contarPorEmpresaRelacionada(List.of(12L))).thenReturn(List.of(count(12L, 21)));
+        when(usuarios.buscarCreadoresSuperAdmin(List.of(55L))).thenReturn(List.of(new SuperAdminCreadorProjection() {
+            @Override public Long getUsuarioId() { return 55L; }
+            @Override public String getNombre() { return "Creador"; }
+            @Override public String getEmail() { return "creador@example.invalid"; }
+        }));
+        when(suscripciones.buscarResumenEmpresaSuperAdmin(List.of(12L))).thenReturn(List.of(new SuperAdminSuscripcionEmpresaProjection() {
+            @Override public Long getEmpresaId() { return 12L; }
+            @Override public String getPlanCodigo() { return "PRO"; }
+            @Override public String getEstado() { return "active"; }
+        }));
+
+        var dto = consulta.empresas(0, 20, "").content().get(0);
+
+        assertEquals("Creador", dto.creadorNombre());
+        assertEquals("creador@example.invalid", dto.creadorEmail());
+        assertEquals(8, dto.usuariosTotales());
+        assertEquals(6, dto.usuariosActivos());
+        assertEquals(4, dto.obras());
+        assertEquals(3, dto.restricciones());
+        assertEquals(21, dto.registrosHoras());
+        assertEquals("PRO", dto.planCodigo());
+        assertEquals("active", dto.estadoSuscripcion());
+    }
+
+    @Test
     void dashboardKeepsPaymentTotalsSeparatedByCurrency() {
         when(empresas.findByIdentificacionFiscal("PLATFORM-0001")).thenReturn(Optional.empty());
         when(empresas.count()).thenReturn(2L);
@@ -106,5 +158,12 @@ class SuperAdminConsultaUseCaseTest {
         assertEquals(2, result.pagosRecientesPorEstadoYMoneda().size());
         assertEquals("ARS", result.pagosRecientesPorEstadoYMoneda().get(0).moneda());
         assertEquals("USD", result.pagosRecientesPorEstadoYMoneda().get(1).moneda());
+    }
+
+    private static EmpresaConteoProjection count(Long empresaId, long cantidad) {
+        return new EmpresaConteoProjection() {
+            @Override public Long getEmpresaId() { return empresaId; }
+            @Override public long getCantidad() { return cantidad; }
+        };
     }
 }
