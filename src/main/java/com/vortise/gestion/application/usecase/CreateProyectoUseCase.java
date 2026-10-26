@@ -29,6 +29,7 @@ public class CreateProyectoUseCase {
     private final CatalogoEmpresaRepository catalogoRepository;
     private final CurrentTenantService currentTenant;
 
+    @SuppressWarnings("null")
     public ProyectoDto execute(ProyectoCreateDto dto) {
         validateDates(dto);
         currentTenant.requireEmpresa(dto.empresaId());
@@ -48,6 +49,7 @@ public class CreateProyectoUseCase {
         proyecto.setHorasPrevistas(dto.horasPrevistas());
         proyecto.setHorasReales(dto.horasReales());
         proyecto.setPlantas(mapPlantas(dto.plantas(), proyecto));
+        proyecto.setSubcontratistas(resolveSelectedSubcontratistas(proyecto, selectedContractorIds(dto)));
         proyecto.setRubros(mapRubros(dto.rubros(), proyecto));
         Proyecto saved = this.proyectoRepository.save(proyecto);
         return ProyectoMapper.toDetailDto(saved);
@@ -116,10 +118,33 @@ public class CreateProyectoUseCase {
         CatalogoEmpresa subcontratista = catalogoRepository.findById(subcontratistaId)
             .orElseThrow(() -> new IllegalArgumentException("Subcontratista no encontrado"));
         Long empresaProyecto = proyecto.getEmpresaRelacionada() == null ? null : proyecto.getEmpresaRelacionada().getId();
-        if (empresaProyecto == null || !subcontratista.getEmpresa().getId().equals(empresaProyecto)) {
+        if (empresaProyecto == null || !subcontratista.getEmpresa().getId().equals(empresaProyecto)
+            || !"SUBCONTRATISTA".equalsIgnoreCase(subcontratista.getTipo())) {
             throw new IllegalArgumentException("El subcontratista no pertenece a la empresa de la obra");
         }
+        if (proyecto.getSubcontratistas() == null || proyecto.getSubcontratistas().stream()
+                .noneMatch(selected -> subcontratistaId.equals(selected.getId()))) {
+            throw new IllegalArgumentException("El subcontratista no está seleccionado para esta obra");
+        }
         return subcontratista;
+    }
+
+    @SuppressWarnings("null")
+    private List<Long> selectedContractorIds(ProyectoCreateDto dto) {
+        if (dto.subcontratistaIds() != null) return dto.subcontratistaIds();
+        if (dto.rubros() == null) return List.of();
+        return dto.rubros().stream().map(RubroCreateDto::subcontratistaId).filter(java.util.Objects::nonNull).distinct().toList();
+    }
+
+    private java.util.Set<CatalogoEmpresa> resolveSelectedSubcontratistas(Proyecto proyecto, List<Long> ids) {
+        Long companyId = proyecto.getEmpresaRelacionada() == null ? null : proyecto.getEmpresaRelacionada().getId();
+        java.util.Set<Long> unique = new java.util.HashSet<>(ids);
+        if (unique.size() != ids.size()) throw new IllegalArgumentException("Hay subcontratistas duplicados");
+        return unique.stream().map(id -> catalogoRepository.findById(id)
+            .filter(item -> companyId != null && companyId.equals(item.getEmpresa().getId())
+                && "SUBCONTRATISTA".equalsIgnoreCase(item.getTipo()))
+            .orElseThrow(() -> new IllegalArgumentException("El subcontratista no pertenece a la empresa de la obra")))
+            .collect(java.util.stream.Collectors.toSet());
     }
 
     public CreateProyectoUseCase(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository, CurrentTenantService currentTenant) {

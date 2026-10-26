@@ -7,6 +7,7 @@ public record RestriccionDto(
     Long proyectoId,
     String proyectoNombre,
     String restriccion,
+    Long rubroId,
     String tipo,
     String sector,
     String nivel,

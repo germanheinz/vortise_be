@@ -31,6 +31,7 @@ final class ProyectoMapper {
             proyecto.getHorasPrevistas(),
             proyecto.getHorasReales(),
             null,
+            null,
             null
         );
     }
@@ -54,8 +55,19 @@ final class ProyectoMapper {
             proyecto.getHorasPrevistas(),
             proyecto.getHorasReales(),
             proyecto.getPlantas() == null ? List.of() : proyecto.getPlantas().stream().map(ProyectoMapper::toPlantaDto).toList(),
-            proyecto.getRubros() == null ? List.of() : proyecto.getRubros().stream().map(ProyectoMapper::toRubroDto).toList()
+            proyecto.getRubros() == null ? List.of() : proyecto.getRubros().stream().map(ProyectoMapper::toRubroDto).toList(),
+            selectedContractorIds(proyecto)
         );
+    }
+
+    @SuppressWarnings("null")
+    private static List<Long> selectedContractorIds(Proyecto proyecto) {
+        java.util.Set<Long> ids = new java.util.TreeSet<>();
+        if (proyecto.getSubcontratistas() != null) proyecto.getSubcontratistas().stream()
+            .map(item -> item.getId()).filter(java.util.Objects::nonNull).forEach(ids::add);
+        if (proyecto.getRubros() != null) proyecto.getRubros().stream().map(RubroObra::getSubcontratista)
+            .filter(java.util.Objects::nonNull).map(item -> item.getId()).filter(java.util.Objects::nonNull).forEach(ids::add);
+        return List.copyOf(ids);
     }
 
     private static PlantaDto toPlantaDto(Planta planta) {

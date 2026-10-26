@@ -21,6 +21,10 @@ public class RestriccionObra {
     @JoinColumn(name = "proyecto_id", nullable = false)
     private Proyecto proyecto;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rubro_id")
+    private RubroObra rubroVinculado;
+
     private String restriccion;
     private String tipo;
     private String sector;
@@ -47,6 +51,9 @@ public class RestriccionObra {
     public Proyecto getProyecto() {
         return proyecto;
     }
+
+    public RubroObra getRubroVinculado() { return rubroVinculado; }
+    public void setRubroVinculado(RubroObra rubroVinculado) { this.rubroVinculado = rubroVinculado; }
 
     public void setProyecto(Proyecto proyecto) {
         this.proyecto = proyecto;

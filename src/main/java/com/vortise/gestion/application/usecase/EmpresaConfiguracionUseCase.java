@@ -18,6 +18,10 @@ import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
 import com.vortise.gestion.domain.repository.CalendarioLaboralEmpresaRepository;
 import com.vortise.gestion.domain.repository.CategoriaManoObraEmpresaRepository;
 import java.util.List;
+import java.text.Normalizer;
+import java.util.Locale;
+import java.util.HashSet;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -82,12 +86,31 @@ public class EmpresaConfiguracionUseCase {
 
     public UnidadMetricaEmpresaDto saveUnidad(Long empresaId, UnidadMetricaEmpresaDto dto) {
         Empresa empresa = requireEmpresa(empresaId);
-        UnidadMetricaEmpresa unidad = dto.id() == null ? new UnidadMetricaEmpresa(empresa, dto.codigo().trim(), dto.nombre().trim())
+        String nombre = dto.nombre().trim();
+        UnidadMetricaEmpresa unidad = dto.id() == null ? new UnidadMetricaEmpresa(empresa, resolveUnidadCodigo(empresaId, dto.codigo(), nombre), nombre)
             : unidadRepository.findById(dto.id()).orElseThrow(() -> new IllegalArgumentException("Unidad no encontrada"));
         if (!unidad.getEmpresa().getId().equals(empresaId)) throw new IllegalArgumentException("La unidad no pertenece a la empresa");
-        unidad.setCodigo(dto.codigo().trim().toUpperCase());
-        unidad.setNombre(dto.nombre().trim());
+        if (dto.id() != null && dto.codigo() != null && !dto.codigo().isBlank()) unidad.setCodigo(dto.codigo().trim().toUpperCase(Locale.ROOT));
+        unidad.setNombre(nombre);
         return toDto(unidadRepository.save(unidad));
+    }
+
+    private String resolveUnidadCodigo(Long empresaId, String requested, String nombre) {
+        if (requested != null && !requested.isBlank()) return requested.trim().toUpperCase(Locale.ROOT);
+        String base = Normalizer.normalize(nombre, Normalizer.Form.NFD)
+            .replaceAll("\\p{M}+", "").toUpperCase(Locale.ROOT)
+            .replaceAll("[^A-Z0-9]+", "_").replaceAll("^_+|_+$", "");
+        if (base.isEmpty()) base = "UNIDAD";
+        base = base.substring(0, Math.min(base.length(), 40));
+        Set<String> used = new HashSet<>();
+        unidadRepository.findByEmpresaId(empresaId).forEach(item -> used.add(item.getCodigo().toUpperCase(Locale.ROOT)));
+        String candidate = base;
+        int suffix = 2;
+        while (used.contains(candidate)) {
+            String tail = "_" + suffix++;
+            candidate = base.substring(0, Math.min(base.length(), 40 - tail.length())) + tail;
+        }
+        return candidate;
     }
 
     public void deleteUnidad(Long empresaId, Long id) {
@@ -116,6 +139,10 @@ public class EmpresaConfiguracionUseCase {
         requireEmpresa(empresaId);
         CatalogoEmpresa item = catalogoRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Catalogo no encontrado"));
         if (!item.getEmpresa().getId().equals(empresaId)) throw new IllegalArgumentException("El catalogo no pertenece a la empresa");
+        if ("SUBCONTRATISTA".equalsIgnoreCase(item.getTipo())
+                && (catalogoRepository.existsInSelectedProjects(id) || catalogoRepository.existsAssignedToActivity(id))) {
+            throw new IllegalStateException("No se puede eliminar el subcontratista mientras esté seleccionado en una obra o asignado a un subrubro");
+        }
         catalogoRepository.deleteById(id);
     }
 

@@ -23,6 +23,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.time.LocalDate;
 
 @Entity
@@ -47,6 +49,11 @@ public class Proyecto {
     @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @jakarta.persistence.JoinColumn(name = "empresa_id")
     private Empresa empresaRelacionada;
+    @jakarta.persistence.ManyToMany
+    @jakarta.persistence.JoinTable(name = "proyecto_subcontratistas",
+        joinColumns = @jakarta.persistence.JoinColumn(name = "proyecto_id"),
+        inverseJoinColumns = @jakarta.persistence.JoinColumn(name = "catalogo_empresa_id"))
+    private Set<CatalogoEmpresa> subcontratistas = new HashSet<>();
     private String empresa;
     private Double horasPrevistas;
     private Double horasReales;
@@ -138,6 +145,9 @@ public class Proyecto {
     public Empresa getEmpresaRelacionada() {
         return this.empresaRelacionada;
     }
+
+    public Set<CatalogoEmpresa> getSubcontratistas() { return subcontratistas; }
+    public void setSubcontratistas(Set<CatalogoEmpresa> subcontratistas) { this.subcontratistas = subcontratistas; }
 
     public Double getHorasPrevistas() {
         return this.horasPrevistas;

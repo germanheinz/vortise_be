@@ -15,6 +15,7 @@ final class RestriccionMapper {
             restriccion.getProyecto().getId(),
             restriccion.getProyecto().getNombre(),
             restriccion.getRestriccion(),
+            restriccion.getRubroVinculado() == null ? null : restriccion.getRubroVinculado().getId(),
             restriccion.getTipo(),
             restriccion.getSector(),
             restriccion.getNivel(),

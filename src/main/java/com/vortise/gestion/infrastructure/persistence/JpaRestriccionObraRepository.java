@@ -6,18 +6,19 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.lang.NonNull;
 
-@Repository
 public interface JpaRestriccionObraRepository extends JpaRepository<RestriccionObra, Long>, RestriccionObraRepository {
     // Access checks and DTO mapping run after the repository session has closed.
     @Override
-    @EntityGraph(attributePaths = {"proyecto", "proyecto.empresaRelacionada"})
-    Optional<RestriccionObra> findById(Long id);
+    @EntityGraph(attributePaths = {"proyecto", "proyecto.empresaRelacionada", "rubroVinculado"})
+    @NonNull Optional<RestriccionObra> findById(@NonNull Long id);
 
     @Override
-    List<RestriccionObra> findAll();
+    @EntityGraph(attributePaths = {"proyecto", "proyecto.empresaRelacionada", "rubroVinculado"})
+    @NonNull List<RestriccionObra> findAll();
 
     @Override
-    List<RestriccionObra> findByProyectoId(Long proyectoId);
+    @EntityGraph(attributePaths = {"proyecto", "proyecto.empresaRelacionada", "rubroVinculado"})
+    @NonNull List<RestriccionObra> findByProyectoId(@NonNull Long proyectoId);
 }

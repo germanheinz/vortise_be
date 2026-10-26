@@ -80,12 +80,13 @@ class RubroPlanningTest {
         assertEquals(2. / 155.4,r.getRendimientoAyudante(),1e-8);
     }
     private ProyectoCreateDto projectDto(List<RubroCreateDto> rows) {
-        return new ProyectoCreateDto("Test",null,null,"Address","P1",null,null,null,null,null,null,null,null,null,List.of(),rows);
+        return new ProyectoCreateDto("Test",null,null,"Address","P1",null,null,null,null,null,null,null,null,null,List.of(),rows,null);
     }
     @Test void updateRetainsIdentityAndRejectsForeignIdsAndRemovalOfLinkedActivity() {
         var projects = mock(ProyectoRepository.class);
         var tasks = mock(ObraTareaRepository.class);
-        var service = new UpdateProyectoUseCase(projects,mock(EmpresaRepository.class),mock(CatalogoEmpresaRepository.class),tasks,mock(com.vortise.gestion.infrastructure.security.CurrentTenantService.class));
+        var service = new UpdateProyectoUseCase(projects,mock(EmpresaRepository.class),mock(CatalogoEmpresaRepository.class),tasks,
+            mock(com.vortise.gestion.domain.repository.RestriccionObraRepository.class),mock(com.vortise.gestion.infrastructure.security.CurrentTenantService.class));
         var p = new Proyecto(); p.setId(1L);
         var r = new RubroObra(); r.setId(10L); r.setProyecto(p);
         p.setRubros(new ArrayList<>(List.of(r)));

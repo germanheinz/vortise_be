@@ -26,6 +26,7 @@ public record ProyectoCreateDto(
 	Double horasPrevistas,
 	Double horasReales,
 	List<PlantaCreateDto> plantas,
-	List<RubroCreateDto> rubros
+	List<RubroCreateDto> rubros,
+	List<Long> subcontratistaIds
 ) {
 }
