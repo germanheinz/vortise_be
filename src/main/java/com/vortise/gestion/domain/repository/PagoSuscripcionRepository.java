@@ -10,10 +10,21 @@ import java.time.Instant;
 import java.util.Optional;
 
 public interface PagoSuscripcionRepository {
+    default Page<PagoSuscripcion> buscarSuperAdmin(Long empresaInternaId, String estado,
+            Instant desde, Instant hasta, Pageable pageable) {
+        // Do not bind null Instants: Hibernate 6.3 can send them as bytea on PostgreSQL.
+        return buscarSuperAdminConFechas(empresaInternaId != null, empresaInternaId == null ? 0L : empresaInternaId,
+            estado != null, estado == null ? "" : estado,
+            desde != null, desde == null ? Instant.EPOCH : desde,
+            hasta != null, hasta == null ? Instant.EPOCH : hasta, pageable);
+    }
+
     @EntityGraph(attributePaths = {"suscripcion", "suscripcion.usuario", "suscripcion.usuario.empresa", "suscripcion.empresa", "suscripcion.plan"})
-    @Query("select p from PagoSuscripcion p left join p.suscripcion.usuario u left join p.suscripcion.empresa e where (u is null or u.superAdmin = false) and (cast(:empresaInternaId as long) is null or e.id is null or e.id <> cast(:empresaInternaId as long)) and (cast(:estado as string) is null or lower(p.estado) = lower(cast(:estado as string))) and (cast(:desde as Instant) is null or p.fecha >= cast(:desde as Instant)) and (cast(:hasta as Instant) is null or p.fecha < cast(:hasta as Instant)) order by p.fecha desc")
-    Page<PagoSuscripcion> buscarSuperAdmin(@Param("empresaInternaId") Long empresaInternaId, @Param("estado") String estado,
-            @Param("desde") Instant desde, @Param("hasta") Instant hasta, Pageable pageable);
+    @Query("select p from PagoSuscripcion p left join p.suscripcion.usuario u left join p.suscripcion.empresa e where (u is null or u.superAdmin = false) and (:filtrarEmpresaInterna = false or e.id is null or e.id <> :empresaInternaId) and (:filtrarEstado = false or lower(p.estado) = lower(:estado)) and (:filtrarDesde = false or p.fecha >= :desde) and (:filtrarHasta = false or p.fecha < :hasta) order by p.fecha desc")
+    Page<PagoSuscripcion> buscarSuperAdminConFechas(@Param("filtrarEmpresaInterna") boolean filtrarEmpresaInterna,
+            @Param("empresaInternaId") Long empresaInternaId, @Param("filtrarEstado") boolean filtrarEstado, @Param("estado") String estado,
+            @Param("filtrarDesde") boolean filtrarDesde, @Param("desde") Instant desde,
+            @Param("filtrarHasta") boolean filtrarHasta, @Param("hasta") Instant hasta, Pageable pageable);
 
     @Query("select p.estado, p.moneda, count(p), sum(p.montoCentavos) from PagoSuscripcion p left join p.suscripcion.usuario u left join p.suscripcion.empresa e where (u is null or u.superAdmin = false) and (:empresaInternaId is null or e.id is null or e.id <> :empresaInternaId) and p.fecha >= :desde group by p.estado, p.moneda")
     java.util.List<Object[]> resumirRecientesSuperAdmin(@Param("empresaInternaId") Long empresaInternaId, @Param("desde") Instant desde);
