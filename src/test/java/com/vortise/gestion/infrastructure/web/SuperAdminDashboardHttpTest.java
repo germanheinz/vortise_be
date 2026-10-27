@@ -51,6 +51,8 @@ class SuperAdminDashboardHttpTest {
         registry.add("app.stripe.webhook-secret", () -> "");
         registry.add("app.stripe.price-basic", () -> "");
         registry.add("app.stripe.price-pro", () -> "");
+        registry.add("logging.level.org.hibernate.SQL", () -> "OFF");
+        registry.add("logging.level.org.hibernate.orm.jdbc.bind", () -> "OFF");
     }
 
     @Test
@@ -81,6 +83,28 @@ class SuperAdminDashboardHttpTest {
                 .andExpect(jsonPath("$.page").value(0))
                 .andExpect(jsonPath("$.size").value(20))
                 .andExpect(jsonPath("$.totalElements").exists());
+        }
+    }
+
+    @Test
+    void billingListsAcceptAbsentAndPresentOptionalFilters() throws Exception {
+        for (String estado : List.of("", "AcTiVe")) {
+            mockMvc.perform(get("/api/admin/suscripciones")
+                    .param("estado", estado).param("empresaId", "42")
+                    .header("Authorization", bearer(true)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+        }
+        for (String estado : List.of("", "PaGaDo")) {
+            for (String desde : List.of("", "2026-10-01")) {
+                for (String hasta : List.of("", "2026-10-27")) {
+                    mockMvc.perform(get("/api/admin/pagos")
+                            .param("estado", estado).param("desde", desde).param("hasta", hasta)
+                            .header("Authorization", bearer(true)))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.totalElements").value(0));
+                }
+            }
         }
     }
 

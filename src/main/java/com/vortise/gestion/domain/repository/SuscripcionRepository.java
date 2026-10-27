@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public interface SuscripcionRepository {
     @EntityGraph(attributePaths = {"usuario", "usuario.empresa", "empresa", "plan"})
-    @Query("select s from Suscripcion s left join s.usuario u left join u.empresa ue left join s.empresa e where (u is null or u.superAdmin = false) and (:empresaInternaId is null or e.id is null or e.id <> :empresaInternaId) and (:estado is null or lower(s.estado) = lower(:estado)) and (:empresaId is null or e.id = :empresaId or ue.id = :empresaId) order by s.actualizadoEn desc")
+    @Query("select s from Suscripcion s left join s.usuario u left join u.empresa ue left join s.empresa e where (u is null or u.superAdmin = false) and (cast(:empresaInternaId as long) is null or e.id is null or e.id <> cast(:empresaInternaId as long)) and (cast(:estado as string) is null or lower(s.estado) = lower(cast(:estado as string))) and (cast(:empresaId as long) is null or e.id = cast(:empresaId as long) or ue.id = cast(:empresaId as long)) order by s.actualizadoEn desc")
     Page<Suscripcion> buscarSuperAdmin(@Param("empresaInternaId") Long empresaInternaId, @Param("estado") String estado,
         @Param("empresaId") Long empresaId, Pageable pageable);
 
