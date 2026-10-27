@@ -1,6 +1,7 @@
 package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.SuperAdminDtos.DashboardDto;
+import com.vortise.gestion.application.dto.SuperAdminDtos.FacturacionUsuarioDto;
 import com.vortise.gestion.application.dto.SuperAdminDtos.EmpresaDto;
 import com.vortise.gestion.application.dto.SuperAdminDtos.EstadoCantidadDto;
 import com.vortise.gestion.application.dto.SuperAdminDtos.PagoDto;
@@ -79,7 +80,9 @@ public class SuperAdminConsultaUseCase {
             .toList();
         List<PagoResumenDto> pagosRecientes = pagos.resumirRecientesSuperAdmin(empresaInternaId,
                 ahora.minusSeconds(VENTANA_PAGOS_DIAS * 24L * 60 * 60)).stream()
-            .map(row -> new PagoResumenDto((String) row[0], (String) row[1], ((Number) row[2]).longValue(), ((Number) row[3]).longValue()))
+            .map(row -> new PagoResumenDto((String) row[0], (String) row[1], ((Number) row[2]).longValue(), ((Number) row[3]).longValue(),
+                row.length > 4 ? ((Number) row[4]).longValue() : 0,
+                "PAGADO".equals(row[0]) ? ((Number) row[3]).longValue() - (row.length > 4 ? ((Number) row[4]).longValue() : 0) : 0))
             .sorted(Comparator.comparing((PagoResumenDto row) -> row.estado(), Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
                 .thenComparing(row -> row.moneda(), Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
             .toList();
@@ -126,9 +129,22 @@ public class SuperAdminConsultaUseCase {
     }
 
     public PageDto<UsuarioDto> usuarios(int page, int size, String q, Long empresaId, Boolean activo) {
-        return mapPage(usuarios.buscarSuperAdmin(empresaInternaId(), empresaId, activo, normalizarBusqueda(q), pageable(page, size)), usuario ->
-            new UsuarioDto(usuario.getId(), usuario.getEmpresa().getId(), usuario.getEmpresa().getNombre(),
-                usuario.getNombre(), usuario.getEmail(), usuario.getRol().name(), usuario.isActivo(), usuario.getUltimoLoginExitosoEn()));
+        var pagina = usuarios.buscarSuperAdmin(empresaInternaId(), empresaId, activo, normalizarBusqueda(q), pageable(page, size));
+        var ids = pagina.getContent().stream().map(UsuarioEmpresa::getId).filter(Objects::nonNull).toList();
+        var empresasIds = pagina.getContent().stream().map(u -> u.getEmpresa().getId()).filter(Objects::nonNull).distinct().toList();
+        Map<Long, Suscripcion> individuales = ids.isEmpty() ? Map.of() : suscripciones.buscarFacturacionUsuarios(ids)
+            .stream().collect(Collectors.toMap(s -> s.getUsuario().getId(), Function.identity()));
+        Map<Long, Suscripcion> equipos = empresasIds.isEmpty() ? Map.of() : suscripciones.buscarFacturacionEmpresas(empresasIds)
+            .stream().collect(Collectors.toMap(s -> s.getEmpresa().getId(), Function.identity()));
+        return mapPage(pagina, usuario -> new UsuarioDto(usuario.getId(), usuario.getEmpresa().getId(), usuario.getEmpresa().getNombre(),
+            usuario.getNombre(), usuario.getEmail(), usuario.getRol().name(), usuario.isActivo(), usuario.getUltimoLoginExitosoEn(),
+            facturacion(individuales.get(usuario.getId())), facturacion(equipos.get(usuario.getEmpresa().getId()))));
+    }
+
+    private static FacturacionUsuarioDto facturacion(Suscripcion s) {
+        return s == null ? null : new FacturacionUsuarioDto(
+            s.getPlan() == null ? null : s.getPlan().getCodigo(), s.getEstado(), s.getInicio(), s.getFinPrueba(),
+            s.getFinPeriodoActual(), s.isCancelaAlFinal());
     }
 
     public PageDto<SuscripcionDto> suscripciones(int page, int size, String estado, Long empresaId) {
@@ -152,7 +168,7 @@ public class SuperAdminConsultaUseCase {
             suscripcion.getPlan() == null ? null : suscripcion.getPlan().getCodigo(),
             suscripcion.getPlan() == null ? null : suscripcion.getPlan().getNombre(), suscripcion.getEstado(),
             suscripcion.getFinPrueba(), suscripcion.getFinPeriodoActual(), suscripcion.isCancelaAlFinal(),
-            suscripcion.getActualizadoEn());
+            suscripcion.getActualizadoEn(), suscripcion.getInicio());
     }
 
     private PagoDto toPagoDto(PagoSuscripcion pago) {
@@ -162,7 +178,10 @@ public class SuperAdminConsultaUseCase {
         return new PagoDto(pago.getId(), empresa == null ? null : empresa.getNombre(),
             usuario != null ? usuario.getNombre() : empresa == null ? "Sin titular" : empresa.getNombre(),
             usuario == null ? null : usuario.getEmail(), suscripcion.getPlan() == null ? null : suscripcion.getPlan().getCodigo(),
-            pago.getEstado(), pago.getMontoCentavos(), pago.getMoneda(), pago.getFecha());
+            pago.getEstado(), pago.getMontoCentavos(), pago.getMoneda(), pago.getFecha(), pago.getMontoDevueltoCentavos(),
+            pago.getMontoNetoCentavos(), pago.getEstadoDevolucion(), pago.getFechaDevolucion(),
+            pago.getIntentos(), pago.getProximoIntento(), pago.getEstadoFactura(), pago.getFechaPago(),
+            pago.getPeriodoInicio(), pago.getPeriodoFin(), suscripcion.getId());
     }
 
     private Long empresaInternaId() {

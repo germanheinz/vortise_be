@@ -26,7 +26,7 @@ public interface PagoSuscripcionRepository {
             @Param("filtrarDesde") boolean filtrarDesde, @Param("desde") Instant desde,
             @Param("filtrarHasta") boolean filtrarHasta, @Param("hasta") Instant hasta, Pageable pageable);
 
-    @Query("select p.estado, p.moneda, count(p), sum(p.montoCentavos) from PagoSuscripcion p left join p.suscripcion.usuario u left join p.suscripcion.empresa e where (u is null or u.superAdmin = false) and (:empresaInternaId is null or e.id is null or e.id <> :empresaInternaId) and p.fecha >= :desde group by p.estado, p.moneda")
+    @Query("select p.estado, p.moneda, count(p), sum(p.montoCentavos), sum(p.montoDevueltoCentavos) from PagoSuscripcion p left join p.suscripcion.usuario u left join p.suscripcion.empresa e where (u is null or u.superAdmin = false) and (:empresaInternaId is null or e.id is null or e.id <> :empresaInternaId) and p.fecha >= :desde group by p.estado, p.moneda")
     java.util.List<Object[]> resumirRecientesSuperAdmin(@Param("empresaInternaId") Long empresaInternaId, @Param("desde") Instant desde);
 
     @Query("select count(p) from PagoSuscripcion p left join p.suscripcion.usuario u left join p.suscripcion.empresa e where (u is null or u.superAdmin = false) and (:empresaInternaId is null or e.id is null or e.id <> :empresaInternaId) and upper(p.estado) = 'FALLIDO'")

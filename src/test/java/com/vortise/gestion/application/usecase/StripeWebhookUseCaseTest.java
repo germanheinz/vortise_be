@@ -49,8 +49,28 @@ class StripeWebhookUseCaseTest {
         local = Suscripcion.paraUsuario(new UsuarioEmpresa(new Empresa("E", null), "u@example.invalid", "U", "h", RolEmpresa.CONSULTA), "cus_1");
         when(suscripciones.findByStripeSubscriptionId(any())).thenReturn(Optional.empty());
         when(suscripciones.findByStripeCustomerId("cus_1")).thenReturn(Optional.of(local));
+        when(suscripciones.bloquearPorStripeCustomerId("cus_1")).thenReturn(Optional.of(local));
         when(planes.findByStripePriceId("price_pro")).thenReturn(Optional.of(pro));
         when(pagos.findByStripeInvoiceId(any())).thenReturn(Optional.empty());
+    }
+
+    @Test
+    void refundReadsCurrentStateAndDoesNotCancelSubscription() {
+        var factura = new FacturaStripe("in_refund", "sub_1", "cus_1", 9900, "usd", "PAGADO", Instant.now());
+        when(stripe.obtenerFactura("in_refund")).thenReturn(factura);
+        var payment = new PagoSuscripcion(local, "in_refund");
+        payment.registrar(9900, "usd", "PAGADO", Instant.now());
+        when(pagos.findByStripeInvoiceId("in_refund")).thenReturn(Optional.of(payment));
+        when(stripe.parsearWebhook("refund", "signature")).thenReturn(new EventoStripe("evt_refund", "refund.updated", null, null, "re_1"));
+        when(stripe.obtenerDevolucion("re_1")).thenReturn(new StripeGateway.DevolucionStripe("re_1", factura, 3000, "succeeded", Instant.now()));
+        useCase.procesar("refund", "signature");
+        when(stripe.parsearWebhook("older-refund", "signature")).thenReturn(new EventoStripe("evt_refund_older", "refund.created", null, null, "re_1"));
+        useCase.procesar("older-refund", "signature");
+        assertEquals(9900, payment.getMontoCentavos());
+        assertEquals(3000, payment.getMontoDevueltoCentavos());
+        assertEquals(6900, payment.getMontoNetoCentavos());
+        verify(stripe, never()).obtenerSuscripcion(any());
+        verify(eventos).save(org.mockito.ArgumentMatchers.argThat(e -> "evt_refund".equals(e.getEventId())));
     }
 
     @Test
@@ -72,12 +92,13 @@ class StripeWebhookUseCaseTest {
     @Test
     void subscriptionEventSyncsStateFromStripeAndRecordsEvent() {
         when(stripe.parsearWebhook("p", "s")).thenReturn(new EventoStripe("evt_1", "checkout.session.completed", "sub_1", null));
-        when(stripe.obtenerSuscripcion("sub_1")).thenReturn(new SuscripcionStripe("sub_1", "cus_1", "active", "price_pro", null, fin, false));
+        when(stripe.obtenerSuscripcion("sub_1")).thenReturn(new SuscripcionStripe("sub_1", "cus_1", "active", "price_pro", null, fin, false, Instant.parse("2026-10-20T10:00:00Z")));
         useCase.procesar("p", "s");
         assertEquals("sub_1", local.getStripeSubscriptionId());
         assertEquals("active", local.getEstado());
         assertEquals(pro, local.getPlan());
         assertEquals(fin, local.getFinPeriodoActual());
+        assertEquals(Instant.parse("2026-10-20T10:00:00Z"), local.getInicio());
         verify(suscripciones).save(local);
         verify(eventos).save(org.mockito.ArgumentMatchers.argThat(e -> "evt_1".equals(e.getEventId())));
     }
@@ -106,6 +127,7 @@ class StripeWebhookUseCaseTest {
     void paidInvoiceIsRecordedOnce() {
         Instant pagado = Instant.parse("2026-10-01T10:00:00Z");
         FacturaStripe factura = new FacturaStripe("in_1", null, "cus_1", 200, "usd", "PAGADO", pagado);
+        when(stripe.obtenerFactura("in_1")).thenReturn(factura);
         when(stripe.parsearWebhook("p", "s")).thenReturn(new EventoStripe("evt_4", "invoice.paid", null, factura));
         useCase.procesar("p", "s");
         verify(pagos).save(org.mockito.ArgumentMatchers.argThat((PagoSuscripcion pago) -> "in_1".equals(pago.getStripeInvoiceId())

@@ -31,14 +31,25 @@ public class StripeSdkGateway implements StripeGateway {
 
     private final StripeClient client;
     private final String webhookSecret;
+    private final String testClock;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public StripeSdkGateway(@Value("${app.stripe.secret-key:}") String secretKey,
-            @Value("${app.stripe.webhook-secret:}") String webhookSecret) {
+            @Value("${app.stripe.webhook-secret:}") String webhookSecret,
+            @Value("${app.stripe.test-clock:}") String testClock) {
+        this.testClock = testClock == null ? "" : testClock.trim();
+        if (!this.testClock.isEmpty() && (secretKey == null || !(secretKey.startsWith("sk_test_") || secretKey.startsWith("rk_test_")))) {
+            throw new IllegalArgumentException("Los test clocks requieren una clave de sandbox");
+        }
         this.client = secretKey == null || secretKey.isBlank() ? null : new StripeClient(secretKey.trim());
         this.webhookSecret = webhookSecret == null ? "" : webhookSecret.trim();
         if (client != null && this.webhookSecret.isEmpty()) {
             log.warn("STRIPE_WEBHOOK_SECRET is not set: subscriptions will not be updated from Stripe events");
         }
+    }
+
+    public StripeSdkGateway(String secretKey, String webhookSecret) {
+        this(secretKey, webhookSecret, "");
     }
 
     @Override
@@ -48,8 +59,9 @@ public class StripeSdkGateway implements StripeGateway {
 
     @Override
     public String crearCliente(String email, String nombre, Map<String, String> metadata) {
-        return llamar(() -> requireClient().v1().customers().create(CustomerCreateParams.builder()
-            .setEmail(email).setName(nombre).putAllMetadata(metadata).build()).getId());
+        var params = CustomerCreateParams.builder().setEmail(email).setName(nombre).putAllMetadata(metadata);
+        if (!testClock.isEmpty()) params.setTestClock(testClock);
+        return llamar(() -> requireClient().v1().customers().create(params.build()).getId());
     }
 
     @Override
@@ -95,8 +107,10 @@ public class StripeSdkGateway implements StripeGateway {
             var deserializer = event.getDataObjectDeserializer();
             objeto = deserializer.getObject().isPresent() ? deserializer.getObject().get() : deserializer.deserializeUnsafe();
         } catch (Exception ex) {
-            log.warn("Stripe event {} of type {} could not be deserialized; ignored", event.getId(), event.getType());
-            return new EventoStripe(event.getId(), event.getType(), null, null);
+            throw new SolicitudInvalidaException("Evento Stripe incompatible; no se procesó");
+        }
+        if (objeto instanceof com.stripe.model.Refund refund) {
+            return new EventoStripe(event.getId(), event.getType(), null, null, refund.getId());
         }
         if (objeto instanceof Subscription subscription) {
             return new EventoStripe(event.getId(), event.getType(), subscription.getId(), null);
@@ -105,10 +119,53 @@ public class StripeSdkGateway implements StripeGateway {
             return new EventoStripe(event.getId(), event.getType(), session.getSubscription(), null);
         }
         if (objeto instanceof Invoice invoice) {
-            FacturaStripe factura = factura(invoice, event.getType());
+            // Fetch with the SDK version: CLI snapshots can use the account's older default version.
+            Invoice current = llamar(() -> requireClient().v1().invoices().retrieve(invoice.getId()));
+            if ("draft".equals(current.getStatus())) return new EventoStripe(event.getId(), event.getType(), null, null);
+            FacturaStripe factura = factura(current, event.getType());
             return new EventoStripe(event.getId(), event.getType(), factura.subscriptionId(), factura);
         }
         return new EventoStripe(event.getId(), event.getType(), null, null);
+    }
+
+    @Override
+    public FacturaStripe obtenerFactura(String invoiceId) {
+        Invoice current = llamar(() -> requireClient().v1().invoices().retrieve(invoiceId));
+        String tipo = "invoice.updated";
+        if ("open".equals(current.getStatus())) {
+            var payments = llamar(() -> requireClient().v1().invoicePayments().list(
+                com.stripe.param.InvoicePaymentListParams.builder().setInvoice(invoiceId).setLimit(100L).build()));
+            for (var payment : payments.autoPagingIterable()) {
+                if (!Boolean.TRUE.equals(payment.getIsDefault()) || payment.getPayment() == null
+                        || payment.getPayment().getPaymentIntent() == null) continue;
+                var intent = llamar(() -> requireClient().v1().paymentIntents().retrieve(payment.getPayment().getPaymentIntent()));
+                if ("requires_action".equals(intent.getStatus())) tipo = "invoice.payment_action_required";
+                break;
+            }
+        }
+        return factura(current, tipo);
+    }
+
+    @Override
+    public DevolucionStripe obtenerDevolucion(String refundId) {
+        return llamar(() -> {
+            var refund = requireClient().v1().refunds().retrieve(refundId);
+            String intent = refund.getPaymentIntent();
+            if (intent == null && refund.getCharge() != null) {
+                intent = requireClient().v1().charges().retrieve(refund.getCharge()).getPaymentIntent();
+            }
+            if (intent == null) return new DevolucionStripe(refundId, null, refund.getAmount(), refund.getStatus(), Instant.ofEpochSecond(refund.getCreated()));
+            var links = requireClient().v1().invoicePayments().list(com.stripe.param.InvoicePaymentListParams.builder()
+                .setPayment(com.stripe.param.InvoicePaymentListParams.Payment.builder().setPaymentIntent(intent)
+                    .setType(com.stripe.param.InvoicePaymentListParams.Payment.Type.PAYMENT_INTENT).build()).setLimit(2L).build()).getData();
+            if (links.size() > 1) throw new IllegalStateException("Devolución con asociación de factura ambigua");
+            FacturaStripe factura = null;
+            if (!links.isEmpty()) {
+                var invoice = requireClient().v1().invoices().retrieve(links.get(0).getInvoice());
+                factura = factura(invoice, "paid".equals(invoice.getStatus()) ? "invoice.paid" : "invoice.payment_failed");
+            }
+            return new DevolucionStripe(refundId, factura, refund.getAmount(), refund.getStatus(), Instant.ofEpochSecond(refund.getCreated()));
+        });
     }
 
     @Override
@@ -120,7 +177,8 @@ public class StripeSdkGateway implements StripeGateway {
         String priceId = items.stream().map(SubscriptionItem::getPrice).filter(Objects::nonNull).map(Price::getId).findFirst().orElse(null);
         return new SuscripcionStripe(s.getId(), s.getCustomer(), s.getStatus(), priceId,
             s.getTrialEnd() == null ? null : Instant.ofEpochSecond(s.getTrialEnd()),
-            finPeriodo, Boolean.TRUE.equals(s.getCancelAtPeriodEnd()));
+            finPeriodo, Boolean.TRUE.equals(s.getCancelAtPeriodEnd()),
+            s.getStartDate() == null ? null : Instant.ofEpochSecond(s.getStartDate()));
     }
 
     @Override
@@ -139,13 +197,25 @@ public class StripeSdkGateway implements StripeGateway {
     private static FacturaStripe factura(Invoice invoice, String tipoEvento) {
         String subscriptionId = invoice.getParent() == null || invoice.getParent().getSubscriptionDetails() == null
             ? null : invoice.getParent().getSubscriptionDetails().getSubscription();
-        boolean pagada = "invoice.paid".equals(tipoEvento);
+        boolean pagada = "paid".equals(invoice.getStatus());
         Long monto = pagada ? invoice.getAmountPaid() : invoice.getAmountDue();
         Long pagadaEn = invoice.getStatusTransitions() == null ? null : invoice.getStatusTransitions().getPaidAt();
+        String estado = switch (invoice.getStatus() == null ? "" : invoice.getStatus()) {
+            case "paid" -> "PAGADO";
+            case "void" -> "ANULADO";
+            case "uncollectible" -> "INCOBRABLE";
+            default -> "invoice.payment_action_required".equals(tipoEvento) ? "REQUIERE_ACCION"
+                : Boolean.TRUE.equals(invoice.getAttempted()) ? "FALLIDO" : "PENDIENTE";
+        };
+        Instant fechaPago = instant(pagadaEn);
         return new FacturaStripe(invoice.getId(), subscriptionId, invoice.getCustomer(), monto == null ? 0L : monto,
-            invoice.getCurrency(), pagada ? "PAGADO" : "FALLIDO",
-            pagadaEn == null ? Instant.now() : Instant.ofEpochSecond(pagadaEn));
+            invoice.getCurrency(), estado,
+            fechaPago == null ? Instant.ofEpochSecond(Objects.requireNonNull(invoice.getCreated(), "Factura sin fecha de creación")) : fechaPago,
+            invoice.getAttemptCount(), pagada ? null : instant(invoice.getNextPaymentAttempt()), invoice.getStatus(),
+            fechaPago, instant(invoice.getPeriodStart()), instant(invoice.getPeriodEnd()));
     }
+
+    private static Instant instant(Long seconds) { return seconds == null ? null : Instant.ofEpochSecond(seconds); }
 
     private StripeClient requireClient() {
         if (client == null) throw new PagosNoConfiguradosException();

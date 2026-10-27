@@ -25,7 +25,7 @@ public class StripeWebhookUseCase {
     static final Set<String> EVENTOS_MANEJADOS = Set.of(
         "checkout.session.completed",
         "customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted",
-        "invoice.paid", "invoice.payment_failed");
+        "invoice.paid", "invoice.payment_failed", "invoice.updated", "invoice.voided", "invoice.marked_uncollectible", "invoice.payment_action_required", "refund.created", "refund.updated", "refund.failed");
     private static final Set<String> ESTADOS_ACTIVOS = Set.of("trialing", "active");
     private static final Logger log = LoggerFactory.getLogger(StripeWebhookUseCase.class);
 
@@ -48,39 +48,63 @@ public class StripeWebhookUseCase {
         if (EVENTOS_MANEJADOS.contains(evento.tipo())) {
             if (evento.subscriptionId() != null) sincronizar(evento.subscriptionId());
             if (evento.factura() != null) registrarPago(evento.factura());
+            if (evento.refundId() != null) {
+                var ruta = stripe.obtenerDevolucion(evento.refundId());
+                if (ruta.factura() != null && suscripciones.bloquearPorStripeCustomerId(ruta.factura().customerId()).isPresent()) {
+                    // The first lookup is routing only. Never apply a snapshot read before the lock.
+                    var refund = stripe.obtenerDevolucion(evento.refundId());
+                    if (refund.factura() == null || !java.util.Objects.equals(ruta.factura().customerId(), refund.factura().customerId())) {
+                        throw new IllegalStateException("Cambió el titular de la devolución");
+                    }
+                    registrarPago(refund.factura());
+                    pagos.findByStripeInvoiceId(refund.factura().id()).ifPresent(pago -> {
+                        pago.registrarDevolucion(refund.id(), refund.montoCentavos(), refund.estado(), refund.fecha());
+                        pagos.save(pago);
+                    });
+                }
+            }
         }
         eventos.save(new StripeEventoProcesado(evento.id(), evento.tipo()));
     }
 
     /** Always re-reads the subscription from Stripe, so event delivery order does not matter. */
     private void sincronizar(String subscriptionId) {
-        SuscripcionStripe remota = stripe.obtenerSuscripcion(subscriptionId);
-        Optional<Suscripcion> porId = suscripciones.findByStripeSubscriptionId(subscriptionId);
-        Optional<Suscripcion> local = porId.or(() -> suscripciones.findByStripeCustomerId(remota.customerId()));
+        SuscripcionStripe ruta = stripe.obtenerSuscripcion(subscriptionId);
+        Optional<Suscripcion> local = suscripciones.bloquearPorStripeCustomerId(ruta.customerId());
         if (local.isEmpty()) {
             log.warn("Stripe subscription {} does not belong to a known customer; ignored", subscriptionId);
             return;
         }
         Suscripcion suscripcion = local.get();
-        boolean otraSuscripcionActiva = porId.isEmpty() && suscripcion.getStripeSubscriptionId() != null
+        SuscripcionStripe remota = stripe.obtenerSuscripcion(subscriptionId);
+        if (!java.util.Objects.equals(suscripcion.getStripeCustomerId(), remota.customerId())) {
+            throw new IllegalStateException("Cambió el titular de la suscripción");
+        }
+        boolean otraSuscripcionActiva = !java.util.Objects.equals(subscriptionId, suscripcion.getStripeSubscriptionId()) && suscripcion.getStripeSubscriptionId() != null
             && suscripcion.isActiva(Instant.now()) && !ESTADOS_ACTIVOS.contains(remota.estado());
         if (otraSuscripcionActiva) return;
         suscripcion.actualizarDesdeStripe(remota.id(),
             remota.priceId() == null ? null : planes.findByStripePriceId(remota.priceId()).orElse(null),
             remota.estado(), remota.finPrueba(), remota.finPeriodoActual(), remota.cancelaAlFinal());
+        suscripcion.registrarInicio(remota.inicio());
         suscripciones.save(suscripcion);
     }
 
-    private void registrarPago(FacturaStripe factura) {
-        Optional<Suscripcion> suscripcion = Optional.ofNullable(factura.subscriptionId())
-            .flatMap(suscripciones::findByStripeSubscriptionId)
-            .or(() -> Optional.ofNullable(factura.customerId()).flatMap(suscripciones::findByStripeCustomerId));
+    private void registrarPago(FacturaStripe ruta) {
+        Optional<Suscripcion> suscripcion = suscripciones.bloquearPorStripeCustomerId(ruta.customerId());
         if (suscripcion.isEmpty()) {
-            log.warn("Stripe invoice {} does not belong to a known customer; ignored", factura.id());
+            log.warn("Stripe invoice {} does not belong to a known customer; ignored", ruta.id());
             return;
         }
+        FacturaStripe factura = stripe.obtenerFactura(ruta.id());
+        if (!java.util.Objects.equals(suscripcion.get().getStripeCustomerId(), factura.customerId())) {
+            throw new IllegalStateException("Cambió el titular de la factura");
+        }
+        if ("draft".equals(factura.estadoFactura())) return;
         PagoSuscripcion pago = pagos.findByStripeInvoiceId(factura.id()).orElseGet(() -> new PagoSuscripcion(suscripcion.get(), factura.id()));
         pago.registrar(factura.montoCentavos(), factura.moneda(), factura.estado(), factura.fecha());
+        pago.registrarDetalleFactura(factura.intentos(), factura.proximoIntento(), factura.estadoFactura(),
+            factura.fechaPago(), factura.periodoInicio(), factura.periodoFin());
         pagos.save(pago);
     }
 }

@@ -5,3 +5,7 @@
 # local secrets and user uploads
 .env
 /data/uploads/
+
+.env.payments-local-06
+
+__pycache__/

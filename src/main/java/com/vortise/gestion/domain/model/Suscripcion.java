@@ -29,6 +29,7 @@ public class Suscripcion {
     @Column(nullable = false, unique = true) private String stripeCustomerId;
     @Column(unique = true) private String stripeSubscriptionId;
     private String estado;
+    private Instant inicio;
     private Instant finPrueba;
     private Instant finPeriodoActual;
     @Column(nullable = false) private boolean cancelaAlFinal;
@@ -60,6 +61,9 @@ public class Suscripcion {
         if (finPrueba != null) this.pruebaUsada = true;
         this.actualizadoEn = Instant.now();
     }
+
+    public void registrarInicio(Instant inicio) { this.inicio = inicio; }
+    public Instant getInicio() { return inicio; }
 
     public Long getId() { return id; }
     public TitularSuscripcion getTitular() { return titular; }

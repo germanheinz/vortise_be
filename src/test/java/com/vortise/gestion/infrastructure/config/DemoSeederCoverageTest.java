@@ -29,6 +29,7 @@ class DemoSeederCoverageTest {
     @Mock CatalogoEmpresaRepository catalogs;
     @Mock CategoriaManoObraEmpresaRepository categories;
     @Mock CalendarioLaboralEmpresaRepository calendars;
+    @Mock SeedRunPolicy seedRunPolicy;
     @InjectMocks DataSeeder seeder;
     Empresa company;
     List<Proyecto> ps=new ArrayList<>();
@@ -42,6 +43,7 @@ class DemoSeederCoverageTest {
     List<GastoFijo> gs=new ArrayList<>();
     List<Rendimiento> ys=new ArrayList<>();
     @BeforeEach void repositories() {
+        when(seedRunPolicy.shouldRunSeeders()).thenReturn(true);
         company=new Empresa("Renamed demo","DEMO-0001");ReflectionTestUtils.setField(company,"id",1L);
         when(companies.findByIdentificacionFiscal("DEMO-0001")).thenReturn(Optional.of(company));
         when(projects.findAll()).thenAnswer(i->ps);

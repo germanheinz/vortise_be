@@ -375,6 +375,15 @@ public class H2LogicalBackupService {
                 throw new IllegalStateException("Entidad JPA sin nombre de tabla explícito: " + entity.getName());
             }
             if (!mappedNames.add(mapping.name())) throw new IllegalStateException("Tabla JPA duplicada: " + mapping.name());
+            // Element collections are persistent business data too. Omitting
+            // refunds would lose history and can block parent-row restoration.
+            for (var field : entity.getJavaType().getDeclaredFields()) {
+                var collection = field.getAnnotation(jakarta.persistence.CollectionTable.class);
+                if (field.isAnnotationPresent(jakarta.persistence.ElementCollection.class) && collection != null) {
+                    if (collection.name().isBlank()) throw new IllegalStateException("Colección JPA sin tabla explícita");
+                    mappedNames.add(collection.name());
+                }
+            }
         }
         Map<String, String> actualNames = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         try (ResultSet tables = metadata.getTables(connection.getCatalog(), schema, "%", new String[]{"TABLE"})) {

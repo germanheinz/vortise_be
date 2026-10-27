@@ -49,10 +49,39 @@ class SuperAdminConsultaUseCaseTest {
     }
 
     @Test
+    void userBillingKeepsUnsubscribedUsersAndSeparatesCompanyCoverage() {
+        Empresa empresa = new Empresa("Cliente", null);
+        ReflectionTestUtils.setField(empresa, "id", 42L);
+        UsuarioEmpresa a = new UsuarioEmpresa(empresa, "a@example.invalid", "A", "hash", RolEmpresa.CONSULTA);
+        UsuarioEmpresa b = new UsuarioEmpresa(empresa, "b@example.invalid", "B", "hash", RolEmpresa.CONSULTA);
+        ReflectionTestUtils.setField(a, "id", 7L);
+        ReflectionTestUtils.setField(b, "id", 8L);
+        var propia = com.vortise.gestion.domain.model.Suscripcion.paraUsuario(a, "cus_a");
+        Instant inicio = Instant.parse("2026-10-20T00:00:00Z");
+        propia.actualizarDesdeStripe("sub_a", null, "trialing", inicio.plusSeconds(604800), inicio.plusSeconds(604800), false);
+        propia.registrarInicio(inicio);
+        var equipo = com.vortise.gestion.domain.model.Suscripcion.paraEmpresa(empresa, "cus_e");
+        equipo.actualizarDesdeStripe("sub_e", null, "active", null, inicio.plusSeconds(2592000), true);
+        when(usuarios.buscarSuperAdmin(eq(null), eq(null), eq(null), eq(""), any()))
+            .thenReturn(new PageImpl<>(List.of(a, b)));
+        when(suscripciones.buscarFacturacionUsuarios(List.of(7L, 8L))).thenReturn(List.of(propia));
+        when(suscripciones.buscarFacturacionEmpresas(List.of(42L))).thenReturn(List.of(equipo));
+        var result = consulta.usuarios(0, 20, null, null, null);
+        assertEquals(2, result.content().size());
+        assertEquals(inicio, result.content().get(0).suscripcionUsuario().inicio());
+        assertEquals("trialing", result.content().get(0).suscripcionUsuario().estado());
+        org.junit.jupiter.api.Assertions.assertNull(result.content().get(1).suscripcionUsuario());
+        assertEquals(true, result.content().get(1).suscripcionEmpresa().cancelaAlFinal());
+        org.junit.jupiter.api.Assertions.assertNull(result.content().get(1).suscripcionEmpresa().inicio());
+    }
+
+    @Test
     @SuppressWarnings("null")
     void userListMapsOnlyFilteredPageAndKeepsCompanyContext() {
         Empresa empresa = new Empresa("Constructora", null);
         UsuarioEmpresa usuario = new UsuarioEmpresa(empresa, "user@example.invalid", "Usuario", "hash", RolEmpresa.CONSULTA);
+        ReflectionTestUtils.setField(empresa, "id", 42L);
+        ReflectionTestUtils.setField(usuario, "id", 7L);
         Instant login = Instant.parse("2026-10-23T10:15:30Z");
         usuario.setUltimoLoginExitosoEn(login);
         List<UsuarioEmpresa> content = new ArrayList<>();

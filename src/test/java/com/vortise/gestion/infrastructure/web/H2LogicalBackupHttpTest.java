@@ -1,5 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
+import java.time.Instant;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -91,12 +93,13 @@ class H2LogicalBackupHttpTest {
         JsonNode json = objectMapper.readTree(snapshot);
         assertEquals(1, json.path("version").intValue());
         assertNotNull(json.path("schemaFingerprint").textValue());
-        assertEquals(25, json.path("tables").size());
+        assertEquals(26, json.path("tables").size());
+        assertTrue(table(json, "DEVOLUCIONES_PAGO").path("rows").isArray());
         assertEquals(1, table(json, "REGISTROS_HORAS").path("rows").size());
         assertEquals(1, table(json, "EMPRESAS").path("rows").size());
 
         mockMvc.perform(get("/api/admin/backup"))
-            .andExpect(status().isUnauthorized());
+            .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/admin/backup").header(HttpHeaders.AUTHORIZATION, bearer(false)))
             .andExpect(status().isForbidden());
         var exportResponse = mockMvc.perform(get("/api/admin/backup").header(HttpHeaders.AUTHORIZATION, bearer(true)))
@@ -114,7 +117,7 @@ class H2LogicalBackupHttpTest {
                 .header(HttpHeaders.AUTHORIZATION, bearer(true)))
             .andExpect(status().isOk())
             .andExpect(content().contentType("application/json"))
-            .andExpect(content().json("{\"message\":\"Respaldo restaurado correctamente\",\"summary\":{\"tables\":25,\"rows\":3}}"));
+            .andExpect(content().json("{\"message\":\"Respaldo restaurado correctamente\",\"summary\":{\"tables\":26,\"rows\":3}}"));
 
         assertEquals("Snapshot Company", jdbc.queryForObject("SELECT nombre FROM empresas WHERE id = 77", String.class));
         assertEquals("Snapshot Project", jdbc.queryForObject("SELECT nombre FROM proyectos WHERE id = 91", String.class));
@@ -178,6 +181,22 @@ class H2LogicalBackupHttpTest {
         ((ArrayNode) rows.get(0)).remove(0);
         assertThrows(BackupValidationException.class, () -> backupService.restore(objectMapper.writeValueAsBytes(snapshot)));
         assertEquals("Snapshot Company", jdbc.queryForObject("SELECT nombre FROM empresas WHERE id = 77", String.class));
+    }
+
+    @Test
+    void refundCollectionSurvivesBackupAndRestoreWithItsParentPayment() throws Exception {
+        insertFixtureRows();
+        Instant timestamp = Instant.parse("2026-10-27T00:00:00Z");
+        jdbc.update("INSERT INTO suscripciones (id, titular, empresa_id, stripe_customer_id, estado, cancela_al_final, prueba_usada, actualizado_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            201L, "EMPRESA", 77L, "cus_backup_synthetic", "active", false, false, timestamp);
+        jdbc.update("INSERT INTO pagos_suscripcion (id, suscripcion_id, stripe_invoice_id, monto_centavos, moneda, estado, fecha, monto_devuelto_centavos, version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            301L, 201L, "in_backup_synthetic", 5000L, "usd", "PAGADO", timestamp, 2000L, 0L);
+        jdbc.update("INSERT INTO devoluciones_pago (pago_id, stripe_refund_id, monto_centavos, estado, fecha) VALUES (?, ?, ?, ?, ?)",
+            301L, "re_backup_synthetic", 2000L, "succeeded", timestamp);
+        byte[] snapshot = backupService.exportBackup();
+        backupService.restore(snapshot);
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM devoluciones_pago WHERE pago_id = 301", Integer.class));
+        assertEquals(2000L, jdbc.queryForObject("SELECT monto_devuelto_centavos FROM pagos_suscripcion WHERE id = 301", Long.class));
     }
 
     private void insertFixtureRows() {

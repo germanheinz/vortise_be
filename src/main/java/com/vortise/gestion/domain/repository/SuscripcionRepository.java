@@ -11,9 +11,16 @@ import java.util.Collection;
 import java.util.Optional;
 
 public interface SuscripcionRepository {
+    default Page<Suscripcion> buscarSuperAdmin(Long empresaInternaId, String estado, Long empresaId, Pageable pageable) {
+        return buscarSuperAdminFiltrado(empresaInternaId != null, empresaInternaId == null ? 0L : empresaInternaId,
+            estado != null, estado == null ? "" : estado, empresaId != null, empresaId == null ? 0L : empresaId, pageable);
+    }
+
     @EntityGraph(attributePaths = {"usuario", "usuario.empresa", "empresa", "plan"})
-    @Query("select s from Suscripcion s left join s.usuario u left join u.empresa ue left join s.empresa e where (u is null or u.superAdmin = false) and (cast(:empresaInternaId as long) is null or e.id is null or e.id <> cast(:empresaInternaId as long)) and (cast(:estado as string) is null or lower(s.estado) = lower(cast(:estado as string))) and (cast(:empresaId as long) is null or e.id = cast(:empresaId as long) or ue.id = cast(:empresaId as long)) order by s.actualizadoEn desc")
-    Page<Suscripcion> buscarSuperAdmin(@Param("empresaInternaId") Long empresaInternaId, @Param("estado") String estado,
+    @Query("select s from Suscripcion s left join s.usuario u left join u.empresa ue left join s.empresa e where (u is null or u.superAdmin = false) and (:filtrarInterna = false or e.id is null or e.id <> :empresaInternaId) and (:filtrarEstado = false or lower(s.estado) = lower(:estado)) and (:filtrarEmpresa = false or e.id = :empresaId or ue.id = :empresaId) order by s.actualizadoEn desc")
+    Page<Suscripcion> buscarSuperAdminFiltrado(@Param("filtrarInterna") boolean filtrarInterna,
+        @Param("empresaInternaId") Long empresaInternaId, @Param("filtrarEstado") boolean filtrarEstado,
+        @Param("estado") String estado, @Param("filtrarEmpresa") boolean filtrarEmpresa,
         @Param("empresaId") Long empresaId, Pageable pageable);
 
     @Query("select s.estado, count(s) from Suscripcion s left join s.usuario u left join s.empresa e where (u is null or u.superAdmin = false) and (:empresaInternaId is null or e.id is null or e.id <> :empresaInternaId) group by s.estado")
@@ -37,6 +44,18 @@ public interface SuscripcionRepository {
 
     @Query("select s.empresa.id as empresaId, p.codigo as planCodigo, s.estado as estado from Suscripcion s left join s.plan p where s.empresa.id in :empresaIds")
     List<SuperAdminSuscripcionEmpresaProjection> buscarResumenEmpresaSuperAdmin(@Param("empresaIds") Collection<Long> empresaIds);
+
+    @EntityGraph(attributePaths = {"usuario", "empresa", "plan"})
+    @Query("select s from Suscripcion s where s.usuario.id in :usuarioIds")
+    List<Suscripcion> buscarFacturacionUsuarios(@Param("usuarioIds") Collection<Long> usuarioIds);
+
+    @EntityGraph(attributePaths = {"empresa", "plan"})
+    @Query("select s from Suscripcion s where s.empresa.id in :empresaIds")
+    List<Suscripcion> buscarFacturacionEmpresas(@Param("empresaIds") Collection<Long> empresaIds);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from Suscripcion s where s.stripeCustomerId = :customerId")
+    Optional<Suscripcion> bloquearPorStripeCustomerId(@Param("customerId") String customerId);
 
     Optional<Suscripcion> findByUsuarioId(Long usuarioId);
     Optional<Suscripcion> findByEmpresaId(Long empresaId);

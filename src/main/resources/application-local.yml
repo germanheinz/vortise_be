@@ -26,3 +26,9 @@ server:
 app:
   security:
     jwt-secret: ${APP_JWT_SECRET:}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+    price-basic: ${STRIPE_PRICE_BASIC:}
+    price-pro: ${STRIPE_PRICE_PRO:}
+    price-enterprise: ${STRIPE_PRICE_ENTERPRISE:}

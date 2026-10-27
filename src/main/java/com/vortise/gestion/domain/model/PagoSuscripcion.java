@@ -23,6 +23,52 @@ public class PagoSuscripcion {
     @Column(nullable = false) private String moneda;
     @Column(nullable = false) private String estado;
     @Column(nullable = false) private Instant fecha;
+    private Long intentos;
+    private Instant proximoIntento;
+    private String estadoFactura;
+    private Instant fechaPago;
+    private Instant periodoInicio;
+    private Instant periodoFin;
+
+    public void registrarDetalleFactura(Long intentos, Instant proximoIntento, String estadoFactura,
+            Instant fechaPago, Instant periodoInicio, Instant periodoFin) {
+        this.intentos = intentos; this.proximoIntento = proximoIntento; this.estadoFactura = estadoFactura;
+        this.fechaPago = fechaPago; this.periodoInicio = periodoInicio; this.periodoFin = periodoFin;
+    }
+    public Long getIntentos() { return intentos; }
+    public Instant getProximoIntento() { return proximoIntento; }
+    public String getEstadoFactura() { return estadoFactura; }
+    public Instant getFechaPago() { return fechaPago; }
+    public Instant getPeriodoInicio() { return periodoInicio; }
+    public Instant getPeriodoFin() { return periodoFin; }
+
+    @Column(nullable = false) private long montoDevueltoCentavos;
+    @jakarta.persistence.Version private long version;
+    @jakarta.persistence.ElementCollection
+    @jakarta.persistence.CollectionTable(name = "devoluciones_pago", joinColumns = @JoinColumn(name = "pago_id"))
+    @jakarta.persistence.MapKeyColumn(name = "stripe_refund_id")
+    private java.util.Map<String, DevolucionPago> devoluciones = new java.util.HashMap<>();
+
+    public void registrarDevolucion(String id, long monto, String estado, Instant fecha) {
+        if (id == null || id.isBlank()) throw new IllegalArgumentException("Devolución sin identificador");
+        devoluciones.put(id, new DevolucionPago(monto, estado, fecha));
+        montoDevueltoCentavos = devoluciones.values().stream().filter(d -> "succeeded".equals(d.getEstado()))
+            .mapToLong(DevolucionPago::getMontoCentavos).sum();
+    }
+    public long getMontoDevueltoCentavos() {
+        return montoDevueltoCentavos;
+    }
+    public long getMontoNetoCentavos() { return "PAGADO".equals(estado) ? montoCentavos - getMontoDevueltoCentavos() : 0; }
+    public String getEstadoDevolucion() {
+        if (devoluciones.isEmpty()) return "SIN_DEVOLUCION";
+        long total = getMontoDevueltoCentavos();
+        if (total > 0) return total >= montoCentavos ? "TOTAL" : "PARCIAL";
+        return devoluciones.values().stream().anyMatch(d -> !java.util.Set.of("failed", "canceled", "succeeded").contains(d.getEstado()))
+            ? "PENDIENTE" : "FALLIDA";
+    }
+    public Instant getFechaDevolucion() {
+        return devoluciones.values().stream().map(DevolucionPago::getFecha).max(Instant::compareTo).orElse(null);
+    }
 
     protected PagoSuscripcion() { }
 
