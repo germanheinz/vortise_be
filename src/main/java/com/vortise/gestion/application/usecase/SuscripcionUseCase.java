@@ -48,7 +48,7 @@ public class SuscripcionUseCase {
         boolean configurado = stripe.isConfigured();
         return planes.findByActivoTrueOrderByNivelAsc().stream().map(plan -> new PlanSuscripcionDto(
             plan.getCodigo(), plan.getNombre(), BigDecimal.valueOf(plan.getPrecioMensualCentavos(), 2), plan.getMoneda(),
-            plan.getDiasPrueba(), plan.getBeneficios(), configurado && plan.getStripePriceId() != null)).toList();
+            plan.getDiasPrueba(), plan.getBeneficios(), configurado && plan.getStripePriceId() != null && !plan.getStripePriceId().isBlank())).toList();
     }
 
     @Transactional(readOnly = true)
@@ -63,7 +63,7 @@ public class SuscripcionUseCase {
         if (!stripe.isConfigured()) throw new PagosNoConfiguradosException();
         PlanSuscripcion plan = planes.findByCodigo(request.planCodigo())
             .filter(PlanSuscripcion::isActivo)
-            .filter(p -> p.getStripePriceId() != null)
+            .filter(p -> p.getStripePriceId() != null && !p.getStripePriceId().isBlank())
             .orElseThrow(() -> new SolicitudInvalidaException("Plan no disponible"));
         UsuarioEmpresa usuario = usuarioActual();
         requireTitularPermitido(request.titular());

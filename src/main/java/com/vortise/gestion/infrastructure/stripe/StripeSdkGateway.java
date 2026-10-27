@@ -43,7 +43,7 @@ public class StripeSdkGateway implements StripeGateway {
 
     @Override
     public boolean isConfigured() {
-        return client != null;
+        return client != null && !webhookSecret.isEmpty();
     }
 
     @Override

@@ -156,6 +156,31 @@ class SuscripcionUseCaseTest {
         assertTrue(consulta.planEfectivo(usuario).isEmpty());
     }
 
+    @Test
+    void blankPriceIdsDisablePlansAndRejectCheckoutBeforeSideEffects() {
+        basic.setStripePriceId("   ");
+        when(planes.findByActivoTrueOrderByNivelAsc()).thenReturn(List.of(basic, pro));
+        assertFalse(useCase.planes().get(0).disponible());
+        assertTrue(useCase.planes().get(1).disponible());
+        assertThrows(SolicitudInvalidaException.class,
+            () -> useCase.checkout(new CheckoutRequestDto("BASIC", TitularSuscripcion.USUARIO)));
+        org.mockito.Mockito.verifyNoInteractions(suscripciones, usuarios, tenant);
+        verify(stripe, never()).crearCliente(anyString(), anyString(), any());
+        verify(stripe, never()).crearCheckout(any());
+    }
+
+    @Test
+    void incompleteConfigurationBlocksCheckoutAndPortalBeforeSideEffects() {
+        when(stripe.isConfigured()).thenReturn(false);
+        assertThrows(PagosNoConfiguradosException.class,
+            () -> useCase.checkout(new CheckoutRequestDto("BASIC", TitularSuscripcion.USUARIO)));
+        assertThrows(PagosNoConfiguradosException.class, () -> useCase.portal(TitularSuscripcion.USUARIO));
+        org.mockito.Mockito.verifyNoInteractions(planes, suscripciones, usuarios, tenant);
+        verify(stripe, never()).crearCliente(anyString(), anyString(), any());
+        verify(stripe, never()).crearCheckout(any());
+        verify(stripe, never()).crearPortal(anyString(), anyString());
+    }
+
     private CheckoutStripe captureCheckout() {
         ArgumentCaptor<CheckoutStripe> captor = ArgumentCaptor.forClass(CheckoutStripe.class);
         verify(stripe).crearCheckout(captor.capture());
