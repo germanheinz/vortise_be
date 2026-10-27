@@ -31,7 +31,7 @@ class SuperAdminDashboardHttpTest {
     private static final String JDBC_URL = DATABASE_URL + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
     private static final String JWT_SECRET = generateTestSigningKey();
     private static final List<String> ENDPOINTS = List.of("/api/admin/dashboard", "/api/admin/empresas", "/api/admin/usuarios",
-        "/api/admin/suscripciones", "/api/admin/pagos");
+        "/api/admin/suscripciones", "/api/admin/pagos", "/api/admin/pagos/configuracion");
 
     @Autowired private MockMvc mockMvc;
     @Autowired private JwtService jwtService;
@@ -47,6 +47,10 @@ class SuperAdminDashboardHttpTest {
         registry.add("spring.datasource.url", () -> JDBC_URL);
         registry.add("app.security.jwt-secret", () -> JWT_SECRET);
         registry.add("app.security.jwt-expiration-ms", () -> 3_600_000L);
+        registry.add("app.stripe.secret-key", () -> "");
+        registry.add("app.stripe.webhook-secret", () -> "");
+        registry.add("app.stripe.price-basic", () -> "");
+        registry.add("app.stripe.price-pro", () -> "");
     }
 
     @Test
@@ -54,9 +58,14 @@ class SuperAdminDashboardHttpTest {
     void allReadEndpointsRequireExactlyTheSuperAdminAuthority() throws Exception {
         for (String endpoint : ENDPOINTS) {
             mockMvc.perform(get(endpoint))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
             mockMvc.perform(get(endpoint).header("Authorization", bearer(false)))
                 .andExpect(status().isForbidden());
+            for (String role : List.of("JEFE_DE_OBRA", "RESPONSABLE", "CONSULTA")) {
+                String token = jwtService.generate(1L, 1L, "platform-test@example.invalid", role, false);
+                mockMvc.perform(get(endpoint).header("Authorization", "Bearer " + token))
+                    .andExpect(status().isForbidden());
+            }
             mockMvc.perform(get(endpoint).header("Authorization", bearer(true)))
                 .andExpect(status().isOk());
         }
@@ -65,7 +74,7 @@ class SuperAdminDashboardHttpTest {
     @Test
     @SuppressWarnings("null")
     void pagedEndpointsReturnExplicitPaginationMetadata() throws Exception {
-        for (String endpoint : ENDPOINTS.subList(1, ENDPOINTS.size())) {
+        for (String endpoint : ENDPOINTS.subList(1, ENDPOINTS.size() - 1)) {
             mockMvc.perform(get(endpoint).header("Authorization", bearer(true)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())

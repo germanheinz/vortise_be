@@ -38,14 +38,14 @@ public class PlanSuscripcionSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
         boolean crearPlanesAusentes = seedRunPolicy.shouldRunSeeders();
-        sincronizar(new PlanSuscripcion("BASIC", "Basic", 900, "usd", 7, 1, List.of(
+        sincronizar(new PlanSuscripcion("BASIC", "Basic", 5000, "usd", 7, 1, List.of(
             "Gestión de empresas y obras",
             "Cronograma y Gantt",
             "Restricciones y tareas",
             "Registro de horas",
             "Dashboard de obra",
             "7 días de prueba gratis")), 100, crearPlanesAusentes);
-        sincronizar(new PlanSuscripcion("PRO", "Pro", 1900, "usd", 0, 2, List.of(
+        sincronizar(new PlanSuscripcion("PRO", "Pro", 9900, "usd", 0, 2, List.of(
             "Todo lo incluido en Basic",
             "Reportes y rendimientos",
             "Importación desde Excel",
@@ -61,7 +61,9 @@ public class PlanSuscripcionSeeder implements CommandLineRunner {
             plan.setStripePriceId(precioConfigurado(plan.getCodigo()));
             planes.save(plan);
         } else {
-            boolean precioLegacyReconocido = plan.getPrecioMensualCentavos() == precioLegacy;
+            boolean precioLegacyReconocido = plan.getPrecioMensualCentavos() == precioLegacy
+                || ("usd".equalsIgnoreCase(plan.getMoneda())
+                    && plan.getPrecioMensualCentavos() == ("BASIC".equals(plan.getCodigo()) ? 900 : 1900));
             boolean precioOficial = plan.getPrecioMensualCentavos() == oferta.getPrecioMensualCentavos()
                 && oferta.getMoneda().equalsIgnoreCase(plan.getMoneda());
             if (precioLegacyReconocido || precioOficial) {

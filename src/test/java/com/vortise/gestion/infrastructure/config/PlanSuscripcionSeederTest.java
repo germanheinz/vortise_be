@@ -35,8 +35,8 @@ class PlanSuscripcionSeederTest {
         assertEquals(List.of("BASIC", "PRO"), guardados.stream().map(plan -> plan.getCodigo()).toList());
         assertEquals(7, guardados.get(0).getDiasPrueba());
         assertEquals(0, guardados.get(1).getDiasPrueba());
-        assertEquals(900, guardados.get(0).getPrecioMensualCentavos());
-        assertEquals(1900, guardados.get(1).getPrecioMensualCentavos());
+        assertEquals(5000, guardados.get(0).getPrecioMensualCentavos());
+        assertEquals(9900, guardados.get(1).getPrecioMensualCentavos());
         assertEquals("usd", guardados.get(0).getMoneda());
         assertEquals("usd", guardados.get(1).getMoneda());
         assertEquals("Gestión de empresas y obras", guardados.get(0).getBeneficios().get(0));
@@ -72,12 +72,26 @@ class PlanSuscripcionSeederTest {
 
         new PlanSuscripcionSeeder(planes, "price_basic_new", "").run();
 
-        assertEquals(900, basic.getPrecioMensualCentavos());
+        assertEquals(5000, basic.getPrecioMensualCentavos());
         assertEquals("price_basic_new", basic.getStripePriceId());
         assertEquals("Basic manual", basic.getNombre());
         assertEquals(List.of("Custom"), basic.getBeneficios());
-        assertEquals(1900, pro.getPrecioMensualCentavos());
+        assertEquals(9900, pro.getPrecioMensualCentavos());
         assertEquals(null, pro.getStripePriceId());
+    }
+
+    @Test
+    void upgradesPreviousOfficialUsdPricesWithoutChangingTrialOrBenefits() {
+        PlanSuscripcion basic = new PlanSuscripcion("BASIC", "Basic", 900, "usd", 7, 1, List.of("Custom"));
+        PlanSuscripcion pro = new PlanSuscripcion("PRO", "Pro", 1900, "usd", 0, 2, List.of("Custom"));
+        basic.setStripePriceId("price_old");
+        guardados.addAll(List.of(basic, pro));
+        new PlanSuscripcionSeeder(planes, "", "", () -> false).run();
+        assertEquals(5000, basic.getPrecioMensualCentavos());
+        assertEquals(9900, pro.getPrecioMensualCentavos());
+        assertEquals(null, basic.getStripePriceId());
+        assertEquals(7, basic.getDiasPrueba());
+        assertEquals(List.of("Custom"), basic.getBeneficios());
     }
 
     @Test
@@ -102,7 +116,7 @@ class PlanSuscripcionSeederTest {
 
         new PlanSuscripcionSeeder(planes, "", "", skipCreation).run();
 
-        assertEquals(900, basic.getPrecioMensualCentavos());
+        assertEquals(5000, basic.getPrecioMensualCentavos());
         assertEquals(List.of("BASIC"), guardados.stream().map(plan -> plan.getCodigo()).toList());
         verify(planes, org.mockito.Mockito.never()).save(org.mockito.ArgumentMatchers.argThat(plan -> plan.getCodigo().equals("PRO")));
     }
