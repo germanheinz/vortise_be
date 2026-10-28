@@ -15,9 +15,9 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -37,10 +37,10 @@ class SuperAdminDashboardHttpTest {
     @Autowired private JwtService jwtService;
     @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager em;
     @Autowired private org.springframework.transaction.PlatformTransactionManager tm;
-    @MockBean private DataSeeder dataSeeder;
-    @MockBean private UsuarioDemoSeeder usuarioDemoSeeder;
-    @MockBean private PlanSuscripcionSeeder planSuscripcionSeeder;
-    @MockBean private SuperAdminSeeder superAdminSeeder;
+    @MockitoBean private DataSeeder dataSeeder;
+    @MockitoBean private UsuarioDemoSeeder usuarioDemoSeeder;
+    @MockitoBean private PlanSuscripcionSeeder planSuscripcionSeeder;
+    @MockitoBean private SuperAdminSeeder superAdminSeeder;
 
     @DynamicPropertySource
     static void isolatedProperties(DynamicPropertyRegistry registry) {

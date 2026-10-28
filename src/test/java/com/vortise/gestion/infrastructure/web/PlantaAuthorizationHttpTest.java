@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.vortise.gestion.application.dto.PlantaDto;
 import com.vortise.gestion.application.usecase.JwtService;
 import com.vortise.gestion.domain.model.Empresa;
@@ -43,11 +43,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.MockMvcPrint;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.MockMvcPrint;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -93,19 +93,19 @@ class PlantaAuthorizationHttpTest {
     private EntityManager entityManager;
 
     // Observe the real repository; never stub persistence or ownership decisions.
-    @SpyBean
+    @MockitoSpyBean
     private PlantaRepository plantaRepository;
 
     private Fixtures fixtures;
 
     // Replace startup runners before the context executes them; no seed writes.
-    @MockBean
+    @MockitoBean
     private DataSeeder dataSeeder;
 
-    @MockBean
+    @MockitoBean
     private UsuarioDemoSeeder usuarioDemoSeeder;
 
-    @MockBean
+    @MockitoBean
     private com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
 
     @DynamicPropertySource

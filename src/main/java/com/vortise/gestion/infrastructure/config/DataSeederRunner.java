@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 /** Runs synthetic fixture seeding only in non-staging environments. */
 @Component
-@Profile("!staging")
+@Profile("!staging & !prod & !production")
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class DataSeederRunner implements CommandLineRunner {
     private final DataSeeder dataSeeder;

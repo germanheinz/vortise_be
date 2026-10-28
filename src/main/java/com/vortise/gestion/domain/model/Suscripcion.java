@@ -22,6 +22,7 @@ public class Suscripcion {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.VARCHAR)
     @Enumerated(EnumType.STRING) @Column(nullable = false) private TitularSuscripcion titular;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "usuario_id", unique = true) private UsuarioEmpresa usuario;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "empresa_id", unique = true) private Empresa empresa;

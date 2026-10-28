@@ -42,6 +42,7 @@ public class PresupuestoLinea {
     private String funcion;
     private String sistema;
     private Double m2;
+    @jakarta.persistence.Column(name = "hh_porm2")
     private Double hhPorM2;
     private Double precioPorHh;
     private Double precioPorHhUsd;

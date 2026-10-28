@@ -17,6 +17,15 @@ spring:
       ddl-auto: create-drop
     show-sql: false
 app:
+  # Never inherit configured administrative accounts or external payment settings.
+  superadmin:
+    email: ""
+    password: ""
+  stripe:
+    secret-key: ""
+    webhook-secret: ""
+    price-basic: ""
+    price-pro: ""
   password-mail:
     enabled: false
   security:

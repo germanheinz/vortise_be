@@ -11,12 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@Profile("staging")
+@Profile({"staging", "prod", "production"})
 @RequestMapping("/api/admin/backup")
 @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
 public class AdminBackupDisabledController {
     private static final String MESSAGE =
-        "El backup y restore lógico solo está disponible con H2 local; está deshabilitado en staging PostgreSQL.";
+        "El backup y restore lógico solo está disponible con H2 local; está deshabilitado en entornos desplegados con PostgreSQL.";
 
     @GetMapping
     public void exportBackup() {

@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
 
 class AdminBackupDisabledControllerTest {
     @Test
-    void backupRoutesAreAvailableOnlyOutsideStagingAndHaveAnExplicitStagingReplacement() {
+    void backupRoutesAreLocalOnlyAndHaveAnExplicitDeployedReplacement() {
         Profile h2Controller = AdminBackupController.class.getAnnotation(Profile.class);
         Profile stagingController = AdminBackupDisabledController.class.getAnnotation(Profile.class);
         Profile h2Service = H2LogicalBackupService.class.getAnnotation(Profile.class);
@@ -19,13 +19,13 @@ class AdminBackupDisabledControllerTest {
         assertNotNull(h2Controller);
         assertNotNull(stagingController);
         assertNotNull(h2Service);
-        assertEquals("!staging", h2Controller.value()[0]);
-        assertEquals("staging", stagingController.value()[0]);
-        assertEquals("!staging", h2Service.value()[0]);
+        assertEquals("!staging & !prod & !production", h2Controller.value()[0]);
+        org.junit.jupiter.api.Assertions.assertArrayEquals(new String[]{"staging", "prod", "production"}, stagingController.value());
+        assertEquals("!staging & !prod & !production", h2Service.value()[0]);
     }
 
     @Test
-    void stagingExportAndRestoreFailWithClearUnavailableErrors() {
+    void deployedExportAndRestoreFailWithClearUnavailableErrors() {
         AdminBackupDisabledController controller = new AdminBackupDisabledController();
 
         FeatureUnavailableException export = assertThrows(FeatureUnavailableException.class, controller::exportBackup);
@@ -33,7 +33,7 @@ class AdminBackupDisabledControllerTest {
 
         assertEquals(export.getMessage(), restore.getMessage());
         org.junit.jupiter.api.Assertions.assertTrue(export.getMessage().contains("H2 local"));
-        org.junit.jupiter.api.Assertions.assertTrue(export.getMessage().contains("staging PostgreSQL"));
+        org.junit.jupiter.api.Assertions.assertTrue(export.getMessage().contains("entornos desplegados con PostgreSQL"));
         var response = new GlobalExceptionHandler().handleFeatureUnavailable(export);
         assertEquals(503, response.getStatusCode().value());
         assertEquals(export.getMessage(), java.util.Objects.requireNonNull(response.getBody()).message());

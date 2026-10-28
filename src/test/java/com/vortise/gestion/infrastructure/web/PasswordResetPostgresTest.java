@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
 import static org.junit.jupiter.api.Assertions.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.vortise.gestion.application.usecase.PasswordResetTransactions;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.annotation.DirtiesContext;
@@ -32,7 +32,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 class PasswordResetPostgresTest {
     private static final String URL = "jdbc:postgresql://127.0.0.1:15434/auth008_test";
     @DynamicPropertySource static void isolation(DynamicPropertyRegistry p) throws Exception {
-        var values = new ObjectMapper().readTree(Files.readString(Path.of("/private/tmp/auth008-pg.json")));
+        var values = tools.jackson.databind.json.JsonMapper.builder().build().readTree(Files.readString(Path.of("/private/tmp/auth008-pg.json")));
         if (!URL.equals(values.path("url").asText()) || !"auth008_test".equals(values.path("username").asText())) throw new IllegalStateException("Disposable auth database required");
         byte[] bytes = new byte[64]; new SecureRandom().nextBytes(bytes); String key = Base64.getEncoder().encodeToString(bytes);
         p.add("spring.datasource.url", () -> URL); p.add("spring.datasource.username", () -> "auth008_test");
@@ -49,10 +49,10 @@ class PasswordResetPostgresTest {
         for (String name : List.of("secret-key", "webhook-secret", "price-basic", "price-pro")) p.add("app.stripe." + name, () -> "");
         p.add("logging.level.org.hibernate.SQL", () -> "OFF"); p.add("logging.level.org.hibernate.orm.jdbc.bind", () -> "OFF");
     }
-    @MockBean DataSeeder dataSeeder;
-    @MockBean UsuarioDemoSeeder demoSeeder;
-    @MockBean PlanSuscripcionSeeder planSeeder;
-    @MockBean SuperAdminSeeder adminSeeder;
+    @MockitoBean DataSeeder dataSeeder;
+    @MockitoBean UsuarioDemoSeeder demoSeeder;
+    @MockitoBean PlanSuscripcionSeeder planSeeder;
+    @MockitoBean SuperAdminSeeder adminSeeder;
     @Autowired DataSource source;
     @Autowired JdbcTemplate jdbc;
     @Autowired EntityManager em;

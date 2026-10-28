@@ -87,6 +87,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value={Exception.class})
     public ResponseEntity<ErrorResponseDto> handleGeneral(Exception ex) {
-        return ResponseEntity.status((HttpStatusCode)HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponseDto(500, "Internal Server Error", ex.getMessage()));
+        return ResponseEntity.status((HttpStatusCode)HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponseDto(500, "Internal Server Error", "No pudimos completar la operación. Intentá nuevamente más tarde."));
     }
 }

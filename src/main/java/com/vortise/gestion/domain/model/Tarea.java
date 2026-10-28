@@ -45,6 +45,7 @@ public class Tarea {
     private String sistema;
     @Column(nullable=false)
     private String nombre;
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.VARCHAR)
     @Enumerated(value=EnumType.STRING)
     private StatusTarea status;
     private Integer avancePct;

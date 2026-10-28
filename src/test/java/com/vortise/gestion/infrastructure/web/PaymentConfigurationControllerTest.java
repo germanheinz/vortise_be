@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
 import static org.junit.jupiter.api.Assertions.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.access.prepost.PreAuthorize;
 
@@ -11,7 +11,7 @@ class PaymentConfigurationControllerTest {
         assertTrue(dto.apiKeyPresent()); assertTrue(dto.webhookSecretPresent());
         assertTrue(dto.basicPricePresent()); assertTrue(dto.proPricePresent());
         assertTrue(dto.paymentsConfigured()); assertEquals("test", dto.mode());
-        String json = new ObjectMapper().findAndRegisterModules().writeValueAsString(dto);
+        String json = tools.jackson.databind.json.JsonMapper.builder().findAndAddModules().build().writeValueAsString(dto);
         assertFalse(json.contains("fixture")); assertFalse(json.contains("sk_test_"));
     }
     @Test void missingConfigurationAndUnknownModeAreExplicit() {

@@ -1,4 +1,7 @@
 spring:
+  jackson:
+    # Preserve Boot 3 JSON defaults while using the supported Jackson 3 mapper.
+    use-jackson2-defaults: true
   mail:
     port: 587
     properties:
