@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -26,16 +26,16 @@ import org.springframework.transaction.PlatformTransactionManager;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @EnabledIfSystemProperty(named = "payments.pg.enabled", matches = "true")
 class PaymentsPostgresTest {
-    @MockBean DataSeeder dataSeeder;
-    @MockBean UsuarioDemoSeeder usuarioDemoSeeder;
-    @MockBean PlanSuscripcionSeeder planSeeder;
-    @MockBean SuperAdminSeeder superSeeder;
+    @MockitoBean DataSeeder dataSeeder;
+    @MockitoBean UsuarioDemoSeeder usuarioDemoSeeder;
+    @MockitoBean PlanSuscripcionSeeder planSeeder;
+    @MockitoBean SuperAdminSeeder superSeeder;
     @Autowired EntityManager em;
     @Autowired PlatformTransactionManager tm;
     @Autowired PagoSuscripcionRepository pagos;
     @Autowired SuscripcionRepository suscripciones;
     @Autowired UsuarioEmpresaRepository usuarios;
-    @MockBean StripeGateway stripe;
+    @MockitoBean StripeGateway stripe;
     @Autowired StripeWebhookUseCase webhook;
 
     @DynamicPropertySource

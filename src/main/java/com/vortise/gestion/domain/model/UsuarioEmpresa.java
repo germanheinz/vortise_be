@@ -23,6 +23,7 @@ public class UsuarioEmpresa {
     @Column(nullable = false, unique = true) private String email;
     @Column(nullable = false) private String nombre;
     @Column(nullable = false) private String passwordHash;
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.VARCHAR)
     @Enumerated(EnumType.STRING) @Column(nullable = false) private RolEmpresa rol;
     @Column(nullable = false) private boolean activo = true;
     @Column(nullable = false) private boolean superAdmin = false;

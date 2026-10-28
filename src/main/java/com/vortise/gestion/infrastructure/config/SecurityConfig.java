@@ -3,6 +3,7 @@ package com.vortise.gestion.infrastructure.config;
 import com.vortise.gestion.infrastructure.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -32,7 +33,11 @@ public class SecurityConfig {
                     response.getWriter().write("{\"status\":403,\"error\":\"Forbidden\",\"message\":\"No tenés permiso para esta acción.\"}");
                 }))
             .authorizeHttpRequests(auth -> auth.requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/auth/**", "/actuator/health").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
+                .requestMatchers(EndpointRequest.to("metrics").withHttpMethod(org.springframework.http.HttpMethod.GET)).hasAuthority("ROLE_SUPER_ADMIN")
+                .requestMatchers(EndpointRequest.toAnyEndpoint()).denyAll()
+                .requestMatchers("/actuator", "/actuator/**").denyAll()
                 // Authenticated by the Stripe-Signature header instead of a JWT.
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/stripe/webhook").permitAll()
                 .anyRequest().authenticated())

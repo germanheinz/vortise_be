@@ -22,7 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
-@Profile("!staging")
+@Profile("!staging & !prod & !production & !e2e-local")
 @RequestMapping("/api/admin/backup")
 @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
 public class AdminBackupController {

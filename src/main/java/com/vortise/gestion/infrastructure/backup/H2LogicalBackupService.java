@@ -1,14 +1,13 @@
 package com.vortise.gestion.infrastructure.backup;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Table;
 import jakarta.persistence.metamodel.EntityType;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -43,7 +42,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Profile("!staging")
+@Profile("!staging & !prod & !production & !e2e-local")
 public class H2LogicalBackupService {
     private static final int FORMAT_VERSION = 1;
     public static final int MAX_BACKUP_BYTES = 50 * 1024 * 1024;
@@ -104,7 +103,7 @@ public class H2LogicalBackupService {
                 throw new IllegalStateException("El respaldo supera el máximo de 50 MiB compatible con la restauración");
             }
             return content;
-        } catch (SQLException | JsonProcessingException ex) {
+        } catch (SQLException | JacksonException ex) {
             throw new IllegalStateException("No se pudo generar el respaldo lógico", ex);
         }
     }
@@ -117,7 +116,7 @@ public class H2LogicalBackupService {
         final JsonNode root;
         try {
             root = objectMapper.readTree(content);
-        } catch (IOException ex) {
+        } catch (JacksonException ex) {
             throw new BackupValidationException("El archivo no contiene JSON válido", ex);
         }
         try (Connection connection = dataSource.getConnection()) {
@@ -643,7 +642,7 @@ public class H2LogicalBackupService {
     private void requireFields(JsonNode node, Set<String> expected, String description) {
         if (node == null || !node.isObject()) throw new BackupValidationException("Objeto " + description + " inválido");
         Set<String> actual = new HashSet<>();
-        node.fieldNames().forEachRemaining(actual::add);
+        node.propertyNames().forEach(actual::add);
         if (!actual.equals(expected)) throw new BackupValidationException("Campos desconocidos o faltantes en " + description);
     }
 

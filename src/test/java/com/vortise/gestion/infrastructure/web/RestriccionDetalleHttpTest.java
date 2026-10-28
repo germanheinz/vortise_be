@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.vortise.gestion.application.usecase.JwtService;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.infrastructure.config.DataSeeder;
@@ -13,9 +13,9 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.*;
+import org.springframework.boot.webmvc.test.autoconfigure.*;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.*;
@@ -41,9 +41,9 @@ class RestriccionDetalleHttpTest {
     @Autowired JwtService jwt;
     @Autowired DataSource source;
     @PersistenceContext EntityManager em;
-    @MockBean DataSeeder dataSeeder;
-    @MockBean UsuarioDemoSeeder usuarioDemoSeeder;
-    @MockBean com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
+    @MockitoBean DataSeeder dataSeeder;
+    @MockitoBean UsuarioDemoSeeder usuarioDemoSeeder;
+    @MockitoBean com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
     private Proyecto own, other;
     private Long restrictionId, foreignRestrictionId;
     private String token;

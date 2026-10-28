@@ -18,9 +18,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
 import com.vortise.gestion.application.usecase.JwtService;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
@@ -38,10 +38,10 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -69,11 +69,11 @@ class H2LogicalBackupHttpTest {
     @Autowired private JdbcTemplate jdbc;
     @Autowired private EmpresaRepository empresas;
 
-    @SpyBean private JdbcTemplate observedJdbc;
-    @MockBean private com.vortise.gestion.infrastructure.config.DataSeeder dataSeeder;
-    @MockBean private com.vortise.gestion.infrastructure.config.UsuarioDemoSeeder usuarioDemoSeeder;
-    @MockBean private com.vortise.gestion.infrastructure.config.SuperAdminSeeder superAdminSeeder;
-    @MockBean private com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
+    @MockitoSpyBean private JdbcTemplate observedJdbc;
+    @MockitoBean private com.vortise.gestion.infrastructure.config.DataSeeder dataSeeder;
+    @MockitoBean private com.vortise.gestion.infrastructure.config.UsuarioDemoSeeder usuarioDemoSeeder;
+    @MockitoBean private com.vortise.gestion.infrastructure.config.SuperAdminSeeder superAdminSeeder;
+    @MockitoBean private com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
 
     @DynamicPropertySource
     static void isolatedProperties(DynamicPropertyRegistry registry) {
@@ -87,7 +87,7 @@ class H2LogicalBackupHttpTest {
     @BeforeEach
     void clearIsolatedDatabase() throws Exception {
         JsonNode empty = objectMapper.readTree(backupService.exportBackup());
-        for (JsonNode table : empty.path("tables")) ((com.fasterxml.jackson.databind.node.ObjectNode) table).set("rows", objectMapper.createArrayNode());
+        for (JsonNode table : empty.path("tables")) ((tools.jackson.databind.node.ObjectNode) table).set("rows", objectMapper.createArrayNode());
         backupService.restore(objectMapper.writeValueAsBytes(empty));
     }
 
@@ -146,7 +146,7 @@ class H2LogicalBackupHttpTest {
                 .header(HttpHeaders.AUTHORIZATION, bearer(true)))
             .andExpect(status().isBadRequest());
 
-        com.fasterxml.jackson.databind.node.ObjectNode mismatched = (com.fasterxml.jackson.databind.node.ObjectNode) objectMapper.readTree(snapshot);
+        tools.jackson.databind.node.ObjectNode mismatched = (tools.jackson.databind.node.ObjectNode) objectMapper.readTree(snapshot);
         mismatched.put("schemaFingerprint", "not-the-current-schema");
         MockMultipartFile wrongSchema = new MockMultipartFile("file", "wrong-schema.json", "application/json",
             objectMapper.writeValueAsBytes(mismatched));
@@ -180,7 +180,7 @@ class H2LogicalBackupHttpTest {
     @Test
     void rejectsRowsWithWrongWidthBeforeAnyDelete() throws Exception {
         insertFixtureRows();
-        com.fasterxml.jackson.databind.node.ObjectNode snapshot = (com.fasterxml.jackson.databind.node.ObjectNode)
+        tools.jackson.databind.node.ObjectNode snapshot = (tools.jackson.databind.node.ObjectNode)
             objectMapper.readTree(backupService.exportBackup());
         ArrayNode rows = (ArrayNode) table(snapshot, "EMPRESAS").path("rows");
         ((ArrayNode) rows.get(0)).remove(0);

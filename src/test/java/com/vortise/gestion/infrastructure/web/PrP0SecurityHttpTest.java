@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.vortise.gestion.application.dto.GastoFijoDto;
 import com.vortise.gestion.application.dto.PresupuestoLineaDto;
 import com.vortise.gestion.application.usecase.JwtService;
@@ -49,11 +49,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.MockMvcPrint;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.MockMvcPrint;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -88,16 +88,16 @@ class PrP0SecurityHttpTest {
     @Autowired private ProductionFeaturePolicy featurePolicy;
     @PersistenceContext private EntityManager entityManager;
 
-    @SpyBean private ProyectoRepository proyectoRepository;
-    @SpyBean private TareaRepository tareaRepository;
-    @SpyBean private PresupuestoLineaRepository presupuestoLineaRepository;
-    @SpyBean private GastoFijoRepository gastoFijoRepository;
-    @SpyBean private IngresoRepository ingresoRepository;
+    @MockitoSpyBean private ProyectoRepository proyectoRepository;
+    @MockitoSpyBean private TareaRepository tareaRepository;
+    @MockitoSpyBean private PresupuestoLineaRepository presupuestoLineaRepository;
+    @MockitoSpyBean private GastoFijoRepository gastoFijoRepository;
+    @MockitoSpyBean private IngresoRepository ingresoRepository;
 
-    @MockBean private DataSeeder dataSeeder;
-    @MockBean private UsuarioDemoSeeder usuarioDemoSeeder;
-    @MockBean private PlanSuscripcionSeeder planSuscripcionSeeder;
-    @MockBean private SuperAdminSeeder superAdminSeeder;
+    @MockitoBean private DataSeeder dataSeeder;
+    @MockitoBean private UsuarioDemoSeeder usuarioDemoSeeder;
+    @MockitoBean private PlanSuscripcionSeeder planSuscripcionSeeder;
+    @MockitoBean private SuperAdminSeeder superAdminSeeder;
 
     private Fixtures fixtures;
 

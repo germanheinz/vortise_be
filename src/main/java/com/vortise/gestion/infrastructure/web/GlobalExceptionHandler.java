@@ -29,6 +29,7 @@ import org.springframework.security.access.AccessDeniedException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
     @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
     public ResponseEntity<ErrorResponseDto> handleAuthentication(org.springframework.security.core.AuthenticationException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDto(401, "Unauthorized", "Email o contraseña incorrectos"));
@@ -87,6 +88,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value={Exception.class})
     public ResponseEntity<ErrorResponseDto> handleGeneral(Exception ex) {
-        return ResponseEntity.status((HttpStatusCode)HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponseDto(500, "Internal Server Error", ex.getMessage()));
+        log.atError().addKeyValue("exception_type", ex.getClass().getSimpleName()).log("unexpected_server_error");
+        return ResponseEntity.status((HttpStatusCode)HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponseDto(500, "Internal Server Error", "No pudimos completar la operación. Intentá nuevamente más tarde."));
     }
 }

@@ -7,9 +7,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import java.util.List;
 
-/** Validates staging datasource inputs before DataSource or JPA beans can initialize. */
+/** Validates deployed datasource inputs before DataSource or JPA beans can initialize. */
 @Configuration(proxyBeanMethods = false)
-@Profile("staging")
+@Profile({"staging", "prod", "production", "e2e-local"})
 public class StagingPostgresConfiguration {
     @Bean
     static BeanFactoryPostProcessor stagingPostgresConfigurationGuard(Environment environment) {
@@ -41,24 +41,33 @@ public class StagingPostgresConfiguration {
         if (url == null || url.isBlank() || username == null || username.isBlank()
                 || password == null || password.isBlank()) {
             throw new IllegalStateException(
-                "Staging requires non-empty APP_DATABASE_JDBC_URL, APP_DATABASE_USERNAME and APP_DATABASE_PASSWORD"
+                "Deployed environment requires non-empty APP_DATABASE_JDBC_URL, APP_DATABASE_USERNAME and APP_DATABASE_PASSWORD"
             );
         }
         if (!url.startsWith("jdbc:postgresql:")) {
             throw new IllegalStateException("APP_DATABASE_JDBC_URL must use the PostgreSQL JDBC scheme");
         }
         if (!url.equals(effectiveUrl) || !username.equals(effectiveUsername) || !password.equals(effectivePassword)) {
-            throw new IllegalStateException("Effective staging datasource must exactly match APP_DATABASE_* settings");
+            throw new IllegalStateException("Effective deployed datasource must exactly match APP_DATABASE_* settings");
         }
         if (!"org.postgresql.Driver".equals(driver) || !"never".equalsIgnoreCase(sqlInitMode)
                 || !"validate".equalsIgnoreCase(ddlAuto) || !"true".equalsIgnoreCase(flywayEnabled)
                 || !"false".equalsIgnoreCase(h2ConsoleEnabled) || alternativeDatasourcePath) {
-            throw new IllegalStateException("Staging must use PostgreSQL, Flyway-only schema management and a disabled H2 console");
+            throw new IllegalStateException("Deployed environment must use PostgreSQL, Flyway-only schema management and a disabled H2 console");
         }
     }
 
     private static boolean hasAlternativeDatasourcePath(Environment environment) {
         List<String> forbidden = List.of(
+            "spring.flyway.url",
+            "spring.flyway.user",
+            "spring.flyway.password",
+            "spring.jpa.properties.jakarta.persistence.schema-generation.database.action",
+            "spring.jpa.properties.javax.persistence.schema-generation.database.action",
+            "spring.jpa.properties.hibernate.hbm2ddl.auto",
+            "jakarta.persistence.schema-generation.database.action",
+            "javax.persistence.schema-generation.database.action",
+            "hibernate.hbm2ddl.auto",
             "spring.datasource.hikari.jdbc-url",
             "spring.datasource.hikari.data-source-class-name",
             "spring.datasource.hikari.data-source-properties.url",

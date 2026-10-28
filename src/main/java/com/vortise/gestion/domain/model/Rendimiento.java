@@ -28,7 +28,7 @@ public class Rendimiento {
     private String etapa;
     private String sistema;
     private String rol;
-    @Column(nullable=false)
+    @Column(name = "hh_porm2", nullable=false)
     private Double hhPorM2;
     @Column(nullable=false)
     private Double precioPorHh;
