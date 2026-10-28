@@ -55,7 +55,7 @@ class AutenticacionUseCaseTest {
     void invalidPasswordDoesNotUpdateOrPersistLoginTimestamp() {
         when(passwordEncoder.matches("incorrecta", "hash")).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(org.springframework.security.authentication.BadCredentialsException.class,
             () -> autenticacion.login(new LoginRequestDto("user@example.invalid", "incorrecta")));
 
         verify(usuarios, never()).save(any());
@@ -66,7 +66,7 @@ class AutenticacionUseCaseTest {
     void inactiveUserDoesNotUpdateOrPersistLoginTimestamp() {
         usuario.setActivo(false);
 
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(org.springframework.security.authentication.BadCredentialsException.class,
             () -> autenticacion.login(new LoginRequestDto("user@example.invalid", "correcta")));
 
         verify(passwordEncoder, never()).matches(any(), any());

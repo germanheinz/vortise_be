@@ -124,9 +124,16 @@ public class H2LogicalBackupService {
             requireH2(connection.getMetaData());
             List<TableDefinition> current = discoverTables(connection);
             ParsedBackup parsed = validateBackup(root, current);
+            Map<Long, Long> previousVersions = jdbc.query("SELECT id, session_version FROM usuarios_empresa", rs -> {
+                Map<Long, Long> versions = new HashMap<>();
+                while (rs.next()) versions.put(rs.getLong(1), rs.getLong(2));
+                return versions;
+            });
             List<TableDefinition> insertOrder = dependencyOrder(current);
             List<IdentityRestart> restarts = identityRestarts(parsed.tables(), insertOrder);
 
+            // Restoring an older snapshot must not resurrect recovery links or sessions.
+            jdbc.update("DELETE FROM password_reset_tokens");
             for (int i = insertOrder.size() - 1; i >= 0; i--) {
                 jdbc.update("DELETE FROM " + quote(connection, insertOrder.get(i).name()));
             }
@@ -138,6 +145,17 @@ public class H2LogicalBackupService {
                 jdbc.execute("ALTER TABLE " + quote(connection, restart.table()) + " ALTER COLUMN "
                     + quote(connection, restart.column()) + " RESTART WITH " + restart.nextValue());
             }
+            jdbc.query("SELECT id, session_version FROM usuarios_empresa", rs -> {
+                long id = rs.getLong(1);
+                // Restores can remove/reintroduce an account: a counter based only on current
+                // rows may repeat a generation previously signed into a still-valid JWT.
+                long restored = rs.getLong(2);
+                long previous = previousVersions.getOrDefault(id, 0L);
+                long version;
+                do { version = com.vortise.gestion.domain.model.UsuarioEmpresa.nuevaGeneracionSesion(); }
+                while (version == restored || version == previous);
+                jdbc.update("UPDATE usuarios_empresa SET session_version = ? WHERE id = ?", version, id);
+            });
             return new RestoreSummary(current.size(), parsed.rowCount());
         } catch (SQLException ex) {
             throw new IllegalStateException("No se pudo restaurar el respaldo lógico", ex);
@@ -374,6 +392,7 @@ public class H2LogicalBackupService {
             if (mapping == null || mapping.name().isBlank()) {
                 throw new IllegalStateException("Entidad JPA sin nombre de tabla explícito: " + entity.getName());
             }
+            if (Set.of("password_reset_tokens", "password_reset_quotas").contains(mapping.name())) continue;
             if (!mappedNames.add(mapping.name())) throw new IllegalStateException("Tabla JPA duplicada: " + mapping.name());
             // Element collections are persistent business data too. Omitting
             // refunds would lose history and can block parent-row restoration.

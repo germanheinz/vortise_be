@@ -32,7 +32,14 @@ public interface UsuarioEmpresaRepository {
     List<SuperAdminCreadorProjection> buscarCreadoresSuperAdmin(@Param("usuarioIds") Collection<Long> usuarioIds);
 
     Optional<UsuarioEmpresa> findByEmail(String email);
+    @EntityGraph(attributePaths = "empresa")
     Optional<UsuarioEmpresa> findById(Long id);
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from UsuarioEmpresa u where u.email = :email")
+    Optional<UsuarioEmpresa> bloquearPorEmail(@Param("email") String email);
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from UsuarioEmpresa u where u.id = :id")
+    Optional<UsuarioEmpresa> bloquearPorId(@Param("id") Long id);
     List<UsuarioEmpresa> findByEmpresaId(Long empresaId);
     long countByEmpresaId(Long empresaId);
     long countByEmpresaIdAndActivoTrue(Long empresaId);

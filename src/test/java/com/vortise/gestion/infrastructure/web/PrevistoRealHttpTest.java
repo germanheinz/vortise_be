@@ -69,7 +69,7 @@ class PrevistoRealHttpTest {
         em.persist(new CategoriaManoObraEmpresa(a,"AYUDANTE",1000.,true));
         em.persist(new CalendarioLaboralEmpresa(a));
         em.flush();
-        token = jwt.generate(1L,a.getId(),"comparison@example.invalid","JEFE_DE_OBRA");
+        token = HttpIdentityFixtures.token(em, jwt, a.getId(), RolEmpresa.JEFE_DE_OBRA, false);
     }
     private Proyecto project(Empresa company,String name) {
         var p = new Proyecto(); p.setNombre(name); p.setDireccion("Test"); p.setNumeroProyecto(name);
@@ -98,7 +98,7 @@ class PrevistoRealHttpTest {
         assertEquals(0L,em.createQuery("select count(t) from ObraTarea t",Long.class).getSingleResult());
     }
     @Test void comparisonRequiresAuthenticationAndCompanyAccess() throws Exception {
-        mvc.perform(get(path(own)+"/indicadores")).andExpect(status().isForbidden());
+        mvc.perform(get(path(own)+"/indicadores")).andExpect(status().isUnauthorized());
         mvc.perform(get(path(other)+"/indicadores").header("Authorization","Bearer "+token)).andExpect(status().isForbidden());
     }
     @Test void savingPlanKeepsTaskLinkAndDerivesHours() throws Exception {

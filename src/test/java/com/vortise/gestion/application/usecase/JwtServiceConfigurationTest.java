@@ -13,6 +13,12 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
 class JwtServiceConfigurationTest {
     @Test
+    void rejectsInvalidOrOverOneHourExpiration() {
+        String key = "test-only-signing-key-with-enough-length-1234567890";
+        assertThrows(IllegalStateException.class, () -> new JwtService(key, 0));
+        assertThrows(IllegalStateException.class, () -> new JwtService(key, 3_600_001));
+    }
+    @Test
     void rejectsMissingSigningSecret() {
         assertThrows(IllegalStateException.class, () -> new JwtService("", 60_000));
     }

@@ -22,6 +22,15 @@ public class SecurityConfig {
         return http.csrf(csrf -> csrf.disable())
             .cors(cors -> { })
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(errors -> errors
+                .authenticationEntryPoint((request, response, exception) -> {
+                    response.setStatus(401); response.setCharacterEncoding("UTF-8"); response.setContentType("application/json");
+                    response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Iniciá sesión para continuar.\"}");
+                })
+                .accessDeniedHandler((request, response, exception) -> {
+                    response.setStatus(403); response.setCharacterEncoding("UTF-8"); response.setContentType("application/json");
+                    response.getWriter().write("{\"status\":403,\"error\":\"Forbidden\",\"message\":\"No tenés permiso para esta acción.\"}");
+                }))
             .authorizeHttpRequests(auth -> auth.requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**", "/actuator/health").permitAll()
                 // Authenticated by the Stripe-Signature header instead of a JWT.

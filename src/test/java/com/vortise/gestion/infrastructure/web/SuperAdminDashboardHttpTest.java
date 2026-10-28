@@ -35,6 +35,8 @@ class SuperAdminDashboardHttpTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private JwtService jwtService;
+    @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager em;
+    @Autowired private org.springframework.transaction.PlatformTransactionManager tm;
     @MockBean private DataSeeder dataSeeder;
     @MockBean private UsuarioDemoSeeder usuarioDemoSeeder;
     @MockBean private PlanSuscripcionSeeder planSuscripcionSeeder;
@@ -60,11 +62,11 @@ class SuperAdminDashboardHttpTest {
     void allReadEndpointsRequireExactlyTheSuperAdminAuthority() throws Exception {
         for (String endpoint : ENDPOINTS) {
             mockMvc.perform(get(endpoint))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
             mockMvc.perform(get(endpoint).header("Authorization", bearer(false)))
                 .andExpect(status().isForbidden());
             for (String role : List.of("JEFE_DE_OBRA", "RESPONSABLE", "CONSULTA")) {
-                String token = jwtService.generate(1L, 1L, "platform-test@example.invalid", role, false);
+                String token = identity(role, false);
                 mockMvc.perform(get(endpoint).header("Authorization", "Bearer " + token))
                     .andExpect(status().isForbidden());
             }
@@ -108,8 +110,17 @@ class SuperAdminDashboardHttpTest {
         }
     }
 
+    private String identity(String role, boolean admin) {
+        return new org.springframework.transaction.support.TransactionTemplate(tm).execute(status -> {
+            var company = em.createQuery("select e from Empresa e order by e.id", com.vortise.gestion.domain.model.Empresa.class).setMaxResults(1).getResultStream().findFirst().orElseGet(() -> {
+                var e = new com.vortise.gestion.domain.model.Empresa("HTTP admin fixture", null); em.persist(e); em.flush(); return e;
+            });
+            return HttpIdentityFixtures.token(em, jwtService, company.getId(), com.vortise.gestion.domain.model.RolEmpresa.valueOf(role), admin);
+        });
+    }
+
     private String bearer(boolean superAdmin) {
-        return "Bearer " + jwtService.generate(1L, 1L, "platform-test@example.invalid", "ADMINISTRADOR", superAdmin);
+        return "Bearer " + identity("ADMINISTRADOR", superAdmin);
     }
 
     private static String generateTestSigningKey() {

@@ -17,5 +17,11 @@ spring:
       ddl-auto: create-drop
     show-sql: false
 app:
+  password-mail:
+    enabled: false
   security:
     jwt-secret: ${app.test-isolation.jwt-secret:ISOLATION_CONFIGURATION_REQUIRED}
+logging:
+  level:
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
