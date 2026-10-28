@@ -29,6 +29,10 @@ import org.springframework.security.access.AccessDeniedException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<ErrorResponseDto> handleAuthentication(org.springframework.security.core.AuthenticationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDto(401, "Unauthorized", "Email o contraseña incorrectos"));
+    }
     @ExceptionHandler(value={BackupValidationException.class})
     public ResponseEntity<ErrorResponseDto> handleBackupValidation(BackupValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponseDto(400, "Bad Request", ex.getMessage()));

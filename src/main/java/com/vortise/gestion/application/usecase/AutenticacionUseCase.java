@@ -34,7 +34,7 @@ public class AutenticacionUseCase {
         UsuarioEmpresa usuario = usuarioRepository.findByEmail(request.email().trim().toLowerCase())
             .filter(item -> item.isActivo())
             .filter(item -> passwordEncoder.matches(request.password(), item.getPasswordHash()))
-            .orElseThrow(() -> new IllegalArgumentException("Email o contraseña incorrectos"));
+            .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException("Email o contraseña incorrectos"));
         usuario.setUltimoLoginExitosoEn(Instant.now());
         usuarioRepository.save(usuario);
         return sesion(usuario);
@@ -43,7 +43,7 @@ public class AutenticacionUseCase {
     @Transactional(readOnly = true)
     public LoginResponseDto sesion(UsuarioEmpresa usuario) {
         Optional<Suscripcion> plan = suscripciones.planEfectivo(usuario);
-        return new LoginResponseDto(jwtService.generate(usuario.getId(), usuario.getEmpresa().getId(), usuario.getEmail(), usuario.getRol().name(), usuario.isSuperAdmin()),
+        return new LoginResponseDto(jwtService.generate(usuario.getId(), usuario.getEmpresa().getId(), usuario.getEmail(), usuario.getRol().name(), usuario.isSuperAdmin(), usuario.getSessionVersion()),
             usuario.getId(), usuario.getEmpresa().getId(), usuario.getEmpresa().getNombre(), usuario.getNombre(), usuario.getEmail(), usuario.getRol().name(),
             usuario.isSuperAdmin(), plan.isPresent(), plan.map(s -> s.getPlan().getCodigo()).orElse(null), fotos.existe(usuario.getId()));
     }

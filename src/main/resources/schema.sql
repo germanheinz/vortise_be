@@ -1,4 +1,8 @@
 -- Legacy incremental H2-local schema adjustments only. PostgreSQL staging is managed exclusively by Flyway.
+ALTER TABLE IF EXISTS usuarios_empresa ADD COLUMN IF NOT EXISTS session_version BIGINT DEFAULT 0 NOT NULL;
+ALTER TABLE IF EXISTS usuarios_empresa ADD COLUMN IF NOT EXISTS persistence_version BIGINT DEFAULT 0 NOT NULL;
+CREATE TABLE IF NOT EXISTS password_reset_quotas (clave VARCHAR(72) PRIMARY KEY, inicio TIMESTAMP WITH TIME ZONE NOT NULL, solicitudes INTEGER NOT NULL);
+INSERT INTO password_reset_quotas (clave, inicio, solicitudes) SELECT 'global', CURRENT_TIMESTAMP, 0 WHERE NOT EXISTS (SELECT 1 FROM password_reset_quotas WHERE clave = 'global');
 ALTER TABLE IF EXISTS empresas ADD COLUMN IF NOT EXISTS limite_usuarios INTEGER DEFAULT 5 NOT NULL;
 ALTER TABLE IF EXISTS proyectos ADD COLUMN IF NOT EXISTS responsables_obra VARCHAR(1000);
 ALTER TABLE IF EXISTS proyectos ADD COLUMN IF NOT EXISTS categorias_mano_obra VARCHAR(1000);

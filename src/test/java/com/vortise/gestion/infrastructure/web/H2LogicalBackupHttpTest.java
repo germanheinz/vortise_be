@@ -3,6 +3,8 @@ package com.vortise.gestion.infrastructure.web;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -11,6 +13,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -60,6 +63,8 @@ class H2LogicalBackupHttpTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private JwtService jwtService;
+    @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager em;
+    @Autowired private org.springframework.transaction.PlatformTransactionManager tm;
     @Autowired private H2LogicalBackupService backupService;
     @Autowired private JdbcTemplate jdbc;
     @Autowired private EmpresaRepository empresas;
@@ -99,7 +104,7 @@ class H2LogicalBackupHttpTest {
         assertEquals(1, table(json, "EMPRESAS").path("rows").size());
 
         mockMvc.perform(get("/api/admin/backup"))
-            .andExpect(status().isForbidden());
+            .andExpect(status().isUnauthorized());
         mockMvc.perform(get("/api/admin/backup").header(HttpHeaders.AUTHORIZATION, bearer(false)))
             .andExpect(status().isForbidden());
         var exportResponse = mockMvc.perform(get("/api/admin/backup").header(HttpHeaders.AUTHORIZATION, bearer(true)))
@@ -209,12 +214,59 @@ class H2LogicalBackupHttpTest {
             OffsetDateTime.of(2026, 3, 4, 16, 15, 0, 0, ZoneOffset.ofHours(-3)), 8.0, null);
     }
 
+    @Test
+    void restoreDoesNotResurrectSessionsOrRecoveryLinks() throws Exception {
+        insertFixtureRows(); String old = bearer(true);
+        long user = jwtService.parse(old.substring(7)).get("userId", Number.class).longValue();
+        byte[] snapshot = backupService.exportBackup();
+        JsonNode exported = objectMapper.readTree(snapshot);
+        assertFalse(exported.toString().toLowerCase().contains("password_reset_tokens"));
+        assertFalse(exported.toString().toLowerCase().contains("password_reset_quotas"));
+        jdbc.update("update usuarios_empresa set session_version = 10 where id = ?", user);
+        jdbc.update("insert into password_reset_tokens (usuario_id, token_hash, creado_en, vence_en, session_version) values (?, ?, ?, ?, ?)",
+            user, "a".repeat(64), Instant.now(), Instant.now().plusSeconds(1800), 10L);
+        backupService.restore(snapshot);
+        assertEquals(0, jdbc.queryForObject("select count(*) from password_reset_tokens", Integer.class));
+        assertNotEquals(10L, jdbc.queryForObject("select session_version from usuarios_empresa where id = ?", Long.class, user));
+        mockMvc.perform(get("/api/admin/backup").header(HttpHeaders.AUTHORIZATION, old)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void repeatedRestoreCannotReuseSessionOfAnAccountMissingFromIntermediateSnapshot() throws Exception {
+        byte[] withoutAccount = backupService.exportBackup();
+        insertFixtureRows(); bearer(true);
+        byte[] withAccount = backupService.exportBackup();
+        backupService.restore(withAccount);
+        String signedAfterFirstRestore = bearer(true);
+        mockMvc.perform(get("/api/admin/backup").header(HttpHeaders.AUTHORIZATION, signedAfterFirstRestore)).andExpect(status().isOk());
+        backupService.restore(withoutAccount);
+        mockMvc.perform(get("/api/admin/backup").header(HttpHeaders.AUTHORIZATION, signedAfterFirstRestore)).andExpect(status().isUnauthorized());
+        backupService.restore(withAccount);
+        mockMvc.perform(get("/api/admin/backup").header(HttpHeaders.AUTHORIZATION, signedAfterFirstRestore)).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/admin/backup").header(HttpHeaders.AUTHORIZATION, bearer(true))).andExpect(status().isOk());
+    }
+
+    @Test
+    void registrationAfterEmptyRestoreDoesNotInheritAnOldSessionWithReusedIdentity() throws Exception {
+        byte[] empty = backupService.exportBackup();
+        insertFixtureRows(); String old = bearer(true);
+        var claims = jwtService.parse(old.substring(7));
+        long oldId = claims.get("userId", Number.class).longValue();
+        backupService.restore(empty);
+        byte[] body = objectMapper.writeValueAsBytes(java.util.Map.of("empresaNombre", "New isolated account", "nombre", "New user",
+            "email", claims.getSubject(), "password", "synthetic-new-password"));
+        var response = mockMvc.perform(post("/api/auth/registro").contentType("application/json").content(body))
+            .andExpect(status().isCreated()).andReturn().getResponse().getContentAsByteArray();
+        assertEquals(oldId, objectMapper.readTree(response).path("usuarioId").longValue());
+        mockMvc.perform(get("/api/admin/backup").header(HttpHeaders.AUTHORIZATION, old)).andExpect(status().isUnauthorized());
+    }
+
     private JsonNode table(JsonNode backup, String name) {
         for (JsonNode table : backup.path("tables")) if (name.equalsIgnoreCase(table.path("name").asText())) return table;
         throw new AssertionError("Missing table " + name);
     }
 
     private String bearer(boolean superAdmin) {
-        return "Bearer " + jwtService.generate(1L, 1L, "backup-test@example.invalid", "ADMINISTRADOR", superAdmin);
+        return "Bearer " + new org.springframework.transaction.support.TransactionTemplate(tm).execute(status -> HttpIdentityFixtures.token(em, jwtService, 77L, com.vortise.gestion.domain.model.RolEmpresa.ADMINISTRADOR, superAdmin));
     }
 }

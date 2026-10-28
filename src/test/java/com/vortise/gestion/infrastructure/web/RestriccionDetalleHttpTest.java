@@ -71,7 +71,7 @@ class RestriccionDetalleHttpTest {
         em.persist(new CategoriaManoObraEmpresa(a,"AYUDANTE",1000.,true));
         em.persist(new CalendarioLaboralEmpresa(a));
         em.flush();
-        token = jwt.generate(1L,a.getId(),"comparison@example.invalid","JEFE_DE_OBRA");
+        token = HttpIdentityFixtures.token(em, jwt, a.getId(), RolEmpresa.JEFE_DE_OBRA, false);
         TestTransaction.flagForCommit();
         TestTransaction.end(); // No test transaction may hide lazy loading failures during HTTP requests.
     }
@@ -94,6 +94,6 @@ class RestriccionDetalleHttpTest {
     @Test void foreignCompanyAndAnonymousRequestsRemainDenied() throws Exception {
         mvc.perform(get("/api/restricciones/"+foreignRestrictionId).header("Authorization","Bearer "+token))
             .andExpect(status().isForbidden());
-        mvc.perform(get("/api/restricciones/"+restrictionId)).andExpect(status().isForbidden());
+        mvc.perform(get("/api/restricciones/"+restrictionId)).andExpect(status().isUnauthorized());
     }
 }

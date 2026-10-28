@@ -137,7 +137,7 @@ class PrP0SecurityHttpTest {
     @AfterEach
     void removeFixturesFromVerifiedEphemeralDatabase() {
         transaction().executeWithoutResult(status -> {
-            for (String entity : List.of("PresupuestoLinea", "GastoFijo", "Planta", "Proyecto", "Empresa")) {
+            for (String entity : List.of("PresupuestoLinea", "GastoFijo", "UsuarioEmpresa", "Planta", "Proyecto", "Empresa")) {
                 requireIsolatedDatabaseUnchecked();
                 entityManager.createQuery("delete from " + entity).executeUpdate();
             }
@@ -247,7 +247,7 @@ class PrP0SecurityHttpTest {
     }
 
     private String bearer(Long companyId, RolEmpresa role) {
-        return "Bearer " + jwtService.generate(73L, companyId, "p0-http@example.invalid", role.name());
+        return "Bearer " + transaction().execute(status -> HttpIdentityFixtures.token(entityManager, jwtService, companyId, role, false));
     }
 
     private BudgetState budgetState() {

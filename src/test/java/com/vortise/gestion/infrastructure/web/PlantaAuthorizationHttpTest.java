@@ -146,7 +146,7 @@ class PlantaAuthorizationHttpTest {
     void removeFixtures() {
         transaction().executeWithoutResult(status -> {
             // Bulk cleanup is restricted to the verified ephemeral test database.
-            for (String entity : List.of("Planta", "Proyecto", "Empresa")) {
+            for (String entity : List.of("UsuarioEmpresa", "Planta", "Proyecto", "Empresa")) {
                 requireIsolatedDatabaseUnchecked();
                 entityManager.createQuery("delete from " + entity).executeUpdate();
             }
@@ -248,7 +248,7 @@ class PlantaAuthorizationHttpTest {
     }
 
     private ResultActions request(RolEmpresa role, Operation operation, Long id) throws Exception {
-        String token = jwtService.generate(1L, fixtures.companyId(), "test@example.invalid", role.name());
+        String token = identity(role, false);
         return request(token, operation, fixtures.projectId(), id, validBody()).andExpect(result -> {
             assertNotNull(result.getInterceptors());
             assertTrue(java.util.Arrays.stream(result.getInterceptors())
@@ -272,8 +272,12 @@ class PlantaAuthorizationHttpTest {
         return new PlantaDto(null, null, "Updated", 200.0, 120.0, 80.0, 160.0, 0.8);
     }
 
+    private String identity(RolEmpresa role, boolean admin) {
+        return transaction().execute(status -> HttpIdentityFixtures.token(entityManager, jwtService, fixtures.companyId(), role, admin));
+    }
+
     private String token(RolEmpresa role) {
-        return jwtService.generate(1L, fixtures.companyId(), "test@example.invalid", role.name());
+        return identity(role, false);
     }
 
     enum ProjectDenial { MISSING, COMPANYLESS, INACCESSIBLE }
@@ -318,9 +322,9 @@ class PlantaAuthorizationHttpTest {
         };
         DatabaseState before = snapshot();
         clearInvocations(plantaRepository);
-        // Source-derived existing default: characterize at approved execution, not a policy change.
+        // Authentication failures are now 401; valid but unauthorized users remain 403.
         request(bearer, operation, fixtures.projectId(), fixtures.targetId(), validBody())
-            .andExpect(status().isForbidden())
+            .andExpect(status().isUnauthorized())
             .andExpect(result -> assertNull(result.getHandler(), "Authentication must fail before MVC"));
         assertDeniedState(before, true);
     }
@@ -334,12 +338,12 @@ class PlantaAuthorizationHttpTest {
 
     @ParameterizedTest
     @EnumSource(Operation.class)
-    void signedNonAdminWithoutCompanyPreservesConflictBehavior(Operation operation) throws Exception {
+    void legacyTokenWithoutVersionOrCurrentIdentityIsUnauthorized(Operation operation) throws Exception {
         DatabaseState before = snapshot();
         clearInvocations(plantaRepository);
         request(signedToken(JWT_SECRET, null, Instant.now().plusSeconds(3600)), operation,
             fixtures.projectId(), fixtures.targetId(), validBody())
-            .andExpect(status().isConflict()).andExpect(jsonPath("$.status").value(409));
+            .andExpect(status().isUnauthorized()).andExpect(jsonPath("$.status").value(401));
         assertDeniedState(before, true);
     }
 
@@ -358,12 +362,12 @@ class PlantaAuthorizationHttpTest {
         if (grant == ForeignGrant.CREATOR_ADMIN) {
             transaction().executeWithoutResult(status -> {
                 requireIsolatedDatabaseUnchecked();
-                entityManager.createQuery("update Empresa e set e.creadoPorUsuarioId = 1 where e.identificacionFiscal = 'AUTH-TEST-B'")
-                    .executeUpdate();
+                entityManager.createQuery("update Empresa e set e.creadoPorUsuarioId = :creator where e.identificacionFiscal = 'AUTH-TEST-B'")
+                    .setParameter("creator", HttpIdentityFixtures.user(entityManager, fixtures.companyId(), RolEmpresa.ADMINISTRADOR, false).getId()).executeUpdate();
             });
             bearer = token(RolEmpresa.ADMINISTRADOR);
         } else {
-            bearer = jwtService.generate(1L, fixtures.companyId(), "test@example.invalid", RolEmpresa.ADMINISTRADOR.name(), true);
+            bearer = identity(RolEmpresa.ADMINISTRADOR, true);
         }
         DatabaseState before = snapshot();
         clearInvocations(plantaRepository);
