@@ -28,6 +28,18 @@ class E2eLocalConfigurationTest {
             .postProcessBeanFactory(new org.springframework.beans.factory.support.DefaultListableBeanFactory()));
     }
 
+    @Test void acceptsLinuxTemporaryDirectoryAndRejectsEscapes() throws Exception {
+        for (String path : new String[]{"/tmp/e2e10-ci-test/uploads", "/private/tmp/e2e10-macos-test/uploads"}) {
+            var env = valid().withProperty("APP_E2E_UPLOADS_DIR", path).withProperty("app.uploads.dir", path);
+            assertDoesNotThrow(() -> E2eLocalConfiguration.validate(env));
+        }
+        for (String path : new String[]{"/tmp/uploads", "/tmp/e2e10-ci/../uploads",
+                "/tmp/e2e10-ci/uploads/", "/home/runner/e2e10-ci/uploads", "/tmp/e2e10-/uploads"}) {
+            var env = valid().withProperty("APP_E2E_UPLOADS_DIR", path).withProperty("app.uploads.dir", path);
+            assertThrows(IllegalStateException.class, () -> E2eLocalConfiguration.validate(env));
+        }
+    }
+
     @Test void rejectsOverridesWithoutCreatingFactories() throws Exception {
         for (var override : Map.ofEntries(
                 Map.entry("APP_DATABASE_JDBC_URL", "jdbc:postgresql://127.0.0.1:15433/other"),
