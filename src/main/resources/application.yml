@@ -39,6 +39,26 @@ spring:
 server:
   port: ${PORT:8080}
   address: 0.0.0.0
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
+logging:
+  structured:
+    format:
+      console: logstash
 app:
   password-mail:
     enabled: ${APP_PASSWORD_MAIL_ENABLED:false}
