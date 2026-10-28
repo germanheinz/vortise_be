@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@Profile({"staging", "prod", "production"})
+@Profile({"staging", "prod", "production", "e2e-local"})
 @RequestMapping("/api/admin/backup")
 @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
 public class AdminBackupDisabledController {

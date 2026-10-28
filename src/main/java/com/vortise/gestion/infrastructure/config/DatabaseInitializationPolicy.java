@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("!staging & !prod & !production")
+@Profile("!staging & !prod & !production & !e2e-local")
 public class DatabaseInitializationPolicy implements SeedRunPolicy, SmartInitializingSingleton {
     private final DataSource dataSource;
     private volatile boolean freshDatabase;

@@ -31,9 +31,9 @@ class StagingSeedRunPolicyTest {
         assertNotNull(demoRunner);
         assertNotNull(demoUserSeeder);
         assertEquals("staging", staging.value()[0]);
-        assertEquals("!staging & !prod & !production", h2.value()[0]);
-        assertEquals("!staging & !prod & !production", demoRunner.value()[0]);
-        assertEquals("!staging & !prod & !production", demoUserSeeder.value()[0]);
+        assertEquals("!staging & !prod & !production & !e2e-local", h2.value()[0]);
+        assertEquals("!staging & !prod & !production & !e2e-local", demoRunner.value()[0]);
+        assertEquals("!staging & !prod & !production & !e2e-local", demoUserSeeder.value()[0]);
     }
 
     @Test

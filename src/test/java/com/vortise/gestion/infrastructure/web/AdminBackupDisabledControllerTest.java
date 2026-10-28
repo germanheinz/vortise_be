@@ -19,9 +19,9 @@ class AdminBackupDisabledControllerTest {
         assertNotNull(h2Controller);
         assertNotNull(stagingController);
         assertNotNull(h2Service);
-        assertEquals("!staging & !prod & !production", h2Controller.value()[0]);
-        org.junit.jupiter.api.Assertions.assertArrayEquals(new String[]{"staging", "prod", "production"}, stagingController.value());
-        assertEquals("!staging & !prod & !production", h2Service.value()[0]);
+        assertEquals("!staging & !prod & !production & !e2e-local", h2Controller.value()[0]);
+        org.junit.jupiter.api.Assertions.assertArrayEquals(new String[]{"staging", "prod", "production", "e2e-local"}, stagingController.value());
+        assertEquals("!staging & !prod & !production & !e2e-local", h2Service.value()[0]);
     }
 
     @Test

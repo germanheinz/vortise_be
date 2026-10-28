@@ -42,7 +42,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Profile("!staging & !prod & !production")
+@Profile("!staging & !prod & !production & !e2e-local")
 public class H2LogicalBackupService {
     private static final int FORMAT_VERSION = 1;
     public static final int MAX_BACKUP_BYTES = 50 * 1024 * 1024;

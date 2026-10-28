@@ -9,7 +9,7 @@ import java.util.List;
 
 /** Validates deployed datasource inputs before DataSource or JPA beans can initialize. */
 @Configuration(proxyBeanMethods = false)
-@Profile({"staging", "prod", "production"})
+@Profile({"staging", "prod", "production", "e2e-local"})
 public class StagingPostgresConfiguration {
     @Bean
     static BeanFactoryPostProcessor stagingPostgresConfigurationGuard(Environment environment) {

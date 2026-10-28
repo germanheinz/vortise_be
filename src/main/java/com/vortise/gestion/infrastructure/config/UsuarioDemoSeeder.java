@@ -13,7 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("!staging & !prod & !production")
+@Profile("!staging & !prod & !production & !e2e-local")
 @Order(20)
 public class UsuarioDemoSeeder implements CommandLineRunner {
     private final EmpresaRepository empresaRepository;
