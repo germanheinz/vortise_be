@@ -1,0 +1,32 @@
+name: Backend CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    name: Backend verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Verify with ephemeral guarded databases
+        run: >-
+          mvn -B -Dpayments.pg.enabled=false -Dauth.pg.enabled=false
+          -Dproduction09.pg.enabled=false -Dapp.password-mail.enabled=false
+          -Dapp.superadmin.email= -Dapp.superadmin.password=
+          -Dapp.stripe.secret-key= -Dapp.stripe.webhook-secret=
+          -Dapp.stripe.price-basic= -Dapp.stripe.price-pro= verify
