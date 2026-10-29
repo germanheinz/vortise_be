@@ -9,3 +9,10 @@
 .env.payments-local-06
 
 __pycache__/
+
+# Private local environment variants and persistent H2 files
+.env.*
+!.env.example
+!.env.*.example
+/data/*.db
+*.py[cod]
