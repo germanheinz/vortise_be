@@ -259,6 +259,21 @@ def finish(source, target, container_id, owner, env):
         raise DrillError('Resource cleanup requires operator attention; no unrelated resource was removed')
 
 
+def wait_target_ready(container_id, env):
+    # initdb's temporary postmaster accepts Unix sockets before TCP is available.
+    # Also verify the host port and credentials that the actual restore will use.
+    for _ in range(60):
+        ready = subprocess.run(['docker', 'exec', container_id, 'pg_isready', '-h', '127.0.0.1',
+            '-U', TARGET_DB, '-d', TARGET_DB], env=env, capture_output=True)
+        if ready.returncode == 0:
+            connected = subprocess.run(['psql', '-X', '-q', '-A', '-t', '-v', 'ON_ERROR_STOP=1',
+                'service=target', '-c', 'SELECT 1;'], env=env, capture_output=True)
+            if connected.returncode == 0 and connected.stdout.strip() == b'1':
+                return
+        time.sleep(0.5)
+    raise DrillError('Restore target TCP readiness/authentication timed out; no database contents were published')
+
+
 def drill(config):
     with socket.socket() as probe:
         probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -312,11 +327,7 @@ def drill(config):
             container_id = created.stdout.strip()
             inspected = subprocess.run(['docker', 'inspect', container_id], env=env, capture_output=True, text=True, check=True)
             check_target_identity(json.loads(inspected.stdout)[0], owner)
-            for _ in range(60):
-                ready = subprocess.run(['docker', 'exec', container_id, 'pg_isready', '-U', TARGET_DB, '-d', TARGET_DB], env=env, capture_output=True)
-                if ready.returncode == 0: break
-                time.sleep(0.5)
-            else: raise DrillError('Restore target readiness timed out')
+            wait_target_ready(container_id, env)
             target = Session('target', env, folder)
             if target.scalar('SELECT current_database();') != TARGET_DB or target.scalar(TABLES):
                 raise DrillError('Restore target must be the empty owned database')

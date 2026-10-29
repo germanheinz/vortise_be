@@ -108,6 +108,20 @@ class TargetGuardTest(unittest.TestCase):
             with self.assertRaises(drill.DrillError): drill.finish(source, target, 'own-id', 'own', {})
             target.close.assert_called_once(); cleanup.assert_called_once_with('own-id', 'own', {})
 
+    def test_target_waits_for_tcp_and_host_authentication_not_bootstrap_socket(self):
+        ready = subprocess.CompletedProcess([], 0, b'', b'')
+        refused = subprocess.CompletedProcess([], 2, b'', b'private connection error')
+        accepted = subprocess.CompletedProcess([], 0, b'1\n', b'')
+        with patch.object(drill.subprocess, 'run', side_effect=[ready, refused, ready, accepted]) as run, patch.object(drill.time, 'sleep') as sleep:
+            drill.wait_target_ready('owned-id', {})
+            self.assertEqual(run.call_count, 4)
+            for call in (run.call_args_list[0], run.call_args_list[2]):
+                command = call.args[0]
+                self.assertIn('-h', command)
+                self.assertEqual(command[command.index('-h') + 1], '127.0.0.1')
+            self.assertEqual(run.call_args_list[3].args[0][-1], 'SELECT 1;')
+            sleep.assert_called_once_with(0.5)
+
     def test_write_access_is_enabled_only_for_restore_environment(self):
         source = {'PGOPTIONS': '-c default_transaction_read_only=on', 'PGSERVICEFILE': 'private'}
         target = drill.restore_environment(source)
