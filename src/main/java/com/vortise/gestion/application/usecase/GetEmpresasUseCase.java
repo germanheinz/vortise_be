@@ -23,6 +23,10 @@ public class GetEmpresasUseCase {
             return empresaRepository.findAll().stream().map(EmpresaMapper::toDto).toList();
         }
 
+        if (currentTenant.isCollaborator()) {
+            return currentTenant.empresasAccesibles().stream().flatMap(id -> empresaRepository.findById(id).stream())
+                .map(EmpresaMapper::toDto).toList();
+        }
         Long ownId = currentTenant.empresaId();
         List<Empresa> empresas = new ArrayList<>(empresaRepository.findById(ownId).stream().toList());
         if (currentTenant.isAdministrator()) {

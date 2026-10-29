@@ -1,5 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
+import java.util.List;
+
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -98,7 +100,10 @@ class H2LogicalBackupHttpTest {
         JsonNode json = objectMapper.readTree(snapshot);
         assertEquals(1, json.path("version").intValue());
         assertNotNull(json.path("schemaFingerprint").textValue());
-        assertEquals(26, json.path("tables").size());
+        assertEquals(29, json.path("tables").size());
+        for (String name : List.of("INVITACIONES_EQUIPO", "INVITACION_EMPRESAS", "USUARIO_EMPRESA_ACCESOS")) {
+            assertTrue(table(json, name).path("rows").isArray());
+        }
         assertTrue(table(json, "DEVOLUCIONES_PAGO").path("rows").isArray());
         assertEquals(1, table(json, "REGISTROS_HORAS").path("rows").size());
         assertEquals(1, table(json, "EMPRESAS").path("rows").size());
@@ -122,7 +127,7 @@ class H2LogicalBackupHttpTest {
                 .header(HttpHeaders.AUTHORIZATION, bearer(true)))
             .andExpect(status().isOk())
             .andExpect(content().contentType("application/json"))
-            .andExpect(content().json("{\"message\":\"Respaldo restaurado correctamente\",\"summary\":{\"tables\":26,\"rows\":3}}"));
+            .andExpect(content().json("{\"message\":\"Respaldo restaurado correctamente\",\"summary\":{\"tables\":29,\"rows\":3}}"));
 
         assertEquals("Snapshot Company", jdbc.queryForObject("SELECT nombre FROM empresas WHERE id = 77", String.class));
         assertEquals("Snapshot Project", jdbc.queryForObject("SELECT nombre FROM proyectos WHERE id = 91", String.class));

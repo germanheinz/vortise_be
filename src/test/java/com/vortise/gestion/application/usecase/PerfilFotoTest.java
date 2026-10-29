@@ -41,7 +41,7 @@ class PerfilFotoTest {
     @BeforeEach
     void setUp() {
         storage = new FileSystemFotoPerfilStorage(dir.toString());
-        useCase = new PerfilUseCase(usuarios, tenant, mock(SuscripcionConsultaService.class), storage);
+        useCase = new PerfilUseCase(usuarios, tenant, mock(SuscripcionConsultaService.class), storage, mock(EquipoAccessPolicy.class));
         ReflectionTestUtils.setField(usuario, "id", 7L);
         when(tenant.usuarioId()).thenReturn(7L);
         when(usuarios.findById(7L)).thenReturn(Optional.of(usuario));

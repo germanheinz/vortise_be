@@ -16,6 +16,7 @@ public interface EmpresaRepository {
     Page<Empresa> buscarSuperAdmin(@Param("empresaInternaId") Long empresaInternaId, @Param("q") String q, Pageable pageable);
 
     List<Empresa> findAll();
+    List<Empresa> findByIdIn(java.util.Collection<Long> ids);
 
     Optional<Empresa> findById(Long id);
 

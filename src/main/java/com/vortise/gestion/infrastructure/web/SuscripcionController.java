@@ -33,12 +33,15 @@ public class SuscripcionController {
     @GetMapping("/suscripciones/planes")
     public ResponseEntity<List<PlanSuscripcionDto>> planes() { return ResponseEntity.ok(useCase.planes()); }
 
+    @PreAuthorize("!hasRole('COLABORADOR')")
     @GetMapping("/suscripciones/mias")
     public ResponseEntity<MisSuscripcionesDto> mias() { return ResponseEntity.ok(useCase.mias()); }
 
+    @PreAuthorize("!hasRole('COLABORADOR')")
     @PostMapping("/suscripciones/checkout")
     public ResponseEntity<UrlDto> checkout(@Valid @RequestBody CheckoutRequestDto request) { return ResponseEntity.ok(useCase.checkout(request)); }
 
+    @PreAuthorize("!hasRole('COLABORADOR')")
     @PostMapping("/suscripciones/portal")
     public ResponseEntity<UrlDto> portal(@Valid @RequestBody PortalRequestDto request) { return ResponseEntity.ok(useCase.portal(request.titular())); }
 

@@ -40,8 +40,11 @@ public interface UsuarioEmpresaRepository {
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from UsuarioEmpresa u where u.id = :id")
     Optional<UsuarioEmpresa> bloquearPorId(@Param("id") Long id);
-    List<UsuarioEmpresa> findByEmpresaId(Long empresaId);
+    @Query("select distinct u from UsuarioEmpresa u left join u.empresasAsignadas a where u.empresa.id = :empresaId or a = :empresaId")
+    List<UsuarioEmpresa> findByEmpresaId(@Param("empresaId") Long empresaId);
     long countByEmpresaId(Long empresaId);
+    long countByInvitanteIdAndActivoTrue(Long invitanteId);
+    List<UsuarioEmpresa> findByInvitanteId(Long invitanteId);
     long countByEmpresaIdAndActivoTrue(Long empresaId);
     UsuarioEmpresa save(UsuarioEmpresa usuario);
     void deleteById(Long id);

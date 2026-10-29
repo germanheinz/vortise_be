@@ -55,7 +55,7 @@ class CompanyInitializationTest {
         ReflectionTestUtils.setField(user, "id", 2L);
         when(users.findById(2L)).thenReturn(Optional.of(user));
         when(users.save(user)).thenReturn(user);
-        var service = new UsuarioEmpresaUseCase(companies, users, encoder, plans);
+        var service = new UsuarioEmpresaUseCase(companies, users, encoder, plans, org.mockito.Mockito.mock(EquipoAccessPolicy.class), org.mockito.Mockito.mock(com.vortise.gestion.application.port.CurrentIdentity.class));
         assertThrows(SolicitudInvalidaException.class, () -> service.update(1L, 2L,
             new UsuarioEmpresaUpdateDto("Name", RolEmpresa.CONSULTA, true, "a")));
         verify(users, never()).save(any()); verifyNoInteractions(encoder);

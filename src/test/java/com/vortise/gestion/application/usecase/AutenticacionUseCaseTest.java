@@ -33,7 +33,7 @@ class AutenticacionUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        autenticacion = new AutenticacionUseCase(usuarios, passwordEncoder, jwtService, suscripciones, fotos);
+        autenticacion = new AutenticacionUseCase(usuarios, passwordEncoder, jwtService, suscripciones, fotos, org.mockito.Mockito.mock(EquipoAccessPolicy.class));
         Empresa empresa = new Empresa("Empresa", null);
         usuario = new UsuarioEmpresa(empresa, "user@example.invalid", "Usuario", "hash", RolEmpresa.CONSULTA);
         when(usuarios.findByEmail("user@example.invalid")).thenReturn(Optional.of(usuario));

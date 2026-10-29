@@ -48,6 +48,11 @@ public class DeleteEmpresaUseCase {
             throw new ConflictoEstadoException("No se puede eliminar una empresa que tiene obras asociadas");
         }
 
+        var usuarios = usuarioEmpresaRepository.findByEmpresaId(id);
+        if (usuarios.stream().anyMatch(usuario -> usuario.isColaborador()
+                || !usuarioEmpresaRepository.findByInvitanteId(usuario.getId()).isEmpty())) {
+            throw new ConflictoEstadoException("No se puede eliminar una empresa con accesos de equipo asignados.");
+        }
         usuarioEmpresaRepository.findByEmpresaId(id).forEach(usuario -> usuarioEmpresaRepository.deleteById(usuario.getId()));
         responsableEmpresaRepository.findByEmpresaId(id).forEach(item -> responsableEmpresaRepository.deleteById(item.getId()));
         unidadMetricaEmpresaRepository.findByEmpresaId(id).forEach(item -> unidadMetricaEmpresaRepository.deleteById(item.getId()));

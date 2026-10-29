@@ -72,6 +72,7 @@ public class ProyectoController {
     }
 
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("!hasRole('COLABORADOR')")
     public ResponseEntity<ProyectoDto> create(@Valid @RequestBody ProyectoCreateDto dto) {
         return ResponseEntity.status((HttpStatusCode)HttpStatus.CREATED).body(this.createProyectoUseCase.execute(dto));
     }

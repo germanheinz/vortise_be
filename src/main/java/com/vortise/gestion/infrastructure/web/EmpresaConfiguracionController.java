@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/empresas/{empresaId}/configuracion")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+@PreAuthorize("hasAnyRole('ADMINISTRADOR', 'COLABORADOR')")
 public class EmpresaConfiguracionController {
     private final EmpresaConfiguracionUseCase useCase;
     private final InicializarEmpresaUseCase inicializar;
@@ -33,6 +33,7 @@ public class EmpresaConfiguracionController {
         this.useCase = useCase; this.inicializar = inicializar;
     }
 
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PostMapping("/inicializar")
     public ResponseEntity<Void> inicializar(@PathVariable Long empresaId) {
         inicializar.execute(empresaId);
@@ -41,38 +42,49 @@ public class EmpresaConfiguracionController {
 
     @GetMapping("/responsables")
     public ResponseEntity<List<ResponsableEmpresaDto>> getResponsables(@PathVariable Long empresaId) { return ResponseEntity.ok(useCase.getResponsables(empresaId)); }
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PostMapping("/responsables")
     public ResponseEntity<ResponsableEmpresaDto> createResponsable(@PathVariable Long empresaId, @Valid @RequestBody ResponsableEmpresaDto dto) { return ResponseEntity.status(HttpStatus.CREATED).body(useCase.saveResponsable(empresaId, dto)); }
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PutMapping("/responsables/{id}")
     public ResponseEntity<ResponsableEmpresaDto> updateResponsable(@PathVariable Long empresaId, @PathVariable Long id, @Valid @RequestBody ResponsableEmpresaDto dto) { return ResponseEntity.ok(useCase.saveResponsable(empresaId, new ResponsableEmpresaDto(id, dto.rol(), dto.nombre(), dto.email(), dto.telefono()))); }
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @DeleteMapping("/responsables/{id}")
     public ResponseEntity<Void> deleteResponsable(@PathVariable Long empresaId, @PathVariable Long id) { useCase.deleteResponsable(empresaId, id); return ResponseEntity.noContent().build(); }
 
     @GetMapping("/unidades")
     public ResponseEntity<List<UnidadMetricaEmpresaDto>> getUnidades(@PathVariable Long empresaId) { return ResponseEntity.ok(useCase.getUnidades(empresaId)); }
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PostMapping("/unidades")
     public ResponseEntity<UnidadMetricaEmpresaDto> createUnidad(@PathVariable Long empresaId, @Valid @RequestBody UnidadMetricaEmpresaDto dto) { return ResponseEntity.status(HttpStatus.CREATED).body(useCase.saveUnidad(empresaId, dto)); }
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PutMapping("/unidades/{id}")
     public ResponseEntity<UnidadMetricaEmpresaDto> updateUnidad(@PathVariable Long empresaId, @PathVariable Long id, @Valid @RequestBody UnidadMetricaEmpresaDto dto) { return ResponseEntity.ok(useCase.saveUnidad(empresaId, new UnidadMetricaEmpresaDto(id, dto.codigo(), dto.nombre()))); }
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @DeleteMapping("/unidades/{id}")
     public ResponseEntity<Void> deleteUnidad(@PathVariable Long empresaId, @PathVariable Long id) { useCase.deleteUnidad(empresaId, id); return ResponseEntity.noContent().build(); }
 
     @GetMapping("/catalogos/{tipo}")
     public ResponseEntity<List<CatalogoEmpresaDto>> getCatalogo(@PathVariable Long empresaId, @PathVariable String tipo) { return ResponseEntity.ok(useCase.getCatalogo(empresaId, tipo)); }
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PostMapping("/catalogos")
     public ResponseEntity<CatalogoEmpresaDto> createCatalogo(@PathVariable Long empresaId, @Valid @RequestBody CatalogoEmpresaDto dto) { return ResponseEntity.status(HttpStatus.CREATED).body(useCase.saveCatalogo(empresaId, dto)); }
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PutMapping("/catalogos/{id}")
     public ResponseEntity<CatalogoEmpresaDto> updateCatalogo(@PathVariable Long empresaId, @PathVariable Long id, @Valid @RequestBody CatalogoEmpresaDto dto) { return ResponseEntity.ok(useCase.saveCatalogo(empresaId, new CatalogoEmpresaDto(id, dto.tipo(), dto.codigo(), dto.nombre()))); }
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @DeleteMapping("/catalogos/{id}")
     public ResponseEntity<Void> deleteCatalogo(@PathVariable Long empresaId, @PathVariable Long id) { useCase.deleteCatalogo(empresaId, id); return ResponseEntity.noContent().build(); }
 
     @GetMapping("/calendario")
     public ResponseEntity<CalendarioLaboralEmpresaDto> getCalendario(@PathVariable Long empresaId) { return ResponseEntity.ok(useCase.getCalendario(empresaId)); }
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PutMapping("/calendario")
     public ResponseEntity<CalendarioLaboralEmpresaDto> saveCalendario(@PathVariable Long empresaId, @Valid @RequestBody CalendarioLaboralEmpresaDto dto) { return ResponseEntity.ok(useCase.saveCalendario(empresaId, dto)); }
 
     @GetMapping("/categorias-mano-obra")
     public ResponseEntity<List<CategoriaManoObraEmpresaDto>> getCategoriasManoObra(@PathVariable Long empresaId) { return ResponseEntity.ok(useCase.getCategoriasManoObra(empresaId)); }
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PutMapping("/categorias-mano-obra/{id}")
     public ResponseEntity<CategoriaManoObraEmpresaDto> updateCategoriaManoObra(@PathVariable Long empresaId, @PathVariable Long id, @Valid @RequestBody CategoriaManoObraEmpresaDto dto) { return ResponseEntity.ok(useCase.saveCategoriaManoObra(empresaId, id, dto)); }
 }

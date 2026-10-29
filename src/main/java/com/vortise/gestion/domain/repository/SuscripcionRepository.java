@@ -11,6 +11,8 @@ import java.util.Collection;
 import java.util.Optional;
 
 public interface SuscripcionRepository {
+    @EntityGraph(attributePaths = {"empresa", "plan"})
+    List<Suscripcion> findByEmpresaIdIn(Collection<Long> empresaIds);
     default Page<Suscripcion> buscarSuperAdmin(Long empresaInternaId, String estado, Long empresaId, Pageable pageable) {
         return buscarSuperAdminFiltrado(empresaInternaId != null, empresaInternaId == null ? 0L : empresaInternaId,
             estado != null, estado == null ? "" : estado, empresaId != null, empresaId == null ? 0L : empresaId, pageable);

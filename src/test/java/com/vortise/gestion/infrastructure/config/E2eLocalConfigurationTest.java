@@ -16,6 +16,7 @@ class E2eLocalConfigurationTest {
         return env.withProperty("APP_DATABASE_JDBC_URL", "jdbc:postgresql://127.0.0.1:15435/e2e10_test")
             .withProperty("APP_DATABASE_USERNAME", "e2e10_test")
             .withProperty("APP_DATABASE_PASSWORD", "synthetic-configuration-test-only-password")
+            .withProperty("APP_E2E_TEAM_PASSWORD", "synthetic-team-configuration-only-password")
             .withProperty("APP_ALLOWED_ORIGINS", "http://127.0.0.1:3001")
             .withProperty("APP_E2E_UPLOADS_DIR", "/private/tmp/e2e10-configuration-test/uploads")
             .withProperty("APP_FRONTEND_URL", "http://127.0.0.1:3001");
@@ -43,7 +44,7 @@ class E2eLocalConfigurationTest {
     @Test void rejectsOverridesWithoutCreatingFactories() throws Exception {
         for (var override : Map.ofEntries(
                 Map.entry("APP_DATABASE_JDBC_URL", "jdbc:postgresql://127.0.0.1:15433/other"),
-                Map.entry("APP_DATABASE_USERNAME", "other"), Map.entry("APP_DATABASE_PASSWORD", "short"),
+                Map.entry("APP_E2E_TEAM_PASSWORD", "short"), Map.entry("APP_DATABASE_USERNAME", "other"), Map.entry("APP_DATABASE_PASSWORD", "short"),
                 Map.entry("server.address", "0.0.0.0"), Map.entry("server.port", "8080"),
                 Map.entry("APP_ALLOWED_ORIGINS", "https://external.example.invalid"),
                 Map.entry("APP_E2E_UPLOADS_DIR", "./data/uploads/avatars"),
