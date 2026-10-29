@@ -61,9 +61,9 @@ class PasswordResetPostgresTest {
     @Autowired UsuarioEmpresaRepository users;
     @Autowired PasswordResetTransactions resets;
     @Autowired PasswordEncoder encoder;
-    @Test void migratesThroughV9ValidatesAndSerializesTokenConsumption() throws Exception {
+    @Test void migratesThroughV10ValidatesAndSerializesTokenConsumption() throws Exception {
         try (var c = source.getConnection()) { assertEquals(URL, c.getMetaData().getURL()); }
-        assertEquals(9, jdbc.queryForObject("select count(*) from flyway_schema_history where success = true and version is not null", Integer.class));
+        assertEquals(10, jdbc.queryForObject("select count(*) from flyway_schema_history where success = true and version is not null", Integer.class));
         assertEquals(1, jdbc.queryForObject("select count(*) from password_reset_quotas where clave = 'global'", Integer.class));
         String email = "pg-auth-" + UUID.randomUUID() + "@example.invalid";
         Long id = new TransactionTemplate(tm).execute(status -> {

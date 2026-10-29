@@ -23,6 +23,7 @@ public class E2eLocalConfiguration {
             require("jdbc:postgresql://127.0.0.1:15435/e2e10_test".equals(env.getRequiredProperty("APP_DATABASE_JDBC_URL")));
             require("e2e10_test".equals(env.getRequiredProperty("APP_DATABASE_USERNAME")));
             require(env.getRequiredProperty("APP_DATABASE_PASSWORD").length() >= 32);
+            require(env.getRequiredProperty("APP_E2E_TEAM_PASSWORD").length() >= 32);
             require("127.0.0.1".equals(env.getRequiredProperty("server.address")));
             require("18081".equals(env.getRequiredProperty("server.port")));
             require("http://127.0.0.1:3001".equals(env.getRequiredProperty("APP_ALLOWED_ORIGINS")));

@@ -146,7 +146,9 @@ class PlantaAuthorizationHttpTest {
     void removeFixtures() {
         transaction().executeWithoutResult(status -> {
             // Bulk cleanup is restricted to the verified ephemeral test database.
-            for (String entity : List.of("UsuarioEmpresa", "Planta", "Proyecto", "Empresa")) {
+            requireIsolatedDatabaseUnchecked();
+            entityManager.createNativeQuery("delete from usuario_empresa_accesos").executeUpdate();
+            for (String entity : List.of("Suscripcion", "UsuarioEmpresa", "Planta", "Proyecto", "Empresa")) {
                 requireIsolatedDatabaseUnchecked();
                 entityManager.createQuery("delete from " + entity).executeUpdate();
             }

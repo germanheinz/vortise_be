@@ -18,10 +18,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
+    private final com.vortise.gestion.application.usecase.EquipoAccessPolicy equipo;
     private final com.vortise.gestion.domain.repository.UsuarioEmpresaRepository usuarios;
 
-    public JwtAuthenticationFilter(JwtService jwtService, com.vortise.gestion.domain.repository.UsuarioEmpresaRepository usuarios) {
-        this.jwtService = jwtService; this.usuarios = usuarios;
+    public JwtAuthenticationFilter(JwtService jwtService, com.vortise.gestion.domain.repository.UsuarioEmpresaRepository usuarios, com.vortise.gestion.application.usecase.EquipoAccessPolicy equipo) {
+        this.jwtService = jwtService; this.usuarios = usuarios; this.equipo = equipo;
     }
 
     @Override
@@ -36,6 +37,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 var usuario = userId == null || version == null ? null : usuarios.findById(userId.longValue()).orElse(null);
                 if (usuario == null || !usuario.isActivo() || usuario.getSessionVersion() != version.longValue()) {
                     throw new IllegalArgumentException("Invalid session");
+                }
+                if (usuario.isColaborador() && !request.getRequestURI().startsWith("/api/auth/") && equipo.empresasPermitidas(usuario).isEmpty()) {
+                    SecurityContextHolder.clearContext();
+                    response.setStatus(403); response.setCharacterEncoding("UTF-8"); response.setContentType("application/json");
+                    response.getWriter().write("{\"status\":403,\"code\":\"TEAM_PRO_REQUIRED\",\"message\":\"El acceso del equipo está suspendido hasta recuperar Pro.\"}");
+                    return;
                 }
                 var authorities = new java.util.ArrayList<SimpleGrantedAuthority>(List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getRol().name())));
                 if (usuario.isSuperAdmin()) {

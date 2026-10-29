@@ -32,6 +32,20 @@ public class UsuarioEmpresa {
     @Column(nullable = false) private long sessionVersion = nuevaGeneracionSesion();
     @jakarta.persistence.Version private long persistenceVersion;
 
+    @Column(name = "invitante_id") private Long invitanteId;
+    @jakarta.persistence.ElementCollection
+    @jakarta.persistence.CollectionTable(name = "usuario_empresa_accesos", joinColumns = @JoinColumn(name = "usuario_id"),
+        uniqueConstraints = @jakarta.persistence.UniqueConstraint(columnNames = {"usuario_id", "empresa_id"}))
+    @Column(name = "empresa_id", nullable = false)
+    private java.util.Set<Long> empresasAsignadas = new java.util.HashSet<>();
+    public Long getInvitanteId() { return invitanteId; }
+    public java.util.Set<Long> getEmpresasAsignadas() { return java.util.Set.copyOf(empresasAsignadas); }
+    public boolean isColaborador() { return rol == RolEmpresa.COLABORADOR; }
+    public void asignarEquipo(Long titularId, java.util.Set<Long> empresas) {
+        if (titularId == null || empresas == null || empresas.isEmpty()) throw new IllegalArgumentException("Equipo inválido");
+        invitanteId = titularId; empresasAsignadas = new java.util.HashSet<>(empresas); rol = RolEmpresa.COLABORADOR;
+    }
+
     protected UsuarioEmpresa() { }
     public UsuarioEmpresa(Empresa empresa, String email, String nombre, String passwordHash, RolEmpresa rol) { this.empresa = empresa; this.email = email; this.nombre = nombre; this.passwordHash = passwordHash; this.rol = rol; }
     public Long getId() { return id; }

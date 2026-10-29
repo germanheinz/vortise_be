@@ -22,18 +22,20 @@ public class PerfilUseCase {
     private final CurrentIdentity tenant;
     private final SuscripcionConsultaService suscripciones;
     private final FotoPerfilStorage fotos;
+    private final EquipoAccessPolicy equipo;
 
     public PerfilUseCase(UsuarioEmpresaRepository usuarios, CurrentIdentity tenant, SuscripcionConsultaService suscripciones,
-            FotoPerfilStorage fotos) {
-        this.usuarios = usuarios; this.tenant = tenant; this.suscripciones = suscripciones; this.fotos = fotos;
+            FotoPerfilStorage fotos, EquipoAccessPolicy equipo) {
+        this.usuarios = usuarios; this.tenant = tenant; this.suscripciones = suscripciones; this.fotos = fotos; this.equipo = equipo;
     }
 
     @Transactional(readOnly = true)
     public MeDto me() {
         UsuarioEmpresa usuario = usuarioActual();
         Optional<Suscripcion> plan = suscripciones.planEfectivo(usuario);
+        var empresa = usuario.isColaborador() ? equipo.empresaInicial(usuario) : usuario.getEmpresa();
         return new MeDto(usuario.getId(), usuario.getNombre(), usuario.getEmail(), usuario.getRol().name(),
-            usuario.getEmpresa().getId(), usuario.getEmpresa().getNombre(), usuario.isSuperAdmin(),
+            empresa.getId(), empresa.getNombre(), usuario.isSuperAdmin(),
             plan.isPresent(), plan.map(s -> s.getPlan().getCodigo()).orElse(null), plan.map(Suscripcion::getTitular).orElse(null),
             fotos.existe(usuario.getId()));
     }

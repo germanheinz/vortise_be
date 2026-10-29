@@ -45,7 +45,7 @@ class SuscripcionUseCaseTest {
     private final PagoSuscripcionRepository pagos = mock(PagoSuscripcionRepository.class);
     private final CurrentTenantService tenant = mock(CurrentTenantService.class);
     private final StripeGateway stripe = mock(StripeGateway.class);
-    private final SuscripcionConsultaService consulta = new SuscripcionConsultaService(suscripciones, pagos);
+    private final SuscripcionConsultaService consulta = new SuscripcionConsultaService(suscripciones, pagos, org.mockito.Mockito.mock(EquipoAccessPolicy.class));
     private final SuscripcionUseCase useCase = new SuscripcionUseCase(planes, suscripciones, usuarios, consulta, tenant, stripe, "https://app.example/");
 
     private final Empresa empresa = withId(new Empresa("Empresa", null), 10L);

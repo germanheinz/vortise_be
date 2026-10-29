@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ImportController {
     private final ExcelImportService excelImportService;
 
+    @org.springframework.security.access.prepost.PreAuthorize("!hasRole('COLABORADOR')")
     @PostMapping(value={"/excel"})
     public ResponseEntity<Map<String, String>> importExcel(@RequestParam(value="file") MultipartFile file, @RequestParam(value="nombre", defaultValue="Proyecto Importado") String nombre) {
         try {

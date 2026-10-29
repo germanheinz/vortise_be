@@ -19,14 +19,19 @@ import org.springframework.transaction.annotation.Transactional;
 public class SuscripcionConsultaService {
     private final SuscripcionRepository suscripciones;
     private final PagoSuscripcionRepository pagos;
+    private final EquipoAccessPolicy equipo;
 
-    public SuscripcionConsultaService(SuscripcionRepository suscripciones, PagoSuscripcionRepository pagos) {
+    public SuscripcionConsultaService(SuscripcionRepository suscripciones, PagoSuscripcionRepository pagos, EquipoAccessPolicy equipo) {
         this.suscripciones = suscripciones;
-        this.pagos = pagos;
+        this.pagos = pagos; this.equipo = equipo;
     }
 
     /** Best active subscription covering the user: their own or their company's, highest plan level wins. */
     public Optional<Suscripcion> planEfectivo(UsuarioEmpresa usuario) {
+        if (usuario.isColaborador()) {
+            return equipo.empresasPermitidas(usuario).stream()
+                .flatMap(id -> equipo.coberturaPro(usuario.getInvitanteId(), id).stream()).findFirst();
+        }
         Instant now = Instant.now();
         return Stream.concat(suscripciones.findByUsuarioId(usuario.getId()).stream(),
                 suscripciones.findByEmpresaId(usuario.getEmpresa().getId()).stream())
