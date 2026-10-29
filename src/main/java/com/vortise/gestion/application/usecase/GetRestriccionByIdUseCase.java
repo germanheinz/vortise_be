@@ -1,6 +1,7 @@
 package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.RestriccionDto;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.model.RestriccionObra;
 import com.vortise.gestion.domain.repository.RestriccionObraRepository;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,7 @@ public class GetRestriccionByIdUseCase {
 
     public RestriccionDto execute(Long restriccionId) {
         RestriccionObra restriccion = restriccionRepository.findById(restriccionId)
-            .orElseThrow(() -> new IllegalArgumentException("Restriccion no encontrada"));
+            .orElseThrow(() -> new RecursoNoEncontradoException("Restriccion no encontrada"));
         return RestriccionMapper.toDto(restriccion);
     }
 }

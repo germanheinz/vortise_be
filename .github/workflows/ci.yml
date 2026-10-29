@@ -26,7 +26,7 @@ jobs:
       - name: Verify with ephemeral guarded databases
         run: >-
           mvn -B -Dpayments.pg.enabled=false -Dauth.pg.enabled=false
-          -Dproduction09.pg.enabled=false -Dapp.password-mail.enabled=false
+          -Dproduction09.pg.enabled=false -Dquality14.pg.enabled=false -Dapp.password-mail.enabled=false
           -Dapp.superadmin.email= -Dapp.superadmin.password=
           -Dapp.stripe.secret-key= -Dapp.stripe.webhook-secret=
           -Dapp.stripe.price-basic= -Dapp.stripe.price-pro= verify

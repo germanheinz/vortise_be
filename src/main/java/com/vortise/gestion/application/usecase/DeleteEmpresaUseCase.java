@@ -1,10 +1,12 @@
 package com.vortise.gestion.application.usecase;
 
-import com.vortise.gestion.domain.repository.EmpresaRepository;
-import com.vortise.gestion.domain.repository.ProyectoRepository;
+import com.vortise.gestion.application.exception.ConflictoEstadoException;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.repository.CalendarioLaboralEmpresaRepository;
 import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
 import com.vortise.gestion.domain.repository.CategoriaManoObraEmpresaRepository;
+import com.vortise.gestion.domain.repository.EmpresaRepository;
+import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.ResponsableEmpresaRepository;
 import com.vortise.gestion.domain.repository.UnidadMetricaEmpresaRepository;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
@@ -40,10 +42,10 @@ public class DeleteEmpresaUseCase {
     @Transactional
     public void execute(Long id) {
         if (empresaRepository.findById(id).isEmpty()) {
-            throw new IllegalArgumentException("Empresa no encontrada");
+            throw new RecursoNoEncontradoException("Empresa no encontrada");
         }
         if (proyectoRepository.countByEmpresaRelacionadaId(id) > 0) {
-            throw new IllegalStateException("No se puede eliminar una empresa que tiene obras asociadas");
+            throw new ConflictoEstadoException("No se puede eliminar una empresa que tiene obras asociadas");
         }
 
         usuarioEmpresaRepository.findByEmpresaId(id).forEach(usuario -> usuarioEmpresaRepository.deleteById(usuario.getId()));

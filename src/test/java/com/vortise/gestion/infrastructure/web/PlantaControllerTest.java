@@ -1,9 +1,5 @@
 package com.vortise.gestion.infrastructure.web;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 import com.vortise.gestion.application.dto.PlantaDto;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.Planta;
@@ -21,6 +17,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 // Direct controller tests: repository mocks only, no Spring context or database.
 // HTTP exception mapping, bean validation and tenant policy need separate tests.
 class PlantaControllerTest {
@@ -35,7 +35,13 @@ class PlantaControllerTest {
     void setUp() {
         plantas = mock(PlantaRepository.class);
         proyectos = mock(ProyectoRepository.class);
-        controller = new PlantaController(plantas, proyectos);
+        var identity = mock(com.vortise.gestion.application.port.CurrentIdentity.class);
+        when(proyectos.bloquearPorId(any())).thenAnswer(invocation -> {
+            Empresa empresa = new Empresa("Own", "TEST-OWN");
+            org.springframework.test.util.ReflectionTestUtils.setField(empresa, "id", 1L);
+            return Optional.of(project(invocation.getArgument(0), empresa));
+        });
+        controller = new PlantaController(new com.vortise.gestion.application.usecase.PlantaUseCase(plantas, proyectos, identity));
     }
 
     @Test
@@ -60,7 +66,7 @@ class PlantaControllerTest {
         assertEquals(expected, response.getBody());
         verify(plantas, never()).deleteById(any());
         verifyNoMoreInteractions(plantas);
-        verifyNoInteractions(proyectos);
+        verify(proyectos).bloquearPorId(any());
     }
 
     @Test
@@ -79,7 +85,7 @@ class PlantaControllerTest {
         order.verify(plantas).deleteById(PLANTA_ID);
         verify(plantas, never()).save(any());
         verifyNoMoreInteractions(plantas);
-        verifyNoInteractions(proyectos);
+        verify(proyectos).bloquearPorId(any());
         assertEquals(before, snapshot(planta));
         assertSame(parent, planta.getProyecto());
     }
@@ -103,7 +109,7 @@ class PlantaControllerTest {
         verify(plantas).findById(PLANTA_ID);
         verify(plantas).save(same(planta));
         verifyNoMoreInteractions(plantas);
-        verifyNoInteractions(proyectos);
+        verify(proyectos).bloquearPorId(any());
     }
 
     static Stream<Arguments> bodyIdentities() {
@@ -129,7 +135,7 @@ class PlantaControllerTest {
         verify(plantas).findById(PLANTA_ID);
         verify(plantas).save(same(planta));
         verifyNoMoreInteractions(plantas);
-        verifyNoInteractions(proyectos);
+        verify(proyectos).bloquearPorId(any());
     }
 
     enum Denial { MISSING, SAME_COMPANY_WRONG_PROJECT, OTHER_COMPANY_WRONG_PROJECT, NULL_PARENT, NULL_PARENT_ID }
@@ -171,7 +177,7 @@ class PlantaControllerTest {
         Proyecto parent = planta == null ? null : planta.getProyecto();
         when(plantas.findById(PLANTA_ID)).thenReturn(Optional.ofNullable(planta));
 
-        IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> {
+        com.vortise.gestion.application.exception.RecursoNoEncontradoException error = assertThrows(com.vortise.gestion.application.exception.RecursoNoEncontradoException.class, () -> {
             if (update) {
                 controller.update(urlProject.getId(), PLANTA_ID, body);
             } else {
@@ -184,7 +190,7 @@ class PlantaControllerTest {
         verify(plantas, never()).save(any());
         verify(plantas, never()).deleteById(any());
         verifyNoMoreInteractions(plantas);
-        verifyNoInteractions(proyectos);
+        verify(proyectos).bloquearPorId(any());
         if (planta != null) {
             assertEquals(before, snapshot(planta));
             assertSame(parent, planta.getProyecto());
@@ -212,7 +218,7 @@ class PlantaControllerTest {
         }
         verify(plantas).findById(PLANTA_ID);
         verifyNoMoreInteractions(plantas);
-        verifyNoInteractions(proyectos);
+        verify(proyectos).bloquearPorId(any());
     }
 
     enum Operation { PUT, DELETE }

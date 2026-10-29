@@ -1,19 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  jakarta.persistence.CascadeType
- *  jakarta.persistence.Column
- *  jakarta.persistence.Entity
- *  jakarta.persistence.FetchType
- *  jakarta.persistence.GeneratedValue
- *  jakarta.persistence.GenerationType
- *  jakarta.persistence.Id
- *  jakarta.persistence.JoinColumn
- *  jakarta.persistence.ManyToOne
- *  jakarta.persistence.OneToMany
- *  jakarta.persistence.Table
- */
 package com.vortise.gestion.domain.model;
 
 import com.vortise.gestion.domain.model.Proyecto;
@@ -96,64 +80,19 @@ public class Entrega {
     }
 
     public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (!(o instanceof Entrega)) {
-            return false;
-        }
-        Entrega other = (Entrega)o;
-        if (!other.canEqual(this)) {
-            return false;
-        }
-        Long this$id = this.getId();
-        Long other$id = other.getId();
-        if (this$id == null ? other$id != null : !((Object)this$id).equals(other$id)) {
-            return false;
-        }
-        Integer this$orden = this.getOrden();
-        Integer other$orden = other.getOrden();
-        if (this$orden == null ? other$orden != null : !((Object)this$orden).equals(other$orden)) {
-            return false;
-        }
-        Proyecto this$proyecto = this.getProyecto();
-        Proyecto other$proyecto = other.getProyecto();
-        if (this$proyecto == null ? other$proyecto != null : !((Object)this$proyecto).equals(other$proyecto)) {
-            return false;
-        }
-        String this$nombre = this.getNombre();
-        String other$nombre = other.getNombre();
-        if (this$nombre == null ? other$nombre != null : !this$nombre.equals(other$nombre)) {
-            return false;
-        }
-        List<Tarea> this$tareas = this.getTareas();
-        List<Tarea> other$tareas = other.getTareas();
-        return !(this$tareas == null ? other$tareas != null : !((Object)this$tareas).equals(other$tareas));
+        if (this == o) return true;
+        if (o == null || EntityIdentity.type(this) != EntityIdentity.type(o)) return false;
+        Entrega other = (Entrega) o;
+        return getId() != null && getId().equals(other.getId());
     }
 
     protected boolean canEqual(Object other) {
         return other instanceof Entrega;
     }
 
-    public int hashCode() {
-        int PRIME = 59;
-        int result = 1;
-        Long $id = this.getId();
-        result = result * 59 + ($id == null ? 43 : ((Object)$id).hashCode());
-        Integer $orden = this.getOrden();
-        result = result * 59 + ($orden == null ? 43 : ((Object)$orden).hashCode());
-        Proyecto $proyecto = this.getProyecto();
-        result = result * 59 + ($proyecto == null ? 43 : ((Object)$proyecto).hashCode());
-        String $nombre = this.getNombre();
-        result = result * 59 + ($nombre == null ? 43 : $nombre.hashCode());
-        List<Tarea> $tareas = this.getTareas();
-        result = result * 59 + ($tareas == null ? 43 : ((Object)$tareas).hashCode());
-        return result;
-    }
+    public int hashCode() { return EntityIdentity.type(this).hashCode(); }
 
-    public String toString() {
-        return "Entrega(id=" + this.getId() + ", proyecto=" + String.valueOf(this.getProyecto()) + ", nombre=" + this.getNombre() + ", orden=" + this.getOrden() + ", tareas=" + String.valueOf(this.getTareas()) + ")";
-    }
+    public String toString() { return "Entrega(id=" + getId() + ")"; }
 
     public Entrega() {
         this.tareas = Entrega.$default$tareas();
@@ -212,8 +151,6 @@ public class Entrega {
             return new Entrega(this.id, this.proyecto, this.nombre, this.orden, tareas$value);
         }
 
-        public String toString() {
-            return "Entrega.EntregaBuilder(id=" + this.id + ", proyecto=" + String.valueOf(this.proyecto) + ", nombre=" + this.nombre + ", orden=" + this.orden + ", tareas$value=" + String.valueOf(this.tareas$value) + ")";
-        }
+        public String toString() { return "EntregaBuilder"; }
     }
 }

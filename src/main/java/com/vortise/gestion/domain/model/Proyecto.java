@@ -1,16 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  jakarta.persistence.CascadeType
- *  jakarta.persistence.Column
- *  jakarta.persistence.Entity
- *  jakarta.persistence.GeneratedValue
- *  jakarta.persistence.GenerationType
- *  jakarta.persistence.Id
- *  jakarta.persistence.OneToMany
- *  jakarta.persistence.Table
- */
 package com.vortise.gestion.domain.model;
 
 import jakarta.persistence.CascadeType;
@@ -21,11 +8,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashSet;
-import java.util.Set;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name="proyectos")
@@ -285,84 +272,19 @@ public class Proyecto {
     }
 
     public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (!(o instanceof Proyecto)) {
-            return false;
-        }
-        Proyecto other = (Proyecto)o;
-        if (!other.canEqual(this)) {
-            return false;
-        }
-        Long this$id = this.getId();
-        Long other$id = other.getId();
-        if (this$id == null ? other$id != null : !((Object)this$id).equals(other$id)) {
-            return false;
-        }
-        Double this$presupuestoUsd = this.getPresupuestoUsd();
-        Double other$presupuestoUsd = other.getPresupuestoUsd();
-        if (this$presupuestoUsd == null ? other$presupuestoUsd != null : !((Object)this$presupuestoUsd).equals(other$presupuestoUsd)) {
-            return false;
-        }
-        String this$nombre = this.getNombre();
-        String other$nombre = other.getNombre();
-        if (this$nombre == null ? other$nombre != null : !this$nombre.equals(other$nombre)) {
-            return false;
-        }
-        String this$descripcion = this.getDescripcion();
-        String other$descripcion = other.getDescripcion();
-        if (this$descripcion == null ? other$descripcion != null : !this$descripcion.equals(other$descripcion)) {
-            return false;
-        }
-        List<Planta> this$plantas = this.getPlantas();
-        List<Planta> other$plantas = other.getPlantas();
-        if (this$plantas == null ? other$plantas != null : !((Object)this$plantas).equals(other$plantas)) {
-            return false;
-        }
-        List<Entrega> this$entregas = this.getEntregas();
-        List<Entrega> other$entregas = other.getEntregas();
-        if (this$entregas == null ? other$entregas != null : !((Object)this$entregas).equals(other$entregas)) {
-            return false;
-        }
-        List<CostoIndirecto> this$costosIndirectos = this.getCostosIndirectos();
-        List<CostoIndirecto> other$costosIndirectos = other.getCostosIndirectos();
-        if (this$costosIndirectos == null ? other$costosIndirectos != null : !((Object)this$costosIndirectos).equals(other$costosIndirectos)) {
-            return false;
-        }
-        List<Ingreso> this$ingresos = this.getIngresos();
-        List<Ingreso> other$ingresos = other.getIngresos();
-        return !(this$ingresos == null ? other$ingresos != null : !((Object)this$ingresos).equals(other$ingresos));
+        if (this == o) return true;
+        if (o == null || EntityIdentity.type(this) != EntityIdentity.type(o)) return false;
+        Proyecto other = (Proyecto) o;
+        return getId() != null && getId().equals(other.getId());
     }
 
     protected boolean canEqual(Object other) {
         return other instanceof Proyecto;
     }
 
-    public int hashCode() {
-        int result = 1;
-        Long $id = this.getId();
-        result = result * 59 + ($id == null ? 43 : ((Object)$id).hashCode());
-        Double $presupuestoUsd = this.getPresupuestoUsd();
-        result = result * 59 + ($presupuestoUsd == null ? 43 : ((Object)$presupuestoUsd).hashCode());
-        String $nombre = this.getNombre();
-        result = result * 59 + ($nombre == null ? 43 : $nombre.hashCode());
-        String $descripcion = this.getDescripcion();
-        result = result * 59 + ($descripcion == null ? 43 : $descripcion.hashCode());
-        List<Planta> $plantas = this.getPlantas();
-        result = result * 59 + ($plantas == null ? 43 : ((Object)$plantas).hashCode());
-        List<Entrega> $entregas = this.getEntregas();
-        result = result * 59 + ($entregas == null ? 43 : ((Object)$entregas).hashCode());
-        List<CostoIndirecto> $costosIndirectos = this.getCostosIndirectos();
-        result = result * 59 + ($costosIndirectos == null ? 43 : ((Object)$costosIndirectos).hashCode());
-        List<Ingreso> $ingresos = this.getIngresos();
-        result = result * 59 + ($ingresos == null ? 43 : ((Object)$ingresos).hashCode());
-        return result;
-    }
+    public int hashCode() { return EntityIdentity.type(this).hashCode(); }
 
-    public String toString() {
-        return "Proyecto(id=" + this.getId() + ", nombre=" + this.getNombre() + ", descripcion=" + this.getDescripcion() + ", presupuestoUsd=" + this.getPresupuestoUsd() + ", plantas=" + String.valueOf(this.getPlantas()) + ", entregas=" + String.valueOf(this.getEntregas()) + ", costosIndirectos=" + String.valueOf(this.getCostosIndirectos()) + ", ingresos=" + String.valueOf(this.getIngresos()) + ")";
-    }
+    public String toString() { return "Proyecto(id=" + getId() + ")"; }
 
     public Proyecto() {
         this.plantas = Proyecto.$default$plantas();
@@ -463,8 +385,6 @@ public class Proyecto {
             return new Proyecto(this.id, this.nombre, this.descripcion, this.presupuestoUsd, plantas$value, entregas$value, costosIndirectos$value, ingresos$value);
         }
 
-        public String toString() {
-            return "Proyecto.ProyectoBuilder(id=" + this.id + ", nombre=" + this.nombre + ", descripcion=" + this.descripcion + ", presupuestoUsd=" + this.presupuestoUsd + ", plantas$value=" + String.valueOf(this.plantas$value) + ", entregas$value=" + String.valueOf(this.entregas$value) + ", costosIndirectos$value=" + String.valueOf(this.costosIndirectos$value) + ", ingresos$value=" + String.valueOf(this.ingresos$value) + ")";
-        }
+        public String toString() { return "ProyectoBuilder"; }
     }
 }

@@ -5,7 +5,7 @@
  *  org.springframework.http.ResponseEntity
  *  org.springframework.web.bind.annotation.GetMapping
  *  org.springframework.web.bind.annotation.RequestMapping
- *  org.springframework.web.bind.annotation.RequestParam
+ *  RequestParam
  *  org.springframework.web.bind.annotation.RestController
  */
 package com.vortise.gestion.infrastructure.web;

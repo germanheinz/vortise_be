@@ -1,11 +1,12 @@
 package com.vortise.gestion.infrastructure.web;
 
+import com.vortise.gestion.application.dto.CalendarioLaboralEmpresaDto;
+import com.vortise.gestion.application.dto.CatalogoEmpresaDto;
+import com.vortise.gestion.application.dto.CategoriaManoObraEmpresaDto;
 import com.vortise.gestion.application.dto.ResponsableEmpresaDto;
 import com.vortise.gestion.application.dto.UnidadMetricaEmpresaDto;
-import com.vortise.gestion.application.dto.CatalogoEmpresaDto;
-import com.vortise.gestion.application.dto.CalendarioLaboralEmpresaDto;
-import com.vortise.gestion.application.dto.CategoriaManoObraEmpresaDto;
 import com.vortise.gestion.application.usecase.EmpresaConfiguracionUseCase;
+import com.vortise.gestion.application.usecase.InicializarEmpresaUseCase;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -25,8 +26,18 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasRole('ADMINISTRADOR')")
 public class EmpresaConfiguracionController {
     private final EmpresaConfiguracionUseCase useCase;
+    private final InicializarEmpresaUseCase inicializar;
 
-    public EmpresaConfiguracionController(EmpresaConfiguracionUseCase useCase) { this.useCase = useCase; }
+    public EmpresaConfiguracionController(EmpresaConfiguracionUseCase useCase,
+            InicializarEmpresaUseCase inicializar) {
+        this.useCase = useCase; this.inicializar = inicializar;
+    }
+
+    @PostMapping("/inicializar")
+    public ResponseEntity<Void> inicializar(@PathVariable Long empresaId) {
+        inicializar.execute(empresaId);
+        return ResponseEntity.noContent().build();
+    }
 
     @GetMapping("/responsables")
     public ResponseEntity<List<ResponsableEmpresaDto>> getResponsables(@PathVariable Long empresaId) { return ResponseEntity.ok(useCase.getResponsables(empresaId)); }

@@ -29,6 +29,13 @@ public class Empresa {
 
     private Long creadoPorUsuarioId;
 
+    @Column(nullable = false)
+    @org.hibernate.annotations.ColumnDefault("false")
+    private boolean configuracionInicializada;
+
+    public boolean isConfiguracionInicializada() { return configuracionInicializada; }
+    public void marcarConfiguracionInicializada() { configuracionInicializada = true; }
+
     protected Empresa() {
     }
 

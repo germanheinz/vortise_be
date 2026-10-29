@@ -10,7 +10,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "unidades_metricas_empresa")
+@Table(name = "unidades_metricas_empresa", uniqueConstraints = @jakarta.persistence.UniqueConstraint(columnNames = {"empresa_id", "codigo"}))
 public class UnidadMetricaEmpresa {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

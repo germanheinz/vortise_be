@@ -1,13 +1,5 @@
 package com.vortise.gestion.application.usecase;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.application.dto.RegistroRequestDto;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
@@ -22,12 +14,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 class RegistroUseCaseTest {
     private final EmpresaRepository empresas = mock(EmpresaRepository.class);
     private final UsuarioEmpresaRepository usuarios = mock(UsuarioEmpresaRepository.class);
     private final PasswordEncoder encoder = mock(PasswordEncoder.class);
     private final AutenticacionUseCase autenticacion = mock(AutenticacionUseCase.class);
-    private final RegistroUseCase useCase = new RegistroUseCase(empresas, usuarios, encoder, autenticacion);
+    private final RegistroUseCase useCase = new RegistroUseCase(empresas, usuarios, encoder, autenticacion, mock(InicializarEmpresaUseCase.class));
     private final RegistroRequestDto request = new RegistroRequestDto(" Nueva Constructora ", " Ana ", " Ana@Example.invalid ", "password123");
 
     @BeforeEach

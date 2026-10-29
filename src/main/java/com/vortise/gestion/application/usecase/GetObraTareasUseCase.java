@@ -4,9 +4,10 @@ import com.vortise.gestion.application.dto.ObraTareaDto;
 import com.vortise.gestion.domain.repository.ObraTareaRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@org.springframework.transaction.annotation.Transactional(readOnly = true)
+@Transactional(readOnly = true)
 public class GetObraTareasUseCase {
     private final ObraTareaRepository obraTareaRepository;
 

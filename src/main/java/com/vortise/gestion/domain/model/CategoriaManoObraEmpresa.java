@@ -10,7 +10,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "categorias_mano_obra_empresa")
+@Table(name = "categorias_mano_obra_empresa", uniqueConstraints = @jakarta.persistence.UniqueConstraint(columnNames = {"empresa_id", "nombre"}))
 public class CategoriaManoObraEmpresa {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

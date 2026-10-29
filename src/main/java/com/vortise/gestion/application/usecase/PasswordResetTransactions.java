@@ -1,10 +1,11 @@
 package com.vortise.gestion.application.usecase;
 
+import com.vortise.gestion.application.exception.ConflictoEstadoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
-import com.vortise.gestion.domain.repository.PasswordResetTokenRepository;
 import com.vortise.gestion.domain.repository.PasswordResetQuotaRepository;
+import com.vortise.gestion.domain.repository.PasswordResetTokenRepository;
+import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.Instant;
@@ -31,7 +32,7 @@ public class PasswordResetTransactions {
     public Optional<Delivery> issue(String email, String ip) {
         Instant now = Instant.now();
         // A seeded singleton serializes quota reservations across instances, including unknown emails.
-        var global = quotas.bloquearGuard().orElseThrow(() -> new IllegalStateException("Password reset quota guard missing"));
+        var global = quotas.bloquearGuard().orElseThrow(() -> new ConflictoEstadoException("Password reset quota guard missing"));
         quotas.limpiar(now.minusSeconds(7200));
         var address = quotas.findById("ip:" + hash(ip)).orElseGet(() -> new PasswordResetQuota("ip:" + hash(ip), now));
         var account = quotas.findById("email:" + hash(email)).orElseGet(() -> new PasswordResetQuota("email:" + hash(email), now));
@@ -49,9 +50,7 @@ public class PasswordResetTransactions {
     @Transactional
     public String confirm(String raw, String password) {
         if (raw == null || !raw.matches("[A-Za-z0-9_-]{43}")) throw invalid();
-        if (password == null || password.length() < 8 || password.length() > 72 || password.getBytes(StandardCharsets.UTF_8).length > 72) {
-            throw new SolicitudInvalidaException("La contraseña debe tener entre 8 y 72 caracteres y no superar 72 bytes.");
-        }
+        PasswordPolicy.validate(password);
         String hash = hash(raw);
         var userId = tokens.buscarUsuarioPorHash(hash).orElseThrow(PasswordResetTransactions::invalid);
         var user = usuarios.bloquearPorId(userId).filter(UsuarioEmpresa::isActivo).orElseThrow(PasswordResetTransactions::invalid);
@@ -65,7 +64,7 @@ public class PasswordResetTransactions {
     }
     public static String hash(String value) {
         try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8))); }
-        catch (NoSuchAlgorithmException ex) { throw new IllegalStateException("SHA-256 unavailable"); }
+        catch (NoSuchAlgorithmException ex) { throw new ConflictoEstadoException("SHA-256 unavailable"); }
     }
     private static SolicitudInvalidaException invalid() { return new SolicitudInvalidaException("El enlace no es válido o venció. Solicitá uno nuevo."); }
 }

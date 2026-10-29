@@ -1,5 +1,6 @@
 package com.vortise.gestion.application.usecase;
 
+import com.vortise.gestion.application.exception.ConflictoEstadoException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -16,11 +17,11 @@ public class JwtService {
     public JwtService(@Value("${app.security.jwt-secret}") String secret,
             @Value("${app.security.jwt-expiration-ms:3600000}") long expirationMs) {
         if (secret == null || secret.isBlank() || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
-            throw new IllegalStateException("app.security.jwt-secret must be explicitly configured with at least 32 bytes");
+            throw new ConflictoEstadoException("app.security.jwt-secret must be explicitly configured with at least 32 bytes");
         }
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         if (expirationMs <= 0 || expirationMs > 3_600_000L) {
-            throw new IllegalStateException("JWT expiration must be positive and at most one hour");
+            throw new ConflictoEstadoException("JWT expiration must be positive and at most one hour");
         }
         this.expirationMs = expirationMs;
     }

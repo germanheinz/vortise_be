@@ -1,12 +1,5 @@
 package com.vortise.gestion.application.usecase;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.vortise.gestion.application.dto.EmpresaCreateDto;
 import com.vortise.gestion.application.dto.EmpresaDto;
 import com.vortise.gestion.domain.model.Empresa;
@@ -16,6 +9,13 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class EmpresaTenantScopeTest {
     private final EmpresaRepository empresas = mock(EmpresaRepository.class);
@@ -54,7 +54,7 @@ class EmpresaTenantScopeTest {
         when(tenant.usuarioId()).thenReturn(7L);
         when(empresas.findByNombreIgnoreCase("Nueva")).thenReturn(Optional.empty());
         when(empresas.save(any(Empresa.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        new SaveEmpresaUseCase(empresas, tenant).create(new EmpresaCreateDto("Nueva", null));
+        new SaveEmpresaUseCase(empresas, tenant, mock(InicializarEmpresaUseCase.class)).create(new EmpresaCreateDto("Nueva", null));
         verify(empresas).save(org.mockito.ArgumentMatchers.argThat(empresa -> Long.valueOf(7L).equals(empresa.getCreadoPorUsuarioId())));
     }
 

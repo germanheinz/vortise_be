@@ -1,5 +1,6 @@
 package com.vortise.gestion.infrastructure.security;
 
+import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import io.jsonwebtoken.Claims;
 import org.springframework.security.access.AccessDeniedException;
@@ -9,7 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CurrentTenantService {
+public class CurrentTenantService implements CurrentIdentity {
     private final EmpresaRepository empresaRepository;
 
     public CurrentTenantService(EmpresaRepository empresaRepository) {

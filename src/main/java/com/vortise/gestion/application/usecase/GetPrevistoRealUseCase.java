@@ -1,5 +1,6 @@
 package com.vortise.gestion.application.usecase;
 
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.*;
 import java.util.List;
@@ -27,21 +28,24 @@ public class GetPrevistoRealUseCase {
             long tareasSinVincular, List<Activity> actividades) { }
 
     public Summary execute(Long projectId) {
-        var project = projects.findById(projectId).orElseThrow(() -> new IllegalArgumentException("Obra no encontrada"));
+        var project = projects.findById(projectId).orElseThrow(() -> new RecursoNoEncontradoException("Obra no encontrada"));
         var companyId = project.getEmpresaRelacionada() == null ? null : project.getEmpresaRelacionada().getId();
         var cats = companyId == null ? List.<CategoriaManoObraEmpresa>of() : categories.findByEmpresaId(companyId);
         Double of = cost(cats, "OFICIAL"), ay = cost(cats, "AYUDANTE");
         Double day = companyId == null ? null : calendars.findByEmpresaId(companyId).map(CalendarioLaboralEmpresa::getHorasLunesAViernes).orElse(null);
         var loads = tasks.findByProyectoId(projectId);
         var rubros = project.getRubros() == null ? List.<RubroObra>of() : project.getRubros();
+        var byRubro = new java.util.HashMap<Long, java.util.List<ObraTarea>>();
+        for (var load : loads) byRubro.computeIfAbsent(load.getRubroId(), key -> new java.util.ArrayList<>()).add(load);
+        var knownIds = rubros.stream().map(RubroObra::getId).collect(java.util.stream.Collectors.toSet());
         var activities = rubros.stream().map(r -> {
-            var matching = loads.stream().filter(t -> r.getId().equals(t.getRubroId())).toList();
+            var matching = byRubro.getOrDefault(r.getId(), List.of());
             Double q = sum(matching, ObraTarea::getCantidadReal), hOf = sum(matching, ObraTarea::getHorasOficiales), hAy = sum(matching, ObraTarea::getHorasAyudantes);
             return new Activity(r.getId(), r.getSubRubro() == null ? r.getRubro() : r.getSubRubro(), r.getUnidad(), q, hOf, hAy,
                 metrics(r, q, hOf, hAy, of, ay, day), matching.stream().map(t -> new Load(t.getId(),
                     metrics(r, t.getCantidadReal(), t.getHorasOficiales(), t.getHorasAyudantes(), of, ay, day))).toList());
         }).toList();
-        long unlinked = loads.stream().filter(t -> rubros.stream().noneMatch(r -> r.getId().equals(t.getRubroId()))).count();
+        long unlinked = loads.stream().filter(t -> !knownIds.contains(t.getRubroId())).count();
         return new Summary(of, ay, day, unlinked, activities);
     }
 

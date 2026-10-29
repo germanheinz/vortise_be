@@ -1,17 +1,17 @@
 package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.RestriccionDto;
+import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.repository.RestriccionObraRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
-import com.vortise.gestion.infrastructure.security.CurrentTenantService;
 
 @Service
 public class GetRestriccionesUseCase {
     private final RestriccionObraRepository restriccionRepository;
-    private final CurrentTenantService currentTenant;
+    private final CurrentIdentity currentTenant;
 
-    public GetRestriccionesUseCase(RestriccionObraRepository restriccionRepository, CurrentTenantService currentTenant) {
+    public GetRestriccionesUseCase(RestriccionObraRepository restriccionRepository, CurrentIdentity currentTenant) {
         this.restriccionRepository = restriccionRepository;
         this.currentTenant = currentTenant;
     }

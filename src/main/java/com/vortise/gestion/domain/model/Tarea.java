@@ -1,19 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  jakarta.persistence.Column
- *  jakarta.persistence.Entity
- *  jakarta.persistence.EnumType
- *  jakarta.persistence.Enumerated
- *  jakarta.persistence.FetchType
- *  jakarta.persistence.GeneratedValue
- *  jakarta.persistence.GenerationType
- *  jakarta.persistence.Id
- *  jakarta.persistence.JoinColumn
- *  jakarta.persistence.ManyToOne
- *  jakarta.persistence.Table
- */
 package com.vortise.gestion.domain.model;
 
 import com.vortise.gestion.domain.model.Entrega;
@@ -168,120 +152,19 @@ public class Tarea {
     }
 
     public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (!(o instanceof Tarea)) {
-            return false;
-        }
-        Tarea other = (Tarea)o;
-        if (!other.canEqual(this)) {
-            return false;
-        }
-        Long this$id = this.getId();
-        Long other$id = other.getId();
-        if (this$id == null ? other$id != null : !((Object)this$id).equals(other$id)) {
-            return false;
-        }
-        Integer this$avancePct = this.getAvancePct();
-        Integer other$avancePct = other.getAvancePct();
-        if (this$avancePct == null ? other$avancePct != null : !((Object)this$avancePct).equals(other$avancePct)) {
-            return false;
-        }
-        Double this$cantidad = this.getCantidad();
-        Double other$cantidad = other.getCantidad();
-        if (this$cantidad == null ? other$cantidad != null : !((Object)this$cantidad).equals(other$cantidad)) {
-            return false;
-        }
-        Double this$costo = this.getCosto();
-        Double other$costo = other.getCosto();
-        if (this$costo == null ? other$costo != null : !((Object)this$costo).equals(other$costo)) {
-            return false;
-        }
-        Integer this$mes = this.getMes();
-        Integer other$mes = other.getMes();
-        if (this$mes == null ? other$mes != null : !((Object)this$mes).equals(other$mes)) {
-            return false;
-        }
-        Entrega this$entrega = this.getEntrega();
-        Entrega other$entrega = other.getEntrega();
-        if (this$entrega == null ? other$entrega != null : !((Object)this$entrega).equals(other$entrega)) {
-            return false;
-        }
-        String this$fase = this.getFase();
-        String other$fase = other.getFase();
-        if (this$fase == null ? other$fase != null : !this$fase.equals(other$fase)) {
-            return false;
-        }
-        String this$etapa = this.getEtapa();
-        String other$etapa = other.getEtapa();
-        if (this$etapa == null ? other$etapa != null : !this$etapa.equals(other$etapa)) {
-            return false;
-        }
-        String this$sistema = this.getSistema();
-        String other$sistema = other.getSistema();
-        if (this$sistema == null ? other$sistema != null : !this$sistema.equals(other$sistema)) {
-            return false;
-        }
-        String this$nombre = this.getNombre();
-        String other$nombre = other.getNombre();
-        if (this$nombre == null ? other$nombre != null : !this$nombre.equals(other$nombre)) {
-            return false;
-        }
-        StatusTarea this$status = this.getStatus();
-        StatusTarea other$status = other.getStatus();
-        if (this$status == null ? other$status != null : !((Object)((Object)this$status)).equals((Object)other$status)) {
-            return false;
-        }
-        LocalDate this$fechaInicio = this.getFechaInicio();
-        LocalDate other$fechaInicio = other.getFechaInicio();
-        if (this$fechaInicio == null ? other$fechaInicio != null : !((Object)this$fechaInicio).equals(other$fechaInicio)) {
-            return false;
-        }
-        LocalDate this$fechaFin = this.getFechaFin();
-        LocalDate other$fechaFin = other.getFechaFin();
-        return !(this$fechaFin == null ? other$fechaFin != null : !((Object)this$fechaFin).equals(other$fechaFin));
+        if (this == o) return true;
+        if (o == null || EntityIdentity.type(this) != EntityIdentity.type(o)) return false;
+        Tarea other = (Tarea) o;
+        return getId() != null && getId().equals(other.getId());
     }
 
     protected boolean canEqual(Object other) {
         return other instanceof Tarea;
     }
 
-    public int hashCode() {
-        int PRIME = 59;
-        int result = 1;
-        Long $id = this.getId();
-        result = result * 59 + ($id == null ? 43 : ((Object)$id).hashCode());
-        Integer $avancePct = this.getAvancePct();
-        result = result * 59 + ($avancePct == null ? 43 : ((Object)$avancePct).hashCode());
-        Double $cantidad = this.getCantidad();
-        result = result * 59 + ($cantidad == null ? 43 : ((Object)$cantidad).hashCode());
-        Double $costo = this.getCosto();
-        result = result * 59 + ($costo == null ? 43 : ((Object)$costo).hashCode());
-        Integer $mes = this.getMes();
-        result = result * 59 + ($mes == null ? 43 : ((Object)$mes).hashCode());
-        Entrega $entrega = this.getEntrega();
-        result = result * 59 + ($entrega == null ? 43 : ((Object)$entrega).hashCode());
-        String $fase = this.getFase();
-        result = result * 59 + ($fase == null ? 43 : $fase.hashCode());
-        String $etapa = this.getEtapa();
-        result = result * 59 + ($etapa == null ? 43 : $etapa.hashCode());
-        String $sistema = this.getSistema();
-        result = result * 59 + ($sistema == null ? 43 : $sistema.hashCode());
-        String $nombre = this.getNombre();
-        result = result * 59 + ($nombre == null ? 43 : $nombre.hashCode());
-        StatusTarea $status = this.getStatus();
-        result = result * 59 + ($status == null ? 43 : ((Object)((Object)$status)).hashCode());
-        LocalDate $fechaInicio = this.getFechaInicio();
-        result = result * 59 + ($fechaInicio == null ? 43 : ((Object)$fechaInicio).hashCode());
-        LocalDate $fechaFin = this.getFechaFin();
-        result = result * 59 + ($fechaFin == null ? 43 : ((Object)$fechaFin).hashCode());
-        return result;
-    }
+    public int hashCode() { return EntityIdentity.type(this).hashCode(); }
 
-    public String toString() {
-        return "Tarea(id=" + this.getId() + ", entrega=" + String.valueOf(this.getEntrega()) + ", fase=" + this.getFase() + ", etapa=" + this.getEtapa() + ", sistema=" + this.getSistema() + ", nombre=" + this.getNombre() + ", status=" + String.valueOf((Object)this.getStatus()) + ", avancePct=" + this.getAvancePct() + ", cantidad=" + this.getCantidad() + ", costo=" + this.getCosto() + ", fechaInicio=" + String.valueOf(this.getFechaInicio()) + ", fechaFin=" + String.valueOf(this.getFechaFin()) + ", mes=" + this.getMes() + ")";
-    }
+    public String toString() { return "Tarea(id=" + getId() + ")"; }
 
     public Tarea() {
         this.status = Tarea.$default$status();
@@ -396,8 +279,6 @@ public class Tarea {
             return new Tarea(this.id, this.entrega, this.fase, this.etapa, this.sistema, this.nombre, status$value, this.avancePct, this.cantidad, this.costo, this.fechaInicio, this.fechaFin, this.mes);
         }
 
-        public String toString() {
-            return "Tarea.TareaBuilder(id=" + this.id + ", entrega=" + String.valueOf(this.entrega) + ", fase=" + this.fase + ", etapa=" + this.etapa + ", sistema=" + this.sistema + ", nombre=" + this.nombre + ", status$value=" + String.valueOf((Object)this.status$value) + ", avancePct=" + this.avancePct + ", cantidad=" + this.cantidad + ", costo=" + this.costo + ", fechaInicio=" + String.valueOf(this.fechaInicio) + ", fechaFin=" + String.valueOf(this.fechaFin) + ", mes=" + this.mes + ")";
-        }
+        public String toString() { return "TareaBuilder"; }
     }
 }

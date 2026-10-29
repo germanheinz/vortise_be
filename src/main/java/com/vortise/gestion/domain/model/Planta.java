@@ -1,17 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  jakarta.persistence.Column
- *  jakarta.persistence.Entity
- *  jakarta.persistence.FetchType
- *  jakarta.persistence.GeneratedValue
- *  jakarta.persistence.GenerationType
- *  jakarta.persistence.Id
- *  jakarta.persistence.JoinColumn
- *  jakarta.persistence.ManyToOne
- *  jakarta.persistence.Table
- */
 package com.vortise.gestion.domain.model;
 
 import com.vortise.gestion.domain.model.Proyecto;
@@ -111,85 +97,19 @@ public class Planta {
     }
 
     public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (!(o instanceof Planta)) {
-            return false;
-        }
-        Planta other = (Planta)o;
-        if (!other.canEqual(this)) {
-            return false;
-        }
-        Long this$id = this.getId();
-        Long other$id = other.getId();
-        if (this$id == null ? other$id != null : !((Object)this$id).equals(other$id)) {
-            return false;
-        }
-        Double this$superficie = this.getSuperficie();
-        Double other$superficie = other.getSuperficie();
-        if (this$superficie == null ? other$superficie != null : !((Object)this$superficie).equals(other$superficie)) {
-            return false;
-        }
-        Double this$supCubierta = this.getSupCubierta();
-        Double other$supCubierta = other.getSupCubierta();
-        if (this$supCubierta == null ? other$supCubierta != null : !((Object)this$supCubierta).equals(other$supCubierta)) {
-            return false;
-        }
-        Double this$supDescubierta = this.getSupDescubierta();
-        Double other$supDescubierta = other.getSupDescubierta();
-        if (this$supDescubierta == null ? other$supDescubierta != null : !((Object)this$supDescubierta).equals(other$supDescubierta)) {
-            return false;
-        }
-        Double this$supCalculada = this.getSupCalculada();
-        Double other$supCalculada = other.getSupCalculada();
-        if (this$supCalculada == null ? other$supCalculada != null : !((Object)this$supCalculada).equals(other$supCalculada)) {
-            return false;
-        }
-        Double this$coefPlantaTipo = this.getCoefPlantaTipo();
-        Double other$coefPlantaTipo = other.getCoefPlantaTipo();
-        if (this$coefPlantaTipo == null ? other$coefPlantaTipo != null : !((Object)this$coefPlantaTipo).equals(other$coefPlantaTipo)) {
-            return false;
-        }
-        Proyecto this$proyecto = this.getProyecto();
-        Proyecto other$proyecto = other.getProyecto();
-        if (this$proyecto == null ? other$proyecto != null : !((Object)this$proyecto).equals(other$proyecto)) {
-            return false;
-        }
-        String this$nivel = this.getNivel();
-        String other$nivel = other.getNivel();
-        return !(this$nivel == null ? other$nivel != null : !this$nivel.equals(other$nivel));
+        if (this == o) return true;
+        if (o == null || EntityIdentity.type(this) != EntityIdentity.type(o)) return false;
+        Planta other = (Planta) o;
+        return getId() != null && getId().equals(other.getId());
     }
 
     protected boolean canEqual(Object other) {
         return other instanceof Planta;
     }
 
-    public int hashCode() {
-        int PRIME = 59;
-        int result = 1;
-        Long $id = this.getId();
-        result = result * 59 + ($id == null ? 43 : ((Object)$id).hashCode());
-        Double $superficie = this.getSuperficie();
-        result = result * 59 + ($superficie == null ? 43 : ((Object)$superficie).hashCode());
-        Double $supCubierta = this.getSupCubierta();
-        result = result * 59 + ($supCubierta == null ? 43 : ((Object)$supCubierta).hashCode());
-        Double $supDescubierta = this.getSupDescubierta();
-        result = result * 59 + ($supDescubierta == null ? 43 : ((Object)$supDescubierta).hashCode());
-        Double $supCalculada = this.getSupCalculada();
-        result = result * 59 + ($supCalculada == null ? 43 : ((Object)$supCalculada).hashCode());
-        Double $coefPlantaTipo = this.getCoefPlantaTipo();
-        result = result * 59 + ($coefPlantaTipo == null ? 43 : ((Object)$coefPlantaTipo).hashCode());
-        Proyecto $proyecto = this.getProyecto();
-        result = result * 59 + ($proyecto == null ? 43 : ((Object)$proyecto).hashCode());
-        String $nivel = this.getNivel();
-        result = result * 59 + ($nivel == null ? 43 : $nivel.hashCode());
-        return result;
-    }
+    public int hashCode() { return EntityIdentity.type(this).hashCode(); }
 
-    public String toString() {
-        return "Planta(id=" + this.getId() + ", proyecto=" + String.valueOf(this.getProyecto()) + ", nivel=" + this.getNivel() + ", superficie=" + this.getSuperficie() + ", supCubierta=" + this.getSupCubierta() + ", supDescubierta=" + this.getSupDescubierta() + ", supCalculada=" + this.getSupCalculada() + ", coefPlantaTipo=" + this.getCoefPlantaTipo() + ")";
-    }
+    public String toString() { return "Planta(id=" + getId() + ")"; }
 
     public Planta() {
     }
@@ -262,8 +182,6 @@ public class Planta {
             return new Planta(this.id, this.proyecto, this.nivel, this.superficie, this.supCubierta, this.supDescubierta, this.supCalculada, this.coefPlantaTipo);
         }
 
-        public String toString() {
-            return "Planta.PlantaBuilder(id=" + this.id + ", proyecto=" + String.valueOf(this.proyecto) + ", nivel=" + this.nivel + ", superficie=" + this.superficie + ", supCubierta=" + this.supCubierta + ", supDescubierta=" + this.supDescubierta + ", supCalculada=" + this.supCalculada + ", coefPlantaTipo=" + this.coefPlantaTipo + ")";
-        }
+        public String toString() { return "PlantaBuilder"; }
     }
 }

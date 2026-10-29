@@ -2,14 +2,17 @@ package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.ObraTareaCreateDto;
 import com.vortise.gestion.application.dto.ObraTareaDto;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
+import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.domain.model.ObraTarea;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.repository.ObraTareaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@org.springframework.transaction.annotation.Transactional
+@Transactional
 public class CreateObraTareaUseCase {
     private final ObraTareaRepository obraTareaRepository;
     private final ProyectoRepository proyectoRepository;
@@ -21,7 +24,7 @@ public class CreateObraTareaUseCase {
 
     public ObraTareaDto execute(Long proyectoId, ObraTareaCreateDto dto) {
         Proyecto proyecto = proyectoRepository.findById(proyectoId)
-            .orElseThrow(() -> new IllegalArgumentException("Proyecto no encontrado"));
+            .orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado"));
 
         ObraTarea tarea = new ObraTarea();
         tarea.setProyecto(proyecto);
@@ -58,7 +61,7 @@ public class CreateObraTareaUseCase {
     public ObraTareaDto update(Long proyectoId, Long tareaId, ObraTareaCreateDto dto) {
         ObraTarea tarea = obraTareaRepository.findById(tareaId)
             .filter(item -> item.getProyecto().getId().equals(proyectoId))
-            .orElseThrow(() -> new IllegalArgumentException("Tarea no encontrada"));
+            .orElseThrow(() -> new RecursoNoEncontradoException("Tarea no encontrada"));
         applyActivity(tarea, dto);
         tarea.setNombre(dto.nombre());
         tarea.setSector(dto.sector());
@@ -90,21 +93,21 @@ public class CreateObraTareaUseCase {
 
     private void applyActivity(ObraTarea tarea, ObraTareaCreateDto dto) {
         if (dto.rubroId() == null || dto.fecha() == null) {
-            throw new IllegalArgumentException("Seleccioná una actividad y una fecha");
+            throw new SolicitudInvalidaException("Seleccioná una actividad y una fecha");
         }
         var rubro = tarea.getProyecto().getRubros().stream()
             .filter(item -> dto.rubroId().equals(item.getId())).findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("La actividad no pertenece a la obra"));
+            .orElseThrow(() -> new RecursoNoEncontradoException("La actividad no pertenece a la obra"));
         for (Double value : new Double[]{dto.cantidadReal(), dto.horasOficiales(), dto.horasAyudantes()}) {
             if (value == null || !Double.isFinite(value) || value < 0) {
-                throw new IllegalArgumentException("Cantidad y horas reales deben ser números no negativos");
+                throw new SolicitudInvalidaException("Cantidad y horas reales deben ser números no negativos");
             }
         }
         if (!Double.isFinite(dto.horasOficiales() + dto.horasAyudantes())) {
-            throw new IllegalArgumentException("Total de horas fuera de rango");
+            throw new SolicitudInvalidaException("Total de horas fuera de rango");
         }
         if (dto.cantidadPrevista() != null && (!Double.isFinite(dto.cantidadPrevista()) || dto.cantidadPrevista() < 0)) {
-            throw new IllegalArgumentException("Cantidad prevista inválida");
+            throw new SolicitudInvalidaException("Cantidad prevista inválida");
         }
         tarea.setActividad(rubro);
     }

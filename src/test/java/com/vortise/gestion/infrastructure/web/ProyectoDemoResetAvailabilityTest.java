@@ -1,8 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import com.vortise.gestion.application.usecase.GetProyectoPaginaUseCase;
 
 import com.vortise.gestion.application.exception.FeatureUnavailableException;
 import com.vortise.gestion.application.usecase.CreateProyectoUseCase;
@@ -15,6 +13,10 @@ import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
 class ProyectoDemoResetAvailabilityTest {
     @Test
     void disabledResetDoesNotInvokeDemoSeeder() {
@@ -25,7 +27,7 @@ class ProyectoDemoResetAvailabilityTest {
             org.mockito.Mockito.mock(GetProyectoByIdUseCase.class),
             org.mockito.Mockito.mock(CreateProyectoUseCase.class),
             org.mockito.Mockito.mock(UpdateProyectoUseCase.class),
-            org.mockito.Mockito.mock(DeleteProyectoUseCase.class), seeder, policy);
+            org.mockito.Mockito.mock(DeleteProyectoUseCase.class), seeder, policy, org.mockito.Mockito.mock(GetProyectoPaginaUseCase.class));
 
         assertThrows(FeatureUnavailableException.class, controller::resetDemo);
         verify(seeder, never()).resetDemoData();

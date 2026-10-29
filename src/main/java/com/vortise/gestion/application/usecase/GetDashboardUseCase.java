@@ -13,6 +13,9 @@ import com.vortise.gestion.application.dto.DashboardKpisDto;
 import com.vortise.gestion.application.dto.DocsSistemaDto;
 import com.vortise.gestion.application.dto.EstadoDocDto;
 import com.vortise.gestion.application.dto.SugerenciaMejoraDto;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
+import com.vortise.gestion.application.port.CurrentIdentity;
+import com.vortise.gestion.application.port.FeaturePolicy;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.StatusTarea;
 import com.vortise.gestion.domain.model.Tarea;
@@ -21,13 +24,12 @@ import com.vortise.gestion.domain.repository.IngresoRepository;
 import com.vortise.gestion.domain.repository.PresupuestoLineaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.TareaRepository;
-import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
-import com.vortise.gestion.infrastructure.security.CurrentTenantService;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -37,13 +39,13 @@ public class GetDashboardUseCase {
     private final IngresoRepository ingresoRepository;
     private final GastoFijoRepository gastoFijoRepository;
     private final PresupuestoLineaRepository presupuestoLineaRepository;
-    private final CurrentTenantService tenant;
-    private final ProductionFeaturePolicy featurePolicy;
+    private final CurrentIdentity tenant;
+    private final FeaturePolicy featurePolicy;
 
     public DashboardDto execute(Long proyectoId) {
-        Proyecto proyecto = this.proyectoRepository.findById(proyectoId).orElseThrow(() -> new IllegalArgumentException("Proyecto no encontrado: " + proyectoId));
+        Proyecto proyecto = this.proyectoRepository.findById(proyectoId).orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado: " + proyectoId));
         if (proyecto.getEmpresaRelacionada() == null) {
-            throw new org.springframework.security.access.AccessDeniedException("Obra no encontrada o sin acceso");
+            throw new AccessDeniedException("Obra no encontrada o sin acceso");
         }
         tenant.requireEmpresa(proyecto.getEmpresaRelacionada().getId());
         List<Tarea> tareas = this.tareaRepository.findByEntregaProyectoId(proyectoId);
@@ -137,7 +139,7 @@ public class GetDashboardUseCase {
 
     public GetDashboardUseCase(ProyectoRepository proyectoRepository, TareaRepository tareaRepository, IngresoRepository ingresoRepository,
             GastoFijoRepository gastoFijoRepository, PresupuestoLineaRepository presupuestoLineaRepository,
-            CurrentTenantService tenant, ProductionFeaturePolicy featurePolicy) {
+            CurrentIdentity tenant, FeaturePolicy featurePolicy) {
         this.proyectoRepository = proyectoRepository;
         this.tareaRepository = tareaRepository;
         this.ingresoRepository = ingresoRepository;

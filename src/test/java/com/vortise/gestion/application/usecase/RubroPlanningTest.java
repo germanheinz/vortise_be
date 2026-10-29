@@ -5,6 +5,7 @@ import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.*;
 import java.util.*;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -79,18 +80,21 @@ class RubroPlanningTest {
         assertEquals(1. / 155.4,r.getRendimientoOficial(),1e-8);
         assertEquals(2. / 155.4,r.getRendimientoAyudante(),1e-8);
     }
-    private ProyectoCreateDto projectDto(List<RubroCreateDto> rows) {
-        return new ProyectoCreateDto("Test",null,null,"Address","P1",null,null,null,null,null,null,null,null,null,List.of(),rows,null);
+    private ProyectoUpdateDto projectDto(List<RubroCreateDto> rows) {
+        return new ProyectoUpdateDto("Test",null,null,"Address","P1",null,null,null,null,null,null,null,null,null,List.of(),rows,null);
     }
     @Test void updateRetainsIdentityAndRejectsForeignIdsAndRemovalOfLinkedActivity() {
         var projects = mock(ProyectoRepository.class);
         var tasks = mock(ObraTareaRepository.class);
         var service = new UpdateProyectoUseCase(projects,mock(EmpresaRepository.class),mock(CatalogoEmpresaRepository.class),tasks,
-            mock(com.vortise.gestion.domain.repository.RestriccionObraRepository.class),mock(com.vortise.gestion.infrastructure.security.CurrentTenantService.class));
+            mock(com.vortise.gestion.domain.repository.RestriccionObraRepository.class),mock(com.vortise.gestion.infrastructure.security.CurrentTenantService.class), mock(com.vortise.gestion.domain.repository.RegistroHorasRepository.class));
         var p = new Proyecto(); p.setId(1L);
+        var company = new com.vortise.gestion.domain.model.Empresa("Test", null);
+        org.springframework.test.util.ReflectionTestUtils.setField(company, "id", 1L);
+        p.setEmpresaRelacionada(company);
         var r = new RubroObra(); r.setId(10L); r.setProyecto(p);
         p.setRubros(new ArrayList<>(List.of(r)));
-        when(projects.findById(1L)).thenReturn(Optional.of(p));
+        when(projects.bloquearPorId(1L)).thenReturn(Optional.of(p));
         when(projects.save(any())).thenAnswer(i -> i.getArgument(0));
         when(tasks.findByProyectoId(1L)).thenReturn(List.of());
         var saved = service.execute(1L,projectDto(List.of(row(10L,10.,5.))));

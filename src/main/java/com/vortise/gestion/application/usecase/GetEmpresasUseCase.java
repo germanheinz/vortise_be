@@ -1,19 +1,19 @@
 package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.EmpresaDto;
+import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
-import com.vortise.gestion.infrastructure.security.CurrentTenantService;
 
 @Service
 public class GetEmpresasUseCase {
     private final EmpresaRepository empresaRepository;
-    private final CurrentTenantService currentTenant;
+    private final CurrentIdentity currentTenant;
 
-    public GetEmpresasUseCase(EmpresaRepository empresaRepository, CurrentTenantService currentTenant) {
+    public GetEmpresasUseCase(EmpresaRepository empresaRepository, CurrentIdentity currentTenant) {
         this.empresaRepository = empresaRepository;
         this.currentTenant = currentTenant;
     }

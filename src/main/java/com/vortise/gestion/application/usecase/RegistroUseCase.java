@@ -22,14 +22,17 @@ public class RegistroUseCase {
     private final PasswordEncoder passwordEncoder;
     private final AutenticacionUseCase autenticacion;
 
+    private final InicializarEmpresaUseCase inicializar;
+
     public RegistroUseCase(EmpresaRepository empresas, UsuarioEmpresaRepository usuarios, PasswordEncoder passwordEncoder,
-            AutenticacionUseCase autenticacion) {
-        this.empresas = empresas; this.usuarios = usuarios; this.passwordEncoder = passwordEncoder; this.autenticacion = autenticacion;
+            AutenticacionUseCase autenticacion, InicializarEmpresaUseCase inicializar) {
+        this.empresas = empresas; this.usuarios = usuarios; this.passwordEncoder = passwordEncoder; this.autenticacion = autenticacion; this.inicializar = inicializar;
     }
 
     @Transactional
     public LoginResponseDto registrar(RegistroRequestDto request) {
-        String email = request.email().trim().toLowerCase();
+        PasswordPolicy.validate(request.password());
+        String email = request.email().trim().toLowerCase(java.util.Locale.ROOT);
         String empresaNombre = request.empresaNombre().trim();
         if (usuarios.findByEmail(email).isPresent() || empresas.findByNombreIgnoreCase(empresaNombre).isPresent()) {
             throw new SolicitudInvalidaException(MENSAJE_DUPLICADO);
@@ -39,6 +42,7 @@ public class RegistroUseCase {
             passwordEncoder.encode(request.password()), RolEmpresa.ADMINISTRADOR));
         empresa.setCreadoPorUsuarioId(usuario.getId());
         empresas.save(empresa);
+        inicializar.execute(empresa.getId());
         return autenticacion.sesion(usuario);
     }
 }
