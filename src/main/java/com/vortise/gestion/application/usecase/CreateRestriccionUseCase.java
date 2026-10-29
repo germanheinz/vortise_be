@@ -25,6 +25,8 @@ public class CreateRestriccionUseCase {
     }
 
     public RestriccionDto execute(Long proyectoId, RestriccionCreateDto dto) {
+        RestriccionPlanning.validateDates(dto.fechaSolicitud(), dto.fechaMaximaEntrega(), dto.fechaRealEntrega());
+        String area = RestriccionPlanning.area(dto.area());
         Proyecto proyecto = proyectoRepository.findById(proyectoId)
             .orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado"));
         RubroObra rubro = rubroRepository.findById(dto.rubroId())
@@ -43,6 +45,7 @@ public class CreateRestriccionUseCase {
         restriccion.setRubro(java.util.stream.Stream.of(rubro.getRubro(), rubro.getSubRubro())
             .filter(value -> value != null && !value.isBlank()).collect(java.util.stream.Collectors.joining(" · ")));
         restriccion.setResponsable(dto.responsable());
+        restriccion.setArea(area);
         restriccion.setFechaSolicitud(dto.fechaSolicitud());
         restriccion.setFechaMaximaEntrega(dto.fechaMaximaEntrega());
         restriccion.setFechaRealEntrega(dto.fechaRealEntrega());

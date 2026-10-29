@@ -1,5 +1,6 @@
 package com.vortise.gestion.domain.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -32,6 +33,8 @@ public class RestriccionObra {
     private String unidad;
     private String rubro;
     private String responsable;
+    @Column(length = 120)
+    private String area;
     private LocalDate fechaSolicitud;
     private LocalDate fechaMaximaEntrega;
     private LocalDate fechaRealEntrega;
@@ -114,6 +117,9 @@ public class RestriccionObra {
     public void setResponsable(String responsable) {
         this.responsable = responsable;
     }
+
+    public String getArea() { return area; }
+    public void setArea(String area) { this.area = area; }
 
     public LocalDate getFechaSolicitud() {
         return fechaSolicitud;

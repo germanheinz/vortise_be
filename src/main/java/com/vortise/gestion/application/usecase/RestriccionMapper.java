@@ -28,7 +28,8 @@ final class RestriccionMapper {
             restriccion.getCarga(),
             restriccion.getPrioridad(),
             restriccion.getEstado(),
-            restriccion.getOrden()
+            restriccion.getOrden(),
+            restriccion.getArea()
         );
     }
 

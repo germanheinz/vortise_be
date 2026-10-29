@@ -96,4 +96,22 @@ class RestriccionDetalleHttpTest {
             .andExpect(status().isForbidden());
         mvc.perform(get("/api/restricciones/"+restrictionId)).andExpect(status().isUnauthorized());
     }
+
+    @Test void areaAndDeliveryDatesCanBeEditedOnlyWithinTheAuthorizedCompany() throws Exception {
+        String body = """
+            {"area":"Compras","responsable":"Ana","fechaSolicitud":"2026-10-01",
+             "fechaMaximaEntrega":"2026-10-10","fechaRealEntrega":"2026-10-12","actualizarFechas":true}
+            """;
+        mvc.perform(patch("/api/restricciones/"+restrictionId).header("Authorization","Bearer "+token)
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.area").value("Compras"))
+            .andExpect(jsonPath("$.fechaRealEntrega").value("2026-10-12"));
+        mvc.perform(get("/api/restricciones/"+restrictionId).header("Authorization","Bearer "+token))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.area").value("Compras"));
+        mvc.perform(patch("/api/restricciones/"+foreignRestrictionId).header("Authorization","Bearer "+token)
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isForbidden());
+        mvc.perform(patch("/api/restricciones/"+restrictionId).contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isUnauthorized());
+    }
 }

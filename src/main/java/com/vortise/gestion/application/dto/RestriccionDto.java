@@ -20,6 +20,7 @@ public record RestriccionDto(
     String carga,
     String prioridad,
     String estado,
-    Integer orden
+    Integer orden,
+    String area
 ) {
 }

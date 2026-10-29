@@ -1,0 +1,1 @@
+ALTER TABLE restricciones_obra ADD COLUMN area VARCHAR(120);

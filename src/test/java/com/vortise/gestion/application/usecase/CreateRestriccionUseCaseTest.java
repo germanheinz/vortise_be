@@ -45,7 +45,10 @@ class CreateRestriccionUseCaseTest {
         when(rubros.findById(31L)).thenReturn(Optional.of(activity));
         when(restricciones.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = useCase.execute(10L, request(31L));
+        var start = java.time.LocalDate.of(2026, 10, 1);
+        var due = start.plusDays(3);
+        var result = useCase.execute(10L, new RestriccionCreateDto("Esperar inspección", 31L,
+            null, null, null, null, null, "Ana", start, due, due, null, null, "RESUELTO", " Compras "));
 
         ArgumentCaptor<RestriccionObra> saved = ArgumentCaptor.forClass(RestriccionObra.class);
         verify(restricciones).save(saved.capture());
@@ -54,6 +57,8 @@ class CreateRestriccionUseCaseTest {
         assertEquals("Instalaciones · Tendido eléctrico", result.rubro());
         assertEquals("Nivel 2", result.nivel());
         assertEquals("m", result.unidad());
+        assertEquals("Compras", result.area()); assertEquals("Ana", result.responsable());
+        assertEquals(start, result.fechaSolicitud()); assertEquals(due, result.fechaRealEntrega());
     }
 
     @Test
@@ -85,5 +90,17 @@ class CreateRestriccionUseCaseTest {
     private RestriccionCreateDto request(Long rubroId) {
         return new RestriccionCreateDto("Esperar inspección", rubroId, null, null, null, null, null,
             null, null, null, null, null, null, null);
+    }
+
+    @Test void legacyRequestsHaveNoInferredArea() {
+        assertNull(request(31L).area());
+    }
+
+    @Test void invalidChronologyIsRejectedBeforePersistence() {
+        var start = java.time.LocalDate.of(2026, 10, 1);
+        assertThrows(IllegalArgumentException.class, () -> useCase.execute(10L,
+            new RestriccionCreateDto("Inspección", 31L, null, null, null, null, null,
+                "Ana", start, start.minusDays(1), null, null, null, "PENDIENTE", "Compras")));
+        verify(restricciones, never()).save(any());
     }
 }
