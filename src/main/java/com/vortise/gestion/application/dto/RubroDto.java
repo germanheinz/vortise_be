@@ -24,6 +24,7 @@ public record RubroDto(
     Integer cantidadPersonas,
     LocalDate fechaInicioPlanificada,
     LocalDate fechaFinPlanificada,
-    boolean cronogramaManual
+    boolean cronogramaManual,
+    Integer frentes
 ) {
 }

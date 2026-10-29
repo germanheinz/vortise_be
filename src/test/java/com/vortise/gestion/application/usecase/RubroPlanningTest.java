@@ -11,8 +11,47 @@ import static org.mockito.Mockito.*;
 
 class RubroPlanningTest {
     private RubroCreateDto row(Long id, Double of, Double ay) {
+        return row(id, of, ay, null);
+    }
+    private RubroCreateDto row(Long id, Double of, Double ay, Integer frentes) {
         return new RubroCreateDto("5000","Hormigón",null,null,"Fundación",155.4,"m3",0.,null,"PROPIA",null,
-            1.,2.,15,null,null,false,id,of,ay);
+            1.,2.,15,null,null,false,id,of,ay,frentes);
+    }
+    @Test void frentesDefaultToOneAndOmittedValuePreservesExistingValue() {
+        var rubro = new RubroObra();
+        RubroPlanning.apply(rubro, row(null, null, null));
+        assertEquals(1, rubro.getFrentes());
+        rubro.setFrentes(3);
+        RubroPlanning.apply(rubro, row(1L, null, null));
+        assertEquals(3, rubro.getFrentes());
+    }
+    @Test void frentesAreStoredWithoutChangingHoursOrManualDates() {
+        var rubro = new RubroObra();
+        var start = java.time.LocalDate.of(2026, 10, 1);
+        var end = java.time.LocalDate.of(2026, 10, 31);
+        rubro.setFechaInicioPlanificada(start);
+        rubro.setFechaFinPlanificada(end);
+        rubro.setCronogramaManual(true);
+        RubroPlanning.apply(rubro, row(null, 10., 5., 2));
+        assertEquals(2, rubro.getFrentes());
+        assertEquals(1554., rubro.getHorasOficialesPrevistas());
+        assertEquals(777., rubro.getHorasAyudantesPrevistas());
+        assertEquals(start, rubro.getFechaInicioPlanificada());
+        assertEquals(end, rubro.getFechaFinPlanificada());
+        assertTrue(rubro.isCronogramaManual());
+    }
+    @Test void nonpositiveFrentesAreRejected() {
+        for (int frentes : new int[]{0, -1}) {
+            assertThrows(IllegalArgumentException.class,
+                () -> RubroPlanning.apply(new RubroObra(), row(null, null, null, frentes)));
+        }
+    }
+    @Test void fractionalAndStringFrentesAreRejectedBeforeCoercion() {
+        var mapper = new tools.jackson.databind.ObjectMapper();
+        for (String value : new String[]{"1.5", "\"2\"", "true", "2147483648"}) {
+            assertThrows(tools.jackson.core.JacksonException.class,
+                () -> mapper.readValue("{\"frentes\":" + value + "}", RubroCreateDto.class));
+        }
     }
     @Test void ratesDeriveHoursAndOverrideIncomingTotals() {
         var r = new RubroObra();
@@ -97,8 +136,11 @@ class RubroPlanningTest {
         when(projects.bloquearPorId(1L)).thenReturn(Optional.of(p));
         when(projects.save(any())).thenAnswer(i -> i.getArgument(0));
         when(tasks.findByProyectoId(1L)).thenReturn(List.of());
-        var saved = service.execute(1L,projectDto(List.of(row(10L,10.,5.))));
+        var saved = service.execute(1L,projectDto(List.of(row(10L,10.,5.,2))));
         assertSame(r,p.getRubros().get(0)); assertEquals(10L,saved.rubros().get(0).id());
+        assertEquals(2, saved.rubros().get(0).frentes());
+        var savedWithoutFrentes = service.execute(1L,projectDto(List.of(row(10L,10.,5.))));
+        assertEquals(2, savedWithoutFrentes.rubros().get(0).frentes());
         assertThrows(IllegalArgumentException.class,() -> service.execute(1L,projectDto(List.of(row(99L,10.,5.)))));
         var t = new ObraTarea(); t.setActividad(r);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(t));

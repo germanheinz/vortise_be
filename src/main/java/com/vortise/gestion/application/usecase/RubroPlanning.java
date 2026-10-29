@@ -7,12 +7,16 @@ import com.vortise.gestion.domain.model.RubroObra;
 final class RubroPlanning {
     private RubroPlanning() { }
     static void apply(RubroObra rubro, RubroCreateDto dto) {
+        if (dto.frentes() != null && dto.frentes() < 1) {
+            throw new SolicitudInvalidaException("Frentes debe ser un entero mayor o igual a 1");
+        }
         for (Double n : new Double[]{dto.cantidad(), dto.horasOficialesPrevistas(), dto.horasAyudantesPrevistas(), dto.productividad(), dto.rendimientoOficial(), dto.rendimientoAyudante()}) {
             if (n != null && (!Double.isFinite(n) || n < 0)) throw new SolicitudInvalidaException("Cantidad y horas previstas inválidas");
         }
         if (dto.fechaInicioPlanificada() != null && dto.fechaFinPlanificada() != null && dto.fechaFinPlanificada().isBefore(dto.fechaInicioPlanificada())) {
             throw new SolicitudInvalidaException("Fin de actividad anterior al inicio");
         }
+        rubro.setFrentes(dto.frentes() == null ? rubro.getFrentes() : dto.frentes());
         if (dto.rendimientoOficial() == null && dto.rendimientoAyudante() == null) {
             if (dto.cantidad() == null || dto.cantidad() <= 0
                 || dto.horasOficialesPrevistas() == null || dto.horasAyudantesPrevistas() == null) return;

@@ -1,5 +1,6 @@
 package com.vortise.gestion.domain.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -39,6 +40,8 @@ public class RubroObra {
     private Double rendimientoOficial;
     private Double rendimientoAyudante;
     private Integer cantidadPersonas;
+    @Column(nullable = false)
+    private Integer frentes = 1;
     private LocalDate fechaInicioPlanificada;
     private LocalDate fechaFinPlanificada;
     private boolean cronogramaManual;
@@ -186,6 +189,9 @@ public class RubroObra {
     public void setCantidadPersonas(Integer cantidadPersonas) {
         this.cantidadPersonas = cantidadPersonas;
     }
+
+    public Integer getFrentes() { return frentes == null ? 1 : frentes; }
+    public void setFrentes(Integer frentes) { this.frentes = frentes; }
 
     public LocalDate getFechaInicioPlanificada() { return fechaInicioPlanificada; }
     public void setFechaInicioPlanificada(LocalDate fechaInicioPlanificada) { this.fechaInicioPlanificada = fechaInicioPlanificada; }

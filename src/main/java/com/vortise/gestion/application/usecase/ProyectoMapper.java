@@ -106,7 +106,8 @@ final class ProyectoMapper {
             rubro.getCantidadPersonas(),
             rubro.getFechaInicioPlanificada(),
             rubro.getFechaFinPlanificada(),
-            rubro.isCronogramaManual()
+            rubro.isCronogramaManual(),
+            rubro.getFrentes()
         );
     }
 }
