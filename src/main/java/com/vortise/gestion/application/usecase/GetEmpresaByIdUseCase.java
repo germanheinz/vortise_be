@@ -1,6 +1,7 @@
 package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.EmpresaDto;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,6 @@ public class GetEmpresaByIdUseCase {
 
     public EmpresaDto execute(Long id) {
         return EmpresaMapper.toDto(empresaRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Empresa no encontrada")));
+            .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada")));
     }
 }

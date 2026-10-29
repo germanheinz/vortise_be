@@ -1,7 +1,5 @@
 package com.vortise.gestion.infrastructure.web;
 
-import static org.junit.jupiter.api.Assertions.*;
-import tools.jackson.databind.ObjectMapper;
 import com.vortise.gestion.application.usecase.PasswordResetTransactions;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
@@ -16,13 +14,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.*;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import tools.jackson.databind.ObjectMapper;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /** New disposable tmpfs container15434 only. No existing payments15433 or hosted datasource. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -60,9 +61,9 @@ class PasswordResetPostgresTest {
     @Autowired UsuarioEmpresaRepository users;
     @Autowired PasswordResetTransactions resets;
     @Autowired PasswordEncoder encoder;
-    @Test void migratesThroughV8ValidatesAndSerializesTokenConsumption() throws Exception {
+    @Test void migratesThroughV9ValidatesAndSerializesTokenConsumption() throws Exception {
         try (var c = source.getConnection()) { assertEquals(URL, c.getMetaData().getURL()); }
-        assertEquals(8, jdbc.queryForObject("select count(*) from flyway_schema_history where success = true and version is not null", Integer.class));
+        assertEquals(9, jdbc.queryForObject("select count(*) from flyway_schema_history where success = true and version is not null", Integer.class));
         assertEquals(1, jdbc.queryForObject("select count(*) from password_reset_quotas where clave = 'global'", Integer.class));
         String email = "pg-auth-" + UUID.randomUUID() + "@example.invalid";
         Long id = new TransactionTemplate(tm).execute(status -> {

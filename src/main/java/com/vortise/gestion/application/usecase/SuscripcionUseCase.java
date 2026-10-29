@@ -4,8 +4,10 @@ import com.vortise.gestion.application.dto.CheckoutRequestDto;
 import com.vortise.gestion.application.dto.MisSuscripcionesDto;
 import com.vortise.gestion.application.dto.PlanSuscripcionDto;
 import com.vortise.gestion.application.dto.UrlDto;
+import com.vortise.gestion.application.exception.ConflictoEstadoException;
 import com.vortise.gestion.application.exception.PagosNoConfiguradosException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
+import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.application.port.StripeGateway;
 import com.vortise.gestion.domain.model.PlanSuscripcion;
 import com.vortise.gestion.domain.model.Suscripcion;
@@ -14,7 +16,6 @@ import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.PlanSuscripcionRepository;
 import com.vortise.gestion.domain.repository.SuscripcionRepository;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
-import com.vortise.gestion.infrastructure.security.CurrentTenantService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -31,12 +32,12 @@ public class SuscripcionUseCase {
     private final SuscripcionRepository suscripciones;
     private final UsuarioEmpresaRepository usuarios;
     private final SuscripcionConsultaService consulta;
-    private final CurrentTenantService tenant;
+    private final CurrentIdentity tenant;
     private final StripeGateway stripe;
     private final String frontendUrl;
 
     public SuscripcionUseCase(PlanSuscripcionRepository planes, SuscripcionRepository suscripciones, UsuarioEmpresaRepository usuarios,
-            SuscripcionConsultaService consulta, CurrentTenantService tenant, StripeGateway stripe,
+            SuscripcionConsultaService consulta, CurrentIdentity tenant, StripeGateway stripe,
             @Value("${app.frontend-url:http://localhost:3000}") String frontendUrl) {
         this.planes = planes; this.suscripciones = suscripciones; this.usuarios = usuarios; this.consulta = consulta;
         this.tenant = tenant; this.stripe = stripe;
@@ -70,7 +71,7 @@ public class SuscripcionUseCase {
 
         Suscripcion suscripcion = buscar(request.titular(), usuario).orElseGet(() -> crear(request.titular(), usuario));
         if (suscripcion.isActiva(Instant.now())) {
-            throw new IllegalStateException("Ya existe una suscripción activa. Podés gestionarla desde el portal de pagos.");
+            throw new ConflictoEstadoException("Ya existe una suscripción activa. Podés gestionarla desde el portal de pagos.");
         }
         Integer diasPrueba = plan.getDiasPrueba() > 0 && !suscripcion.isPruebaUsada() ? plan.getDiasPrueba() : null;
         String url = stripe.crearCheckout(new StripeGateway.CheckoutStripe(

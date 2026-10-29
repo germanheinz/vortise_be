@@ -1,5 +1,6 @@
 package com.vortise.gestion.application.usecase;
 
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.repository.RestriccionObraRepository;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +14,7 @@ public class DeleteRestriccionUseCase {
 
     public void execute(Long restriccionId) {
         if (restriccionObraRepository.findById(restriccionId).isEmpty()) {
-            throw new IllegalArgumentException("Restriccion no encontrada");
+            throw new RecursoNoEncontradoException("Restriccion no encontrada");
         }
 
         restriccionObraRepository.deleteById(restriccionId);

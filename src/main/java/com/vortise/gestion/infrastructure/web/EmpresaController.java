@@ -2,10 +2,12 @@ package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.EmpresaCreateDto;
 import com.vortise.gestion.application.dto.EmpresaDto;
+import com.vortise.gestion.application.dto.PaginaDto;
 import com.vortise.gestion.application.usecase.DeleteEmpresaUseCase;
 import com.vortise.gestion.application.usecase.GetEmpresaByIdUseCase;
 import com.vortise.gestion.application.usecase.GetEmpresasUseCase;
 import com.vortise.gestion.application.usecase.GetObrasByEmpresaUseCase;
+import com.vortise.gestion.application.usecase.GetProyectoPaginaUseCase;
 import com.vortise.gestion.application.usecase.SaveEmpresaUseCase;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -19,11 +21,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/empresas")
 public class EmpresaController {
+    private final GetProyectoPaginaUseCase pagina;
     private final GetEmpresasUseCase getEmpresasUseCase;
     private final GetEmpresaByIdUseCase getEmpresaByIdUseCase;
     private final SaveEmpresaUseCase saveEmpresaUseCase;
@@ -32,7 +36,8 @@ public class EmpresaController {
 
     public EmpresaController(GetEmpresasUseCase getEmpresasUseCase, GetEmpresaByIdUseCase getEmpresaByIdUseCase,
             SaveEmpresaUseCase saveEmpresaUseCase, DeleteEmpresaUseCase deleteEmpresaUseCase,
-            GetObrasByEmpresaUseCase getObrasByEmpresaUseCase) {
+            GetObrasByEmpresaUseCase getObrasByEmpresaUseCase, GetProyectoPaginaUseCase pagina) {
+        this.pagina = pagina;
         this.getEmpresasUseCase = getEmpresasUseCase;
         this.getEmpresaByIdUseCase = getEmpresaByIdUseCase;
         this.saveEmpresaUseCase = saveEmpresaUseCase;
@@ -48,6 +53,13 @@ public class EmpresaController {
     @GetMapping("/{id}")
     public ResponseEntity<EmpresaDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(getEmpresaByIdUseCase.execute(id));
+    }
+
+    @GetMapping("/{id}/obras/pagina")
+    public ResponseEntity<PaginaDto<com.vortise.gestion.application.dto.ProyectoDto>> getPagina(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int size,
+            @RequestParam(defaultValue = "") String q) {
+        return ResponseEntity.ok(pagina.execute(id, q, page, size));
     }
 
     @GetMapping("/{id}/obras")

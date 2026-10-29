@@ -1,14 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  jakarta.persistence.Column
- *  jakarta.persistence.Entity
- *  jakarta.persistence.GeneratedValue
- *  jakarta.persistence.GenerationType
- *  jakarta.persistence.Id
- *  jakarta.persistence.Table
- */
 package com.vortise.gestion.domain.model;
 
 import jakarta.persistence.Column;
@@ -77,64 +66,19 @@ public class GastoFijo {
     }
 
     public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-        if (!(o instanceof GastoFijo)) {
-            return false;
-        }
-        GastoFijo other = (GastoFijo)o;
-        if (!other.canEqual(this)) {
-            return false;
-        }
-        Long this$id = this.getId();
-        Long other$id = other.getId();
-        if (this$id == null ? other$id != null : !((Object)this$id).equals(other$id)) {
-            return false;
-        }
-        Double this$monto = this.getMonto();
-        Double other$monto = other.getMonto();
-        if (this$monto == null ? other$monto != null : !((Object)this$monto).equals(other$monto)) {
-            return false;
-        }
-        Integer this$mes = this.getMes();
-        Integer other$mes = other.getMes();
-        if (this$mes == null ? other$mes != null : !((Object)this$mes).equals(other$mes)) {
-            return false;
-        }
-        String this$concepto = this.getConcepto();
-        String other$concepto = other.getConcepto();
-        if (this$concepto == null ? other$concepto != null : !this$concepto.equals(other$concepto)) {
-            return false;
-        }
-        String this$categoria = this.getCategoria();
-        String other$categoria = other.getCategoria();
-        return !(this$categoria == null ? other$categoria != null : !this$categoria.equals(other$categoria));
+        if (this == o) return true;
+        if (o == null || EntityIdentity.type(this) != EntityIdentity.type(o)) return false;
+        GastoFijo other = (GastoFijo) o;
+        return getId() != null && getId().equals(other.getId());
     }
 
     protected boolean canEqual(Object other) {
         return other instanceof GastoFijo;
     }
 
-    public int hashCode() {
-        int PRIME = 59;
-        int result = 1;
-        Long $id = this.getId();
-        result = result * 59 + ($id == null ? 43 : ((Object)$id).hashCode());
-        Double $monto = this.getMonto();
-        result = result * 59 + ($monto == null ? 43 : ((Object)$monto).hashCode());
-        Integer $mes = this.getMes();
-        result = result * 59 + ($mes == null ? 43 : ((Object)$mes).hashCode());
-        String $concepto = this.getConcepto();
-        result = result * 59 + ($concepto == null ? 43 : $concepto.hashCode());
-        String $categoria = this.getCategoria();
-        result = result * 59 + ($categoria == null ? 43 : $categoria.hashCode());
-        return result;
-    }
+    public int hashCode() { return EntityIdentity.type(this).hashCode(); }
 
-    public String toString() {
-        return "GastoFijo(id=" + this.getId() + ", concepto=" + this.getConcepto() + ", monto=" + this.getMonto() + ", categoria=" + this.getCategoria() + ", mes=" + this.getMes() + ")";
-    }
+    public String toString() { return "GastoFijo(id=" + getId() + ")"; }
 
     public GastoFijo() {
     }
@@ -186,8 +130,6 @@ public class GastoFijo {
             return new GastoFijo(this.id, this.concepto, this.monto, this.categoria, this.mes);
         }
 
-        public String toString() {
-            return "GastoFijo.GastoFijoBuilder(id=" + this.id + ", concepto=" + this.concepto + ", monto=" + this.monto + ", categoria=" + this.categoria + ", mes=" + this.mes + ")";
-        }
+        public String toString() { return "GastoFijoBuilder"; }
     }
 }

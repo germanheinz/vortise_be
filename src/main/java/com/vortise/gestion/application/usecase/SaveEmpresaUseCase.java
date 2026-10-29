@@ -2,32 +2,44 @@ package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.EmpresaCreateDto;
 import com.vortise.gestion.application.dto.EmpresaDto;
+import com.vortise.gestion.application.exception.ConflictoEstadoException;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
+import com.vortise.gestion.application.exception.SolicitudInvalidaException;
+import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
-import com.vortise.gestion.infrastructure.security.CurrentTenantService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SaveEmpresaUseCase {
     private final EmpresaRepository empresaRepository;
-    private final CurrentTenantService currentTenant;
+    private final CurrentIdentity currentTenant;
 
-    public SaveEmpresaUseCase(EmpresaRepository empresaRepository, CurrentTenantService currentTenant) {
+    private final InicializarEmpresaUseCase inicializar;
+
+    public SaveEmpresaUseCase(EmpresaRepository empresaRepository, CurrentIdentity currentTenant, InicializarEmpresaUseCase inicializar) {
         this.empresaRepository = empresaRepository;
         this.currentTenant = currentTenant;
+        this.inicializar = inicializar;
     }
 
+    @Transactional
     public EmpresaDto create(EmpresaCreateDto dto) {
         ensureNameAvailable(dto.nombre(), null);
         ensureTaxIdAvailable(dto.identificacionFiscal(), null);
         Empresa empresa = new Empresa(dto.nombre().trim(), normalize(dto.identificacionFiscal()));
         empresa.setCreadoPorUsuarioId(currentTenant.usuarioId());
-        return EmpresaMapper.toDto(empresaRepository.save(empresa));
+        Empresa saved = empresaRepository.save(empresa);
+        inicializar.execute(saved.getId());
+        return EmpresaMapper.toDto(saved);
     }
 
+    @Transactional
     public EmpresaDto update(Long id, EmpresaCreateDto dto) {
-        Empresa empresa = empresaRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Empresa no encontrada"));
+        Empresa empresa = empresaRepository.bloquearPorId(id)
+            .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada"));
+        currentTenant.requireEmpresa(id);
         ensureNameAvailable(dto.nombre(), id);
         ensureTaxIdAvailable(dto.identificacionFiscal(), id);
         empresa.setNombre(dto.nombre().trim());
@@ -39,7 +51,7 @@ public class SaveEmpresaUseCase {
         empresaRepository.findByNombreIgnoreCase(nombre.trim())
             .filter(existing -> !existing.getId().equals(currentId))
             .ifPresent(existing -> {
-                throw new IllegalArgumentException("Ya existe una empresa con ese nombre");
+                throw new SolicitudInvalidaException("Ya existe una empresa con ese nombre");
             });
     }
 
@@ -52,7 +64,7 @@ public class SaveEmpresaUseCase {
         empresaRepository.findByIdentificacionFiscal(taxId)
             .filter(existing -> !existing.getId().equals(currentId))
             .ifPresent(existing -> {
-                throw new IllegalStateException("Ya existe una empresa con esa identificación fiscal");
+                throw new ConflictoEstadoException("Ya existe una empresa con esa identificación fiscal");
             });
     }
 

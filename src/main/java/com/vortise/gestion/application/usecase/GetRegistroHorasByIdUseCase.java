@@ -1,6 +1,7 @@
 package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.RegistroHorasDto;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.repository.RegistroHorasRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,6 @@ public class GetRegistroHorasByIdUseCase {
 
     public RegistroHorasDto execute(Long id) {
         return registroHorasRepository.findById(id).map(RegistroHorasMapper::toDto)
-            .orElseThrow(() -> new IllegalArgumentException("Registro de horas no encontrado"));
+            .orElseThrow(() -> new RecursoNoEncontradoException("Registro de horas no encontrado"));
     }
 }

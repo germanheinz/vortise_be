@@ -1,5 +1,6 @@
 package com.vortise.gestion.infrastructure.config;
 
+import com.vortise.gestion.application.port.FeaturePolicy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
@@ -7,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 /** Fail-closed gates for features that are unsafe without tenant-owned data. */
 @Component
-public class ProductionFeaturePolicy {
+public class ProductionFeaturePolicy implements FeaturePolicy {
     private final Environment environment;
     private final boolean syntheticData;
     private final boolean isolatedStorage;

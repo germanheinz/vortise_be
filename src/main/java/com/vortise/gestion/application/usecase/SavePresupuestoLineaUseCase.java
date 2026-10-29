@@ -7,6 +7,7 @@
 package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.PresupuestoLineaDto;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.model.PresupuestoLinea;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.repository.PresupuestoLineaRepository;
@@ -21,14 +22,14 @@ public class SavePresupuestoLineaUseCase {
 
     @Transactional
     public PresupuestoLineaDto execute(PresupuestoLineaDto dto) {
-        Proyecto proyecto = this.proyectoRepository.findById(dto.proyectoId()).orElseThrow(() -> new IllegalArgumentException("Proyecto no encontrado: " + dto.proyectoId()));
+        Proyecto proyecto = this.proyectoRepository.findById(dto.proyectoId()).orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado: " + dto.proyectoId()));
         PresupuestoLinea linea;
         if (dto.id() == null) {
             linea = PresupuestoLinea.builder().proyecto(proyecto).build();
         } else {
             linea = presupuestoLineaRepository.findById(dto.id())
                 .filter(existing -> existing.getProyecto() != null && proyecto.getId().equals(existing.getProyecto().getId()))
-                .orElseThrow(() -> new IllegalArgumentException("Presupuesto no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Presupuesto no encontrado"));
         }
         linea.setEtapa(dto.etapa());
         linea.setTipoSuperficie(dto.tipoSuperficie());

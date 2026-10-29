@@ -1,10 +1,11 @@
 package com.vortise.gestion.application.usecase;
 
+import com.vortise.gestion.application.exception.ConflictoEstadoException;
 import com.vortise.gestion.application.exception.PagosNoConfiguradosException;
-import com.vortise.gestion.application.port.StripeGateway;
 import com.vortise.gestion.application.port.StripeGateway.EventoStripe;
 import com.vortise.gestion.application.port.StripeGateway.FacturaStripe;
 import com.vortise.gestion.application.port.StripeGateway.SuscripcionStripe;
+import com.vortise.gestion.application.port.StripeGateway;
 import com.vortise.gestion.domain.model.PagoSuscripcion;
 import com.vortise.gestion.domain.model.StripeEventoProcesado;
 import com.vortise.gestion.domain.model.Suscripcion;
@@ -54,7 +55,7 @@ public class StripeWebhookUseCase {
                     // The first lookup is routing only. Never apply a snapshot read before the lock.
                     var refund = stripe.obtenerDevolucion(evento.refundId());
                     if (refund.factura() == null || !java.util.Objects.equals(ruta.factura().customerId(), refund.factura().customerId())) {
-                        throw new IllegalStateException("Cambió el titular de la devolución");
+                        throw new ConflictoEstadoException("Cambió el titular de la devolución");
                     }
                     registrarPago(refund.factura());
                     pagos.findByStripeInvoiceId(refund.factura().id()).ifPresent(pago -> {
@@ -78,7 +79,7 @@ public class StripeWebhookUseCase {
         Suscripcion suscripcion = local.get();
         SuscripcionStripe remota = stripe.obtenerSuscripcion(subscriptionId);
         if (!java.util.Objects.equals(suscripcion.getStripeCustomerId(), remota.customerId())) {
-            throw new IllegalStateException("Cambió el titular de la suscripción");
+            throw new ConflictoEstadoException("Cambió el titular de la suscripción");
         }
         boolean otraSuscripcionActiva = !java.util.Objects.equals(subscriptionId, suscripcion.getStripeSubscriptionId()) && suscripcion.getStripeSubscriptionId() != null
             && suscripcion.isActiva(Instant.now()) && !ESTADOS_ACTIVOS.contains(remota.estado());
@@ -98,7 +99,7 @@ public class StripeWebhookUseCase {
         }
         FacturaStripe factura = stripe.obtenerFactura(ruta.id());
         if (!java.util.Objects.equals(suscripcion.get().getStripeCustomerId(), factura.customerId())) {
-            throw new IllegalStateException("Cambió el titular de la factura");
+            throw new ConflictoEstadoException("Cambió el titular de la factura");
         }
         if ("draft".equals(factura.estadoFactura())) return;
         PagoSuscripcion pago = pagos.findByStripeInvoiceId(factura.id()).orElseGet(() -> new PagoSuscripcion(suscripcion.get(), factura.id()));

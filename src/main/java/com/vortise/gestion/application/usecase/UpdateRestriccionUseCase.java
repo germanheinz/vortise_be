@@ -2,6 +2,7 @@ package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.RestriccionDto;
 import com.vortise.gestion.application.dto.RestriccionUpdateDto;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.model.RestriccionObra;
 import com.vortise.gestion.domain.repository.RestriccionObraRepository;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,7 @@ public class UpdateRestriccionUseCase {
 
     public RestriccionDto execute(Long restriccionId, RestriccionUpdateDto dto) {
         RestriccionObra restriccion = restriccionRepository.findById(restriccionId)
-            .orElseThrow(() -> new IllegalArgumentException("Restriccion no encontrada"));
+            .orElseThrow(() -> new RecursoNoEncontradoException("Restriccion no encontrada"));
 
         if (dto.prioridad() != null) {
             restriccion.setPrioridad(dto.prioridad());

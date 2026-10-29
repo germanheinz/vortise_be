@@ -1,5 +1,6 @@
 package com.vortise.gestion.application.usecase;
 
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +14,7 @@ public class DeleteProyectoUseCase {
 
     public void execute(Long proyectoId) {
         if (proyectoRepository.findById(proyectoId).isEmpty()) {
-            throw new IllegalArgumentException("Proyecto no encontrado");
+            throw new RecursoNoEncontradoException("Proyecto no encontrado");
         }
 
         proyectoRepository.deleteById(proyectoId);

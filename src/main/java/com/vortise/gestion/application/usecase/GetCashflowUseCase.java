@@ -8,6 +8,9 @@ package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.CashflowDto;
 import com.vortise.gestion.application.dto.CashflowMesDto;
+import com.vortise.gestion.application.exception.FeatureUnavailableException;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
+import com.vortise.gestion.application.port.FeaturePolicy;
 import com.vortise.gestion.domain.model.GastoFijo;
 import com.vortise.gestion.domain.model.Ingreso;
 import com.vortise.gestion.domain.model.PresupuestoLinea;
@@ -17,8 +20,6 @@ import com.vortise.gestion.domain.repository.IngresoRepository;
 import com.vortise.gestion.domain.repository.PresupuestoLineaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.service.CashflowCalculadorService;
-import com.vortise.gestion.application.exception.FeatureUnavailableException;
-import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -29,13 +30,13 @@ public class GetCashflowUseCase {
     private final GastoFijoRepository gastoFijoRepository;
     private final IngresoRepository ingresoRepository;
     private final CashflowCalculadorService cashflowCalculadorService;
-    private final ProductionFeaturePolicy featurePolicy;
+    private final FeaturePolicy featurePolicy;
 
     public CashflowDto execute(Long proyectoId) {
         if (!featurePolicy.gastosFijosEnabled()) {
             throw new FeatureUnavailableException("El cashflow está temporalmente deshabilitado hasta completar el aislamiento de gastos indirectos por empresa.");
         }
-        Proyecto proyecto = this.proyectoRepository.findById(proyectoId).orElseThrow(() -> new IllegalArgumentException("Proyecto no encontrado: " + proyectoId));
+        Proyecto proyecto = this.proyectoRepository.findById(proyectoId).orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado: " + proyectoId));
         List<PresupuestoLinea> lineas = this.presupuestoLineaRepository.findByProyectoId(proyectoId);
         List<GastoFijo> gastosFijos = this.gastoFijoRepository.findAll();
         List<Ingreso> ingresos = this.ingresoRepository.findByProyectoId(proyectoId);
@@ -45,7 +46,7 @@ public class GetCashflowUseCase {
 
         public GetCashflowUseCase(ProyectoRepository proyectoRepository, PresupuestoLineaRepository presupuestoLineaRepository,
             GastoFijoRepository gastoFijoRepository, IngresoRepository ingresoRepository,
-            CashflowCalculadorService cashflowCalculadorService, ProductionFeaturePolicy featurePolicy) {
+            CashflowCalculadorService cashflowCalculadorService, FeaturePolicy featurePolicy) {
         this.proyectoRepository = proyectoRepository;
         this.presupuestoLineaRepository = presupuestoLineaRepository;
         this.gastoFijoRepository = gastoFijoRepository;

@@ -2,6 +2,7 @@ package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.RestriccionComentarioCreateDto;
 import com.vortise.gestion.application.dto.RestriccionComentarioDto;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.model.RestriccionComentario;
 import com.vortise.gestion.domain.model.RestriccionObra;
 import com.vortise.gestion.domain.repository.RestriccionComentarioRepository;
@@ -21,7 +22,7 @@ public class CreateRestriccionComentarioUseCase {
 
     public RestriccionComentarioDto execute(Long restriccionId, RestriccionComentarioCreateDto dto) {
         RestriccionObra restriccion = restriccionRepository.findById(restriccionId)
-            .orElseThrow(() -> new IllegalArgumentException("Restriccion no encontrada"));
+            .orElseThrow(() -> new RecursoNoEncontradoException("Restriccion no encontrada"));
 
         RestriccionComentario comentario = new RestriccionComentario();
         comentario.setRestriccion(restriccion);

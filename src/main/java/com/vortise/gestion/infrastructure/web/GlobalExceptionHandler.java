@@ -13,19 +13,21 @@ package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.ErrorResponseDto;
 import com.vortise.gestion.application.dto.FeatureUnavailableDto;
-import com.vortise.gestion.application.exception.PagosNoConfiguradosException;
+import com.vortise.gestion.application.exception.ConflictoEstadoException;
 import com.vortise.gestion.application.exception.FeatureUnavailableException;
+import com.vortise.gestion.application.exception.PagosNoConfiguradosException;
 import com.vortise.gestion.application.exception.ProveedorPagoException;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.infrastructure.backup.BackupValidationException;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -39,14 +41,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponseDto(400, "Bad Request", ex.getMessage()));
     }
 
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    public ResponseEntity<ErrorResponseDto> handleNotFound(RecursoNoEncontradoException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponseDto(404, "Not Found", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ConflictoEstadoException.class)
+    public ResponseEntity<ErrorResponseDto> handleConflict(ConflictoEstadoException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponseDto(409, "Conflict", ex.getMessage()));
+    }
+
     @ExceptionHandler(value={IllegalArgumentException.class})
     public ResponseEntity<ErrorResponseDto> handleIllegalArgument(IllegalArgumentException ex) {
-        return ResponseEntity.status((HttpStatusCode)HttpStatus.NOT_FOUND).body(new ErrorResponseDto(404, "Not Found", ex.getMessage()));
+        return ResponseEntity.badRequest().body(new ErrorResponseDto(400, "Bad Request", "La solicitud no es válida."));
     }
 
     @ExceptionHandler(value={IllegalStateException.class})
     public ResponseEntity<ErrorResponseDto> handleIllegalState(IllegalStateException ex) {
-        return ResponseEntity.status((HttpStatusCode)HttpStatus.CONFLICT).body(new ErrorResponseDto(409, "Conflict", ex.getMessage()));
+        return ResponseEntity.status((HttpStatusCode)HttpStatus.CONFLICT).body(new ErrorResponseDto(409, "Conflict", "La operación no puede completarse en el estado actual."));
     }
 
     @ExceptionHandler(value={AccessDeniedException.class})
@@ -84,6 +96,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value={MaxUploadSizeExceededException.class})
     public ResponseEntity<ErrorResponseDto> handleMaxUpload(MaxUploadSizeExceededException ex) {
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(new ErrorResponseDto(413, "Payload Too Large", "El archivo es demasiado grande"));
+    }
+
+    @ExceptionHandler({org.springframework.dao.DataIntegrityViolationException.class,
+        org.springframework.dao.OptimisticLockingFailureException.class})
+    public ResponseEntity<ErrorResponseDto> handlePersistenceConflict(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponseDto(409, "Conflict",
+            "Los datos cambiaron o ya existe un registro equivalente. Actualizá la página y volvé a intentar."));
+    }
+
+    @ExceptionHandler({org.springframework.http.converter.HttpMessageNotReadableException.class,
+        org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,
+        org.springframework.web.bind.MissingServletRequestParameterException.class})
+    public ResponseEntity<ErrorResponseDto> handleMalformedInput(Exception ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponseDto(400, "Bad Request", "El formato de la solicitud no es válido."));
     }
 
     @ExceptionHandler(value={Exception.class})

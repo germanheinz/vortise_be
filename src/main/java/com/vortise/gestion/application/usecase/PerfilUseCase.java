@@ -2,13 +2,13 @@ package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.MeDto;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
-import com.vortise.gestion.application.port.FotoPerfilStorage;
+import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.application.port.FotoPerfilStorage.FotoPerfil;
 import com.vortise.gestion.application.port.FotoPerfilStorage.TipoImagen;
+import com.vortise.gestion.application.port.FotoPerfilStorage;
 import com.vortise.gestion.domain.model.Suscripcion;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
-import com.vortise.gestion.infrastructure.security.CurrentTenantService;
 import java.util.Optional;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -19,11 +19,11 @@ public class PerfilUseCase {
     static final int MAX_FOTO_BYTES = 2 * 1024 * 1024;
 
     private final UsuarioEmpresaRepository usuarios;
-    private final CurrentTenantService tenant;
+    private final CurrentIdentity tenant;
     private final SuscripcionConsultaService suscripciones;
     private final FotoPerfilStorage fotos;
 
-    public PerfilUseCase(UsuarioEmpresaRepository usuarios, CurrentTenantService tenant, SuscripcionConsultaService suscripciones,
+    public PerfilUseCase(UsuarioEmpresaRepository usuarios, CurrentIdentity tenant, SuscripcionConsultaService suscripciones,
             FotoPerfilStorage fotos) {
         this.usuarios = usuarios; this.tenant = tenant; this.suscripciones = suscripciones; this.fotos = fotos;
     }

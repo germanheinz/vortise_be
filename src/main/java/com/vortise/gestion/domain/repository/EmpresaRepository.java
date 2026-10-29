@@ -1,14 +1,15 @@
 package com.vortise.gestion.domain.repository;
 
 import com.vortise.gestion.domain.model.Empresa;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import java.util.List;
-import java.util.Optional;
 
 public interface EmpresaRepository {
+    Optional<Empresa> bloquearPorId(Long id);
     long count();
 
     @Query("select e from Empresa e where (:empresaInternaId is null or e.id <> :empresaInternaId) and (:q = '' or lower(e.nombre) like lower(concat('%', :q, '%')))")

@@ -1,6 +1,7 @@
 package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.ProyectoDto;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import java.util.List;
@@ -18,7 +19,7 @@ public class GetObrasByEmpresaUseCase {
 
     public List<ProyectoDto> execute(Long empresaId) {
         if (empresaRepository.findById(empresaId).isEmpty()) {
-            throw new IllegalArgumentException("Empresa no encontrada");
+            throw new RecursoNoEncontradoException("Empresa no encontrada");
         }
         return proyectoRepository.findByEmpresaRelacionadaId(empresaId).stream()
             .map(ProyectoMapper::toSummaryDto)

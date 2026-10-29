@@ -20,5 +20,5 @@ public record RegistroHorasUpdateDto(
     Double horasAyudantes,
     String causaNoCumplimiento,
     String medidaCorrectiva
-) {
+) implements RegistroHorasDatos {
 }

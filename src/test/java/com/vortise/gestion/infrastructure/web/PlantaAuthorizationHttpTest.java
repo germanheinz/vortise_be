@@ -456,16 +456,17 @@ class PlantaAuthorizationHttpTest {
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void malformedInputPreservesLegacyErrorHandling(boolean invalidPathId) throws Exception {
+    void malformedInputReturnsSanitizedClientError(boolean invalidPathId) throws Exception {
         DatabaseState before = snapshot();
         clearInvocations(plantaRepository);
         String childId = invalidPathId ? "not-a-number" : fixtures.targetId().toString();
-        // The existing broad exception advice maps these MVC exceptions to 500.
+        // CODE-QUALITY-14 intentionally classifies malformed input as 400 before child lookup.
         mockMvc.perform(put("/api/proyectos/" + fixtures.projectId() + "/plantas/" + childId)
             .header("Authorization", "Bearer " + token(RolEmpresa.CONSULTA))
             .contentType(MediaType.APPLICATION_JSON)
             .content(invalidPathId ? objectMapper.writeValueAsString(validBody()) : "{"))
-            .andExpect(status().isInternalServerError());
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("El formato de la solicitud no es válido."));
         assertDeniedState(before, true);
     }
 

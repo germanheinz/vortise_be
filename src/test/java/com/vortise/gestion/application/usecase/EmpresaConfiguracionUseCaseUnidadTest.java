@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -28,6 +29,7 @@ class EmpresaConfiguracionUseCaseUnidadTest {
         empresa = mock(Empresa.class);
         when(empresa.getId()).thenReturn(EMPRESA_ID);
         when(empresas.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
+        when(empresas.bloquearPorId(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         unidades = mock(UnidadMetricaEmpresaRepository.class);
         useCase = new EmpresaConfiguracionUseCase(
             empresas,

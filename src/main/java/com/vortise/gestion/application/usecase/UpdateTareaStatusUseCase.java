@@ -8,6 +8,7 @@ package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.TareaDto;
 import com.vortise.gestion.application.dto.TareaUpdateStatusDto;
+import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.model.Tarea;
 import com.vortise.gestion.domain.repository.TareaRepository;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ public class UpdateTareaStatusUseCase {
     private final TareaRepository tareaRepository;
 
     public TareaDto execute(Long id, TareaUpdateStatusDto dto) {
-        Tarea tarea = this.tareaRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Tarea no encontrada: " + id));
+        Tarea tarea = this.tareaRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Tarea no encontrada: " + id));
         tarea.setStatus(dto.status());
         if (dto.avancePct() != null) {
             tarea.setAvancePct(dto.avancePct());

@@ -5,7 +5,7 @@
  *  org.springframework.http.ResponseEntity
  *  org.springframework.web.bind.annotation.PostMapping
  *  org.springframework.web.bind.annotation.RequestMapping
- *  org.springframework.web.bind.annotation.RequestParam
+ *  RequestParam
  *  org.springframework.web.bind.annotation.RestController
  *  org.springframework.web.multipart.MultipartFile
  */
