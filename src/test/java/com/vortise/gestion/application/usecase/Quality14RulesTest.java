@@ -75,6 +75,7 @@ class Quality14RulesTest {
         var identity = mock(CurrentIdentity.class);
         Empresa company = new Empresa("A", null); ReflectionTestUtils.setField(company, "id", 1L);
         Proyecto project = new Proyecto(); project.setId(7L); project.setEmpresaRelacionada(company);
+        project.setSuperficieCubierta(100.0); project.setSuperficieSemicubierta(20.0); project.setSuperficieDescubierta(40.0);
         RubroObra activity = new RubroObra(); activity.setId(8L); activity.setSubRubro("Activity");
         activity.setProyecto(project); project.getRubros().add(activity);
         Planta plant = new Planta(); plant.setProyecto(project); project.getPlantas().add(plant);
@@ -89,6 +90,32 @@ class Quality14RulesTest {
         assertDoesNotThrow(() -> useCase.execute(7L, input));
         assertSame(activity, project.getRubros().get(0));
         assertSame(plant, project.getPlantas().get(0));
+        assertEquals(100.0, project.getSuperficieCubierta());
+        assertEquals(20.0, project.getSuperficieSemicubierta());
+        assertEquals(40.0, project.getSuperficieDescubierta());
         verify(identity).requireEmpresa(1L);
+    }
+
+    @Test void explicitlyReplacesGeneralSurfaceTotals() {
+        ProyectoRepository projects = mock(ProyectoRepository.class);
+        var tasks = mock(ObraTareaRepository.class);
+        var identity = mock(CurrentIdentity.class);
+        Empresa company = new Empresa("A", null); ReflectionTestUtils.setField(company, "id", 1L);
+        Proyecto project = new Proyecto(); project.setId(7L); project.setEmpresaRelacionada(company);
+        when(projects.bloquearPorId(7L)).thenReturn(Optional.of(project));
+        when(projects.save(project)).thenReturn(project);
+        var companyChanges = mock(AplicarCambiosEmpresaObraUseCase.class);
+        when(companyChanges.execute(any(), any(), any())).thenReturn(List.of());
+        var useCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class), tasks,
+            mock(RestriccionObraRepository.class), identity, mock(RegistroHorasRepository.class), companyChanges);
+        when(tasks.findByProyectoId(7L)).thenReturn(List.of());
+        ProyectoUpdateDto input = new ProyectoUpdateDto("Name", null, null, "Address", "P1", null, null, null, null,
+            null, null, null, null, null, List.of(), null, null, 120.0, 35.0, 45.0, true, null, null);
+
+        ProyectoDto result = useCase.execute(7L, input);
+
+        assertEquals(120.0, result.superficieCubierta());
+        assertEquals(35.0, result.superficieSemicubierta());
+        assertEquals(45.0, result.superficieDescubierta());
     }
 }

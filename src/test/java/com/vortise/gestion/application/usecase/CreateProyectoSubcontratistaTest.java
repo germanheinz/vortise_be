@@ -64,6 +64,20 @@ class CreateProyectoSubcontratistaTest {
         verify(proyectos, never()).save(any(Proyecto.class));
     }
 
+    @Test
+    void persistsGeneralSurfaceTotalsAndReturnsThemInTheProjectDetail() {
+        when(proyectos.save(any(Proyecto.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        ProyectoCreateDto request = new ProyectoCreateDto("Obra de prueba", null, null, "Dirección", "OB-2",
+            null, null, null, null, 2, EMPRESA_ID, null, null, null, List.of(), List.of(), List.of(),
+            120.0, 35.0, 45.0, null, null);
+
+        var saved = useCase.execute(request);
+
+        assertEquals(120.0, saved.superficieCubierta());
+        assertEquals(35.0, saved.superficieSemicubierta());
+        assertEquals(45.0, saved.superficieDescubierta());
+    }
+
     private CatalogoEmpresa subcontractor(Empresa owner, String type) {
         CatalogoEmpresa item = mock(CatalogoEmpresa.class);
         when(item.getEmpresa()).thenReturn(owner);

@@ -32,6 +32,7 @@ public record ProyectoUpdateDto(
 	Double superficieCubierta,
 	Double superficieSemicubierta,
 	Double superficieDescubierta,
+	boolean actualizarSuperficiesGenerales,
 	@Valid List<CategoriaManoObraCostoDto> costosManoObraModificados,
 	@Valid List<SubcontratistaObraDto> contratistasObra
 ) {
@@ -41,6 +42,6 @@ public record ProyectoUpdateDto(
 			List<RubroCreateDto> rubros, List<Long> subcontratistaIds) {
 		this(nombre, descripcion, presupuestoUsd, direccion, numeroProyecto, fechaInicio, fechaFin, responsablesObra,
 			categoriasManoObra, cantidadSectores, empresaId, empresa, horasPrevistas, horasReales, plantas, rubros,
-			subcontratistaIds, null, null, null, null, null);
+			subcontratistaIds, null, null, null, false, null, null);
 	}
 }
