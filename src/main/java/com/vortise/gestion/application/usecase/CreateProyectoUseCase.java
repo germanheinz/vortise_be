@@ -23,6 +23,7 @@ import com.vortise.gestion.domain.repository.ProyectoRepository;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CreateProyectoUseCase {
@@ -30,10 +31,13 @@ public class CreateProyectoUseCase {
     private final EmpresaRepository empresaRepository;
     private final CatalogoEmpresaRepository catalogoRepository;
     private final CurrentIdentity currentTenant;
+    private final AplicarCambiosEmpresaObraUseCase cambiosEmpresa;
 
     @SuppressWarnings("null")
+    @Transactional
     public ProyectoDto execute(ProyectoCreateDto dto) {
         validateDates(dto);
+        validateSurfaces(dto.superficieCubierta(), dto.superficieSemicubierta(), dto.superficieDescubierta());
         currentTenant.requireEmpresa(dto.empresaId());
         Proyecto proyecto = Proyecto.builder().nombre(dto.nombre()).descripcion(dto.descripcion()).presupuestoUsd(dto.presupuestoUsd()).build();
         proyecto.setDireccion(dto.direccion());
@@ -43,15 +47,20 @@ public class CreateProyectoUseCase {
         proyecto.setResponsablesObra(dto.responsablesObra());
         proyecto.setCategoriasManoObra(dto.categoriasManoObra());
         proyecto.setCantidadSectores(dto.cantidadSectores());
+        proyecto.setSuperficieCubierta(dto.superficieCubierta());
+        proyecto.setSuperficieSemicubierta(dto.superficieSemicubierta());
+        proyecto.setSuperficieDescubierta(dto.superficieDescubierta());
         proyecto.setEmpresa(dto.empresa());
         if (dto.empresaId() != null) {
-            proyecto.setEmpresaRelacionada(empresaRepository.findById(dto.empresaId())
+            proyecto.setEmpresaRelacionada(empresaRepository.bloquearPorId(dto.empresaId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada")));
         }
         proyecto.setHorasPrevistas(dto.horasPrevistas());
         proyecto.setHorasReales(dto.horasReales());
         proyecto.setPlantas(mapPlantas(dto.plantas(), proyecto));
-        proyecto.setSubcontratistas(resolveSelectedSubcontratistas(proyecto, selectedContractorIds(dto)));
+        List<Long> selectedIds = new ArrayList<>(dto.subcontratistaIds() == null ? selectedContractorIds(dto) : dto.subcontratistaIds());
+        addDistinct(selectedIds, cambiosEmpresa.execute(dto.empresaId(), dto.costosManoObraModificados(), dto.contratistasObra()));
+        proyecto.setSubcontratistas(resolveSelectedSubcontratistas(proyecto, selectedIds));
         proyecto.setRubros(mapRubros(dto.rubros(), proyecto));
         Proyecto saved = this.proyectoRepository.save(proyecto);
         return ProyectoMapper.toDetailDto(saved);
@@ -60,6 +69,14 @@ public class CreateProyectoUseCase {
     private void validateDates(ProyectoCreateDto dto) {
         if (dto.fechaInicio() != null && dto.fechaFin() != null && dto.fechaFin().isBefore(dto.fechaInicio())) {
             throw new SolicitudInvalidaException("La fecha de fin debe ser posterior al inicio de la obra");
+        }
+    }
+
+    private void validateSurfaces(Double... surfaces) {
+        for (Double surface : surfaces) {
+            if (surface != null && (!Double.isFinite(surface) || surface < 0)) {
+                throw new SolicitudInvalidaException("Las superficies generales deben ser números no negativos");
+            }
         }
     }
 
@@ -149,10 +166,16 @@ public class CreateProyectoUseCase {
             .collect(java.util.stream.Collectors.toSet());
     }
 
-    public CreateProyectoUseCase(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository, CurrentIdentity currentTenant) {
+    public CreateProyectoUseCase(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository,
+            CurrentIdentity currentTenant, AplicarCambiosEmpresaObraUseCase cambiosEmpresa) {
         this.proyectoRepository = proyectoRepository;
         this.empresaRepository = empresaRepository;
         this.catalogoRepository = catalogoRepository;
         this.currentTenant = currentTenant;
+        this.cambiosEmpresa = cambiosEmpresa;
+    }
+
+    private void addDistinct(List<Long> selectedIds, List<Long> additionalIds) {
+        additionalIds.stream().filter(id -> !selectedIds.contains(id)).forEach(selectedIds::add);
     }
 }

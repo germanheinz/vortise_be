@@ -33,6 +33,9 @@ public class Proyecto {
     @Column(length = 1000)
     private String categoriasManoObra;
     private Integer cantidadSectores;
+    private Double superficieCubierta;
+    private Double superficieSemicubierta;
+    private Double superficieDescubierta;
     @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
     @jakarta.persistence.JoinColumn(name = "empresa_id")
     private Empresa empresaRelacionada;
@@ -124,6 +127,10 @@ public class Proyecto {
     public Integer getCantidadSectores() {
         return this.cantidadSectores;
     }
+
+    public Double getSuperficieCubierta() { return superficieCubierta; }
+    public Double getSuperficieSemicubierta() { return superficieSemicubierta; }
+    public Double getSuperficieDescubierta() { return superficieDescubierta; }
 
     public String getEmpresa() {
         return this.empresa;
@@ -219,6 +226,10 @@ public class Proyecto {
     public void setCantidadSectores(Integer cantidadSectores) {
         this.cantidadSectores = cantidadSectores;
     }
+
+    public void setSuperficieCubierta(Double superficieCubierta) { this.superficieCubierta = superficieCubierta; }
+    public void setSuperficieSemicubierta(Double superficieSemicubierta) { this.superficieSemicubierta = superficieSemicubierta; }
+    public void setSuperficieDescubierta(Double superficieDescubierta) { this.superficieDescubierta = superficieDescubierta; }
 
     public void setEmpresa(String empresa) {
         this.empresa = empresa;

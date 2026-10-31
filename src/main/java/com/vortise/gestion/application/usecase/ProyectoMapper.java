@@ -32,7 +32,10 @@ final class ProyectoMapper {
             proyecto.getHorasReales(),
             null,
             null,
-            null
+            null,
+            proyecto.getSuperficieCubierta(),
+            proyecto.getSuperficieSemicubierta(),
+            proyecto.getSuperficieDescubierta()
         );
     }
 
@@ -56,7 +59,10 @@ final class ProyectoMapper {
             proyecto.getHorasReales(),
             proyecto.getPlantas() == null ? List.of() : proyecto.getPlantas().stream().map(ProyectoMapper::toPlantaDto).toList(),
             proyecto.getRubros() == null ? List.of() : proyecto.getRubros().stream().map(ProyectoMapper::toRubroDto).toList(),
-            selectedContractorIds(proyecto)
+            selectedContractorIds(proyecto),
+            proyecto.getSuperficieCubierta(),
+            proyecto.getSuperficieSemicubierta(),
+            proyecto.getSuperficieDescubierta()
         );
     }
 

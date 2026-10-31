@@ -25,6 +25,9 @@ public record ProyectoDto(
 	Double horasReales,
 	List<PlantaDto> plantas,
 	List<RubroDto> rubros,
-	List<Long> subcontratistaIds
+	List<Long> subcontratistaIds,
+	Double superficieCubierta,
+	Double superficieSemicubierta,
+	Double superficieDescubierta
 ) {
 }

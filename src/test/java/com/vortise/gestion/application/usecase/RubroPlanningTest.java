@@ -125,8 +125,11 @@ class RubroPlanningTest {
     @Test void updateRetainsIdentityAndRejectsForeignIdsAndRemovalOfLinkedActivity() {
         var projects = mock(ProyectoRepository.class);
         var tasks = mock(ObraTareaRepository.class);
+        var changes = mock(AplicarCambiosEmpresaObraUseCase.class);
+        when(changes.execute(any(), any(), any())).thenReturn(List.of());
         var service = new UpdateProyectoUseCase(projects,mock(EmpresaRepository.class),mock(CatalogoEmpresaRepository.class),tasks,
-            mock(com.vortise.gestion.domain.repository.RestriccionObraRepository.class),mock(com.vortise.gestion.infrastructure.security.CurrentTenantService.class), mock(com.vortise.gestion.domain.repository.RegistroHorasRepository.class));
+            mock(com.vortise.gestion.domain.repository.RestriccionObraRepository.class),mock(com.vortise.gestion.infrastructure.security.CurrentTenantService.class),
+            mock(com.vortise.gestion.domain.repository.RegistroHorasRepository.class), changes);
         var p = new Proyecto(); p.setId(1L);
         var company = new com.vortise.gestion.domain.model.Empresa("Test", null);
         org.springframework.test.util.ReflectionTestUtils.setField(company, "id", 1L);

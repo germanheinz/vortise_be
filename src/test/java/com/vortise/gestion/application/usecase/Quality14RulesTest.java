@@ -81,7 +81,9 @@ class Quality14RulesTest {
         when(projects.bloquearPorId(7L)).thenReturn(Optional.of(project));
         when(projects.save(project)).thenReturn(project);
         when(restrictions.countByRubroVinculadoId(8L)).thenReturn(1L);
-        var useCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class), tasks, restrictions, identity, hours);
+        var changes = mock(AplicarCambiosEmpresaObraUseCase.class);
+        when(changes.execute(any(), any(), any())).thenReturn(List.of());
+        var useCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class), tasks, restrictions, identity, hours, changes);
         var input = new ProyectoUpdateDto("Name", null, null, "Address", "P1", null, null, null, null,
             null, null, null, null, null, null, null, null);
         assertDoesNotThrow(() -> useCase.execute(7L, input));

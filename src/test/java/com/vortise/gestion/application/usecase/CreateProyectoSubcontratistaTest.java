@@ -29,9 +29,11 @@ class CreateProyectoSubcontratistaTest {
         catalogos = mock(CatalogoEmpresaRepository.class);
         empresa = mock(Empresa.class);
         when(empresa.getId()).thenReturn(EMPRESA_ID);
-        when(empresas.findById(EMPRESA_ID)).thenReturn(Optional.of(empresa));
+        when(empresas.bloquearPorId(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         CurrentTenantService tenant = mock(CurrentTenantService.class);
-        useCase = new CreateProyectoUseCase(proyectos, empresas, catalogos, tenant);
+        AplicarCambiosEmpresaObraUseCase cambiosEmpresa = mock(AplicarCambiosEmpresaObraUseCase.class);
+        when(cambiosEmpresa.execute(any(), any(), any())).thenReturn(List.of());
+        useCase = new CreateProyectoUseCase(proyectos, empresas, catalogos, tenant, cambiosEmpresa);
     }
 
     @Test
