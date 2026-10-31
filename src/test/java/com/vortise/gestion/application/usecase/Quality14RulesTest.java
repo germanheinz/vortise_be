@@ -82,9 +82,7 @@ class Quality14RulesTest {
         when(projects.bloquearPorId(7L)).thenReturn(Optional.of(project));
         when(projects.save(project)).thenReturn(project);
         when(restrictions.countByRubroVinculadoId(8L)).thenReturn(1L);
-        var changes = mock(AplicarCambiosEmpresaObraUseCase.class);
-        when(changes.execute(any(), any(), any())).thenReturn(List.of());
-        var useCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class), tasks, restrictions, identity, hours, changes);
+        var useCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class), tasks, restrictions, identity, hours);
         var input = new ProyectoUpdateDto("Name", null, null, "Address", "P1", null, null, null, null,
             null, null, null, null, null, null, null, null);
         assertDoesNotThrow(() -> useCase.execute(7L, input));
@@ -104,10 +102,8 @@ class Quality14RulesTest {
         Proyecto project = new Proyecto(); project.setId(7L); project.setEmpresaRelacionada(company);
         when(projects.bloquearPorId(7L)).thenReturn(Optional.of(project));
         when(projects.save(project)).thenReturn(project);
-        var companyChanges = mock(AplicarCambiosEmpresaObraUseCase.class);
-        when(companyChanges.execute(any(), any(), any())).thenReturn(List.of());
         var useCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class), tasks,
-            mock(RestriccionObraRepository.class), identity, mock(RegistroHorasRepository.class), companyChanges);
+            mock(RestriccionObraRepository.class), identity, mock(RegistroHorasRepository.class));
         when(tasks.findByProyectoId(7L)).thenReturn(List.of());
         ProyectoUpdateDto input = new ProyectoUpdateDto("Name", null, null, "Address", "P1", null, null, null, null,
             null, null, null, null, null, List.of(), null, null, 120.0, 35.0, 45.0, true, null, null);
