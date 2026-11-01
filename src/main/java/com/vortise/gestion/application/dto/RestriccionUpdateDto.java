@@ -11,9 +11,17 @@ public record RestriccionUpdateDto(
     LocalDate fechaSolicitud,
     LocalDate fechaMaximaEntrega,
     LocalDate fechaRealEntrega,
-    boolean actualizarFechas
+    boolean actualizarFechas,
+    Long rubroId
 ) {
+    public RestriccionUpdateDto(String prioridad, String estado, Integer orden, String area,
+            String responsable, LocalDate fechaSolicitud, LocalDate fechaMaximaEntrega,
+            LocalDate fechaRealEntrega, boolean actualizarFechas) {
+        this(prioridad, estado, orden, area, responsable, fechaSolicitud, fechaMaximaEntrega,
+            fechaRealEntrega, actualizarFechas, null);
+    }
+
     public RestriccionUpdateDto(String prioridad, String estado, Integer orden) {
-        this(prioridad, estado, orden, null, null, null, null, null, false);
+        this(prioridad, estado, orden, null, null, null, null, null, false, null);
     }
 }

@@ -6,6 +6,7 @@ Enfoque y fórmula aprobados explícitamente por el dueño el 2026-10-29. Implem
 
 ## Comportamiento
 
+- Cambio aprobado 2026-11-01: Subrubro opcional al crear una restricción para obras todavía sin actividades. La relación puede agregarse/cambiarse después; el backend valida que el rubro indicado sea un subrubro de la misma obra. No crear actividades ficticias ni modificar restricciones existentes.
 - Cambio aprobado 2026-11-01: cada responsable de empresa puede tener un área opcional de hasta 120 caracteres. La propiedad se normaliza al guardar, se expone en GET/POST/PUT de configuración de responsables y puede sugerirse como área inicial al asignar a esa persona a una restricción. No cambiar restricciones existentes ni inferir áreas desde roles.
 - El Área de la restricción sigue siendo editable de forma independiente y ofrece el catálogo AREA_RESTRICCION. Al seleccionar un responsable, puede tomar como valor inicial el área asignada explícitamente a esa persona; nunca inferirla desde el rol o el nombre del rubro.
 - Persistir el nombre como snapshot opcional de hasta 120 caracteres en la restricción. Los registros existentes conservan área nula y aparecen como Sin área; no hay backfill inventado ni sincronización retroactiva al renombrar un catálogo.
@@ -14,8 +15,8 @@ Enfoque y fórmula aprobados explícitamente por el dueño el 2026-10-29. Implem
 
 ## Contrato API
 
-- POST /api/proyectos/{id}/restricciones: campo aditivo `area?: string | null`; los otros campos conservan contrato. GET de detalle/listados devuelve `area: string | null`.
-- PATCH /api/restricciones/{id}: mantener prioridad/estado/orden; añadir area, responsable y las tres fechas. Area/responsable omitidos o null preservan el valor; cadena vacía lo limpia.
+- POST /api/proyectos/{id}/restricciones: `rubroId` es opcional para crear una restricción sin vínculo, y se valida como subrubro de esa obra si se envía; agregar además campo aditivo `area?: string | null`. GET de detalle/listados devuelve `rubroId`/`rubro` nulos cuando no hay vínculo y `area: string | null`.
+- PATCH /api/restricciones/{id}: mantener prioridad/estado/orden; añadir `rubroId`, area, responsable y las tres fechas. `rubroId` omitido/null preserva la asociación; un ID no nulo cambia el vínculo tras validar obra y subrubro. Area/responsable omitidos o null preservan el valor; cadena vacía lo limpia.
 - GET/POST/PUT /api/empresas/{empresaId}/configuracion/responsables: agregar `area?: string | null` a ResponsableEmpresaDto. Las escrituras recortan espacios y convierten vacío a null; área mayor a 120 caracteres se rechaza.
 - Para fechas, los campos no nulos se actualizan de forma parcial. `actualizarFechas: true` reemplaza explícitamente las tres fechas y permite limpiar alguna con null. Omitir el flag y las fechas preserva el comportamiento del tablero.
 - La actualización valida antes de mutar y guarda/mapea en una transacción. No cambiar endpoints, roles ni validaciones de pertenencia existentes.
@@ -31,3 +32,4 @@ El cálculo y su presentación están especificados en el SDD frontend. Días co
 3. PATCH anterior de estado/orden no borra área, responsable ni fechas; no fabricar entrega al marcar resuelta.
 4. Acceso ajeno o anónimo sigue denegado en la ruta real; las nuevas propiedades no amplían permisos.
 5. Migración aditiva V12 y esquema local para el área de restricción, más V14 y esquema local para el área opcional del responsable; no cambiar migraciones anteriores ni destruir datos.
+6. Crear sin rubro y vincular/cambiar en PATCH solo a subrubros de la misma obra; omitir `rubroId` conserva asociaciones anteriores.

@@ -62,6 +62,20 @@ class CreateRestriccionUseCaseTest {
     }
 
     @Test
+    void acceptsRestrictionWithoutSubrubro() {
+        when(restricciones.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var result = useCase.execute(10L, request(null));
+
+        ArgumentCaptor<RestriccionObra> saved = ArgumentCaptor.forClass(RestriccionObra.class);
+        verify(restricciones).save(saved.capture());
+        verifyNoInteractions(rubros);
+        assertNull(saved.getValue().getRubroVinculado());
+        assertNull(result.rubroId());
+        assertNull(result.rubro());
+    }
+
+    @Test
     void rejectsParentWithoutSubrubro() {
         RubroObra parent = new RubroObra();
         parent.setId(32L);

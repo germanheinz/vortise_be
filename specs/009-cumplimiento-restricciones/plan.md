@@ -14,6 +14,13 @@
 3. Añadir V14__responsible_area.sql y ALTER idempotente a schema.sql para H2 local. No aplicar migraciones ni tocar bases persistentes.
 4. Probar alta/edición normalizadas y fuente de migración. La validación permitida en esta tarea es editorial; Maven queda pendiente de autorización.
 
+### Subrubro opcional y asociación posterior (aprobado 2026-11-01)
+
+1. Quitar la obligatoriedad de `rubroId` en RestriccionCreateDto; al crear con ID nulo, persistir la restricción sin vínculo ni datos de actividad inferidos.
+2. Agregar `rubroId` opcional a RestriccionUpdateDto. Omitir/null preserva el vínculo; un ID no nulo se resuelve y valida como subrubro de la misma obra antes de mutar o guardar.
+3. En frontend, permitir el placeholder Sin subrubro en alta y agregar selector en el detalle. Solo enviar `rubroId` cuando cambie; conservar una selección histórica que ya no esté disponible.
+4. No requiere migración: la asociación JPA `rubro_id` ya es nullable. Probar alta sin vínculo, asociación correcta y rechazo de actividad ajena/parent.
+
 ## Verificación propuesta
 
 - Fuente de pruebas context-free: CreateRestriccionUseCaseTest y UpdateRestriccionUseCaseTest para mapping, normalización, cronología, limpieza explícita y preservación de patches antiguos.

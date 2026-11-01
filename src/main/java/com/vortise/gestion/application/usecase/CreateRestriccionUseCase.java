@@ -29,7 +29,7 @@ public class CreateRestriccionUseCase {
         String area = RestriccionPlanning.area(dto.area());
         Proyecto proyecto = proyectoRepository.findById(proyectoId)
             .orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado"));
-        RubroObra rubro = rubroRepository.findById(dto.rubroId())
+        RubroObra rubro = dto.rubroId() == null ? null : rubroRepository.findById(dto.rubroId())
             .filter(candidate -> candidate.getProyecto().getId().equals(proyectoId))
             .filter(candidate -> candidate.getSubRubro() != null && !candidate.getSubRubro().isBlank())
             .orElseThrow(() -> new SolicitudInvalidaException("La actividad debe ser un subrubro de la misma obra"));
@@ -40,10 +40,12 @@ public class CreateRestriccionUseCase {
         restriccion.setTipo(dto.tipo());
         restriccion.setSector(dto.sector());
         restriccion.setRubroVinculado(rubro);
-        restriccion.setNivel(rubro.getNivel());
-        restriccion.setUnidad(rubro.getUnidad());
-        restriccion.setRubro(java.util.stream.Stream.of(rubro.getRubro(), rubro.getSubRubro())
-            .filter(value -> value != null && !value.isBlank()).collect(java.util.stream.Collectors.joining(" · ")));
+        if (rubro != null) {
+            restriccion.setNivel(rubro.getNivel());
+            restriccion.setUnidad(rubro.getUnidad());
+            restriccion.setRubro(java.util.stream.Stream.of(rubro.getRubro(), rubro.getSubRubro())
+                .filter(value -> value != null && !value.isBlank()).collect(java.util.stream.Collectors.joining(" · ")));
+        }
         restriccion.setResponsable(dto.responsable());
         restriccion.setArea(area);
         restriccion.setFechaSolicitud(dto.fechaSolicitud());

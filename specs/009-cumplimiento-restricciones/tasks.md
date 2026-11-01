@@ -1,5 +1,12 @@
 # 009 — Estado y evidencia backend
 
+## Subrubro opcional y asociación posterior (aprobado 2026-11-01)
+
+- [x] POST acepta omisión de `rubroId`; cuando se envía conserva validación de subrubro y pertenencia.
+- [x] PATCH permite asociar/cambiar subrubro de la misma obra; campo omitido conserva vínculo.
+- [x] Pruebas fuente para crear sin vínculo, asociar luego y rechazar obra ajena.
+- [ ] Maven/tests y verificación HTTP no ejecutados; requieren autorización aparte.
+
 ## Área asociada a responsables (aprobada 2026-11-01)
 
 - [x] Entidad y DTO extienden el área opcional, con límite de 120 caracteres y constructores compatibles.
