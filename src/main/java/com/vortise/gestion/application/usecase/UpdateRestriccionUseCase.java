@@ -11,6 +11,9 @@ import com.vortise.gestion.domain.repository.RubroObraRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+
 @Service
 public class UpdateRestriccionUseCase {
     private final RestriccionObraRepository restriccionRepository;
@@ -59,11 +62,24 @@ public class UpdateRestriccionUseCase {
         }
         if (dto.estado() != null) {
             restriccion.setEstado(dto.estado());
+            if (!datesChanged) syncResolutionDate(restriccion);
         }
         if (dto.orden() != null) {
             restriccion.setOrden(dto.orden());
         }
 
         return RestriccionMapper.toDto(restriccionRepository.save(restriccion));
+    }
+
+    // The real date is the resolution date: set it on resolve, clear it on reopen.
+    private static void syncResolutionDate(RestriccionObra restriccion) {
+        if (!"RESUELTO".equalsIgnoreCase(restriccion.getEstado())) {
+            restriccion.setFechaRealEntrega(null);
+            return;
+        }
+        if (restriccion.getFechaRealEntrega() != null) return;
+        LocalDate today = LocalDate.now(ZoneId.of("America/Argentina/Buenos_Aires"));
+        LocalDate requested = restriccion.getFechaSolicitud();
+        restriccion.setFechaRealEntrega(requested != null && requested.isAfter(today) ? requested : today);
     }
 }
