@@ -1,6 +1,7 @@
 package com.vortise.gestion.application.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
@@ -14,7 +15,7 @@ public record RestriccionCreateDto(
     String rubro,
     String responsable,
     LocalDate fechaSolicitud,
-    LocalDate fechaMaximaEntrega,
+    @NotNull LocalDate fechaMaximaEntrega,
     LocalDate fechaRealEntrega,
     String carga,
     String prioridad,

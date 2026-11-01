@@ -113,7 +113,14 @@ class CreateRestriccionUseCaseTest {
 
     private RestriccionCreateDto request(Long rubroId) {
         return new RestriccionCreateDto("Esperar inspección", rubroId, null, null, null, null, null,
-            null, null, null, null, null, null, null);
+            null, null, java.time.LocalDate.of(2026, 10, 10), null, null, null, null);
+    }
+
+    @Test void rejectsRestrictionWithoutDeadline() {
+        assertThrows(IllegalArgumentException.class, () -> useCase.execute(10L,
+            new RestriccionCreateDto("Esperar inspección", null, null, null, null, null, null,
+                null, null, null, null, null, null, null)));
+        verify(restricciones, never()).save(any());
     }
 
     @Test void legacyRequestsHaveNoInferredArea() {

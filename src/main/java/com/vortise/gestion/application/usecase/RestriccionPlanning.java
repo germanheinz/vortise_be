@@ -14,7 +14,10 @@ final class RestriccionPlanning {
     }
 
     static void validateDates(LocalDate solicitud, LocalDate maxima, LocalDate real) {
-        if (solicitud != null && maxima != null && maxima.isBefore(solicitud)) {
+        if (maxima == null) {
+            throw new SolicitudInvalidaException("La fecha máxima de entrega es obligatoria");
+        }
+        if (solicitud != null && maxima.isBefore(solicitud)) {
             throw new SolicitudInvalidaException("La fecha máxima no puede ser anterior a la solicitud");
         }
         if (solicitud != null && real != null && real.isBefore(solicitud)) {

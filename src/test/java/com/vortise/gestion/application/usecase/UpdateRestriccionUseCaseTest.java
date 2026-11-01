@@ -89,7 +89,7 @@ class UpdateRestriccionUseCaseTest {
     }
 
     @Test void rejectsInvalidDatesBeforeMutatingOrSaving() {
-        for (var dates : new LocalDate[][]{{start, start.minusDays(1), null}, {start, due, start.minusDays(1)}}) {
+        for (var dates : new LocalDate[][]{{start, start.minusDays(1), null}, {start, due, start.minusDays(1)}, {start, null, null}}) {
             assertThrows(IllegalArgumentException.class, () -> useCase.execute(2L,
                 new RestriccionUpdateDto(null, null, null, "Nueva", null, dates[0], dates[1], dates[2], true)));
         }
