@@ -63,6 +63,9 @@ public class UpdateProyectoUseCase {
     public ProyectoDto execute(Long proyectoId, ProyectoUpdateDto dto) {
         validateDates(dto);
         validateSurfaces(dto.superficieCubierta(), dto.superficieSemicubierta(), dto.superficieDescubierta());
+        if (dto.actualizarPedidosDeObraDias() && dto.pedidosDeObraDias() != null && dto.pedidosDeObraDias() < 0) {
+            throw new SolicitudInvalidaException("Pedidos de obra debe ser un entero no negativo");
+        }
         if (dto.empresaId() != null) currentTenant.requireEmpresa(dto.empresaId());
         Proyecto proyecto = proyectoRepository.bloquearPorId(proyectoId)
             .orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado"));
@@ -86,6 +89,7 @@ public class UpdateProyectoUseCase {
         proyecto.setResponsablesObra(dto.responsablesObra());
         proyecto.setCategoriasManoObra(dto.categoriasManoObra());
         proyecto.setCantidadSectores(dto.cantidadSectores());
+        if (dto.actualizarPedidosDeObraDias()) proyecto.setPedidosDeObraDias(dto.pedidosDeObraDias());
         if (dto.actualizarSuperficiesGenerales()) {
             proyecto.setSuperficieCubierta(dto.superficieCubierta());
             proyecto.setSuperficieSemicubierta(dto.superficieSemicubierta());

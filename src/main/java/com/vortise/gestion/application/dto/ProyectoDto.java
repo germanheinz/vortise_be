@@ -28,6 +28,7 @@ public record ProyectoDto(
 	List<Long> subcontratistaIds,
 	Double superficieCubierta,
 	Double superficieSemicubierta,
-	Double superficieDescubierta
+	Double superficieDescubierta,
+	Integer pedidosDeObraDias
 ) {
 }

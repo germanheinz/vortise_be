@@ -7,6 +7,7 @@ import com.vortise.gestion.domain.model.Planta;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RubroObra;
 import java.util.List;
+import java.util.Comparator;
 
 final class ProyectoMapper {
     private ProyectoMapper() {
@@ -35,7 +36,8 @@ final class ProyectoMapper {
             null,
             proyecto.getSuperficieCubierta(),
             proyecto.getSuperficieSemicubierta(),
-            proyecto.getSuperficieDescubierta()
+            proyecto.getSuperficieDescubierta(),
+            proyecto.getPedidosDeObraDias()
         );
     }
 
@@ -58,12 +60,21 @@ final class ProyectoMapper {
             proyecto.getHorasPrevistas(),
             proyecto.getHorasReales(),
             proyecto.getPlantas() == null ? List.of() : proyecto.getPlantas().stream().map(ProyectoMapper::toPlantaDto).toList(),
-            proyecto.getRubros() == null ? List.of() : proyecto.getRubros().stream().map(ProyectoMapper::toRubroDto).toList(),
+            proyecto.getRubros() == null ? List.of() : proyecto.getRubros().stream()
+                .sorted(Comparator.comparing((RubroObra rubro) -> numericCode(rubro.getnRubro()), Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(ProyectoMapper::toRubroDto).toList(),
             selectedContractorIds(proyecto),
             proyecto.getSuperficieCubierta(),
             proyecto.getSuperficieSemicubierta(),
-            proyecto.getSuperficieDescubierta()
+            proyecto.getSuperficieDescubierta(),
+            proyecto.getPedidosDeObraDias()
         );
+    }
+
+    private static Long numericCode(String value) {
+        if (value == null || !value.trim().matches("\\d+")) return null;
+        try { return Long.parseLong(value.trim()); }
+        catch (NumberFormatException ignored) { return null; }
     }
 
     @SuppressWarnings("null")

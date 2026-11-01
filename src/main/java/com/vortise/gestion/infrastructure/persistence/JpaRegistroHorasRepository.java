@@ -23,4 +23,7 @@ public interface JpaRegistroHorasRepository extends JpaRepository<RegistroHoras,
 
     @Override
     List<RegistroHoras> findByProyectoId(Long proyectoId);
+
+    @Override
+    boolean existsByProyectoId(Long proyectoId);
 }

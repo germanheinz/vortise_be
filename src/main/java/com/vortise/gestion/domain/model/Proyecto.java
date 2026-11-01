@@ -33,6 +33,7 @@ public class Proyecto {
     @Column(length = 1000)
     private String categoriasManoObra;
     private Integer cantidadSectores;
+    private Integer pedidosDeObraDias;
     private Double superficieCubierta;
     private Double superficieSemicubierta;
     private Double superficieDescubierta;
@@ -127,6 +128,9 @@ public class Proyecto {
     public Integer getCantidadSectores() {
         return this.cantidadSectores;
     }
+
+    public Integer getPedidosDeObraDias() { return this.pedidosDeObraDias; }
+    public void setPedidosDeObraDias(Integer pedidosDeObraDias) { this.pedidosDeObraDias = pedidosDeObraDias; }
 
     public Double getSuperficieCubierta() { return superficieCubierta; }
     public Double getSuperficieSemicubierta() { return superficieSemicubierta; }

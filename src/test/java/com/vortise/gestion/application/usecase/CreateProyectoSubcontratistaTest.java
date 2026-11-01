@@ -78,6 +78,18 @@ class CreateProyectoSubcontratistaTest {
         assertEquals(45.0, saved.superficieDescubierta());
     }
 
+    @Test
+    void persistsWorkOrderRestrictionUploadDays() {
+        when(proyectos.save(any(Proyecto.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        ProyectoCreateDto request = new ProyectoCreateDto("Obra de prueba", null, null, "Dirección", "OB-3",
+            null, null, null, null, 2, EMPRESA_ID, null, null, null, List.of(), List.of(), List.of(),
+            null, null, null, null, null, 30);
+
+        var saved = useCase.execute(request);
+
+        assertEquals(30, saved.pedidosDeObraDias());
+    }
+
     private CatalogoEmpresa subcontractor(Empresa owner, String type) {
         CatalogoEmpresa item = mock(CatalogoEmpresa.class);
         when(item.getEmpresa()).thenReturn(owner);

@@ -89,6 +89,13 @@ class PostgresMigrationSourceTest {
     }
 
     @Test
+    void projectRestrictionDeadlineMigrationAddsAnOptionalIntegerColumn() throws IOException {
+        String migration = resource("db/migration/V15__project_restriction_upload_deadline.sql");
+
+        assertTrue(Pattern.compile("(?is)^\\s*ALTER TABLE proyectos ADD COLUMN pedidos_de_obra_dias INTEGER;\\s*$").matcher(migration).matches());
+    }
+
+    @Test
     void secondMigrationSeedsOnlyApprovedPlansIdempotentlyWithoutStripeIds() throws IOException {
         String migration = resource("db/migration/V2__seed_plan_catalog.sql");
 

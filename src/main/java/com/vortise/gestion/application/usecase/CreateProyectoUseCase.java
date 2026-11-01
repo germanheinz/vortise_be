@@ -38,6 +38,7 @@ public class CreateProyectoUseCase {
     public ProyectoDto execute(ProyectoCreateDto dto) {
         validateDates(dto);
         validateSurfaces(dto.superficieCubierta(), dto.superficieSemicubierta(), dto.superficieDescubierta());
+        validatePedidosDeObraDias(dto.pedidosDeObraDias());
         currentTenant.requireEmpresa(dto.empresaId());
         Proyecto proyecto = Proyecto.builder().nombre(dto.nombre()).descripcion(dto.descripcion()).presupuestoUsd(dto.presupuestoUsd()).build();
         proyecto.setDireccion(dto.direccion());
@@ -47,6 +48,7 @@ public class CreateProyectoUseCase {
         proyecto.setResponsablesObra(dto.responsablesObra());
         proyecto.setCategoriasManoObra(dto.categoriasManoObra());
         proyecto.setCantidadSectores(dto.cantidadSectores());
+        proyecto.setPedidosDeObraDias(dto.pedidosDeObraDias());
         proyecto.setSuperficieCubierta(dto.superficieCubierta());
         proyecto.setSuperficieSemicubierta(dto.superficieSemicubierta());
         proyecto.setSuperficieDescubierta(dto.superficieDescubierta());
@@ -70,6 +72,10 @@ public class CreateProyectoUseCase {
         if (dto.fechaInicio() != null && dto.fechaFin() != null && dto.fechaFin().isBefore(dto.fechaInicio())) {
             throw new SolicitudInvalidaException("La fecha de fin debe ser posterior al inicio de la obra");
         }
+    }
+
+    private void validatePedidosDeObraDias(Integer dias) {
+        if (dias != null && dias < 0) throw new SolicitudInvalidaException("Pedidos de obra debe ser un entero no negativo");
     }
 
     private void validateSurfaces(Double... surfaces) {

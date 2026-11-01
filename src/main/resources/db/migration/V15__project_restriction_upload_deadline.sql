@@ -1,0 +1,1 @@
+ALTER TABLE proyectos ADD COLUMN pedidos_de_obra_dias INTEGER;

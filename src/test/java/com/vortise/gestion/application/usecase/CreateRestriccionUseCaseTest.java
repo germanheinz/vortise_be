@@ -1,6 +1,7 @@
 package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.RestriccionCreateDto;
+import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RestriccionObra;
 import com.vortise.gestion.domain.model.RubroObra;
@@ -73,6 +74,15 @@ class CreateRestriccionUseCaseTest {
         assertNull(saved.getValue().getRubroVinculado());
         assertNull(result.rubroId());
         assertNull(result.rubro());
+    }
+
+    @Test
+    void rejectsNewRestrictionAfterProjectUploadDeadline() {
+        proyecto.setFechaInicio(java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")).minusDays(2));
+        proyecto.setPedidosDeObraDias(1);
+
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.execute(10L, request(null)));
+        verify(restricciones, never()).save(any());
     }
 
     @Test
