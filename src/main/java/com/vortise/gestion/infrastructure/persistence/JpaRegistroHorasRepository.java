@@ -15,8 +15,8 @@ public interface JpaRegistroHorasRepository extends JpaRepository<RegistroHoras,
     java.util.Optional<Long> findProyectoIdById(@Param("id") Long id);
 
     @Override
-    @Query("select coalesce(sum(h.horas), 0) from RegistroHoras h where h.proyecto.id = :proyectoId")
-    double sumHorasByProyectoId(@Param("proyectoId") Long proyectoId);
+    @Query("select coalesce(sum(h.horas), 0.0) from RegistroHoras h where h.proyecto.id = :proyectoId")
+    Double sumHorasByProyectoId(@Param("proyectoId") Long proyectoId);
 
     @Override
     List<RegistroHoras> findAll();

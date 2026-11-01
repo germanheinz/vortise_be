@@ -4,18 +4,18 @@
 package com.vortise.gestion.domain.repository;
 
 import com.vortise.gestion.domain.model.Proyecto;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 public interface ProyectoRepository {
-    Optional<Proyecto> bloquearPorId(Long id);
-    PageSlice<Proyecto> buscarPagina(Long empresaId, String q, int page, int size);
     public List<Proyecto> findAll();
 
     public Optional<Proyecto> findById(Long var1);
+
+    public Optional<Proyecto> bloquearPorId(Long id);
 
     public Proyecto save(Proyecto var1);
 
@@ -29,4 +29,6 @@ public interface ProyectoRepository {
     List<EmpresaConteoProjection> contarPorEmpresaRelacionada(@Param("empresaIds") Collection<Long> empresaIds);
 
     public List<Proyecto> findByEmpresaRelacionadaId(Long empresaId);
+
+    public PageSlice<Proyecto> buscarPagina(Long empresaId, String q, int page, int size);
 }

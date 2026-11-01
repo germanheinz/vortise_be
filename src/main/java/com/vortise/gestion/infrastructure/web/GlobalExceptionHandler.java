@@ -105,16 +105,19 @@ public class GlobalExceptionHandler {
             "Los datos cambiaron o ya existe un registro equivalente. Actualizá la página y volvé a intentar."));
     }
 
-    @ExceptionHandler({org.springframework.http.converter.HttpMessageNotReadableException.class,
-        org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,
-        org.springframework.web.bind.MissingServletRequestParameterException.class})
-    public ResponseEntity<ErrorResponseDto> handleMalformedInput(Exception ex) {
-        return ResponseEntity.badRequest().body(new ErrorResponseDto(400, "Bad Request", "El formato de la solicitud no es válido."));
-    }
-
     @ExceptionHandler(value={Exception.class})
     public ResponseEntity<ErrorResponseDto> handleGeneral(Exception ex) {
-        log.atError().addKeyValue("exception_type", ex.getClass().getSimpleName()).log("unexpected_server_error");
+        log.atError().addKeyValue("exception_type", ex.getClass().getSimpleName())
+            .addKeyValue("source_location", sourceLocation(ex)).log("unexpected_server_error");
         return ResponseEntity.status((HttpStatusCode)HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponseDto(500, "Internal Server Error", "No pudimos completar la operación. Intentá nuevamente más tarde."));
+    }
+
+    private String sourceLocation(Exception ex) {
+        for (StackTraceElement frame : ex.getStackTrace()) {
+            if (frame.getClassName().startsWith("com.vortise.gestion.")) {
+                return frame.getClassName() + "." + frame.getMethodName() + ":" + frame.getLineNumber();
+            }
+        }
+        return "unavailable";
     }
 }

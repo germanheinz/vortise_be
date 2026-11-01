@@ -114,4 +114,27 @@ class Quality14RulesTest {
         assertEquals(35.0, result.superficieSemicubierta());
         assertEquals(45.0, result.superficieDescubierta());
     }
+
+    @Test void nullStoredHoursAggregateDoesNotFailProjectUpdate() {
+        ProyectoRepository projects = mock(ProyectoRepository.class);
+        ObraTareaRepository tasks = mock(ObraTareaRepository.class);
+        RestriccionObraRepository restrictions = mock(RestriccionObraRepository.class);
+        RegistroHorasRepository hours = mock(RegistroHorasRepository.class);
+        CurrentIdentity identity = mock(CurrentIdentity.class);
+        Empresa company = new Empresa("A", null); ReflectionTestUtils.setField(company, "id", 1L);
+        Proyecto project = new Proyecto(); project.setId(7L); project.setEmpresaRelacionada(company);
+        when(projects.bloquearPorId(7L)).thenReturn(Optional.of(project));
+        when(projects.save(project)).thenReturn(project);
+        when(tasks.findByProyectoId(7L)).thenReturn(List.of());
+        when(hours.existsByProyectoId(7L)).thenReturn(true);
+        when(hours.sumHorasByProyectoId(7L)).thenReturn(null);
+        UpdateProyectoUseCase useCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class),
+            mock(CatalogoEmpresaRepository.class), tasks, restrictions, identity, hours);
+        ProyectoUpdateDto input = new ProyectoUpdateDto("Name", null, null, "Address", "P1", null, null,
+            null, null, null, null, null, null, null, null, null, null);
+
+        ProyectoDto result = useCase.execute(7L, input);
+
+        assertEquals(0.0, result.horasReales());
+    }
 }

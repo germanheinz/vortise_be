@@ -101,8 +101,13 @@ public class UpdateProyectoUseCase {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada")));
         }
         proyecto.setHorasPrevistas(dto.horasPrevistas());
-        proyecto.setHorasReales(horas.existsByProyectoId(proyectoId)
-            ? RegistroHorasRules.roundHours(horas.sumHorasByProyectoId(proyectoId)) : dto.horasReales());
+        if (horas == null) throw new IllegalStateException("No está configurado el repositorio de horas");
+        Double totalHoras = dto.horasReales();
+        if (horas.existsByProyectoId(proyectoId)) {
+            Double sumaHoras = horas.sumHorasByProyectoId(proyectoId);
+            totalHoras = RegistroHorasRules.roundHours(sumaHoras == null ? 0.0 : sumaHoras);
+        }
+        proyecto.setHorasReales(totalHoras);
         List<Long> selectedContractorIds = new ArrayList<>(dto.subcontratistaIds() == null
             ? existingContractorIds(proyecto) : dto.subcontratistaIds());
         List<Long> contractorChanges = applyCompanyChanges(empresaDestinoId, dto);
