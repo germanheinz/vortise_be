@@ -82,6 +82,13 @@ class PostgresMigrationSourceTest {
     }
 
     @Test
+    void responsibleAreaMigrationAddsOnlyAnOptionalAreaColumn() throws IOException {
+        String migration = resource("db/migration/V14__responsible_area.sql");
+
+        assertTrue(Pattern.compile("(?is)^\\s*ALTER TABLE responsables_empresa ADD COLUMN area VARCHAR\\(120\\);\\s*$").matcher(migration).matches());
+    }
+
+    @Test
     void secondMigrationSeedsOnlyApprovedPlansIdempotentlyWithoutStripeIds() throws IOException {
         String migration = resource("db/migration/V2__seed_plan_catalog.sql");
 

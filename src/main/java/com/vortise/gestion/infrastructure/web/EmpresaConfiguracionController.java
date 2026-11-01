@@ -47,7 +47,7 @@ public class EmpresaConfiguracionController {
     public ResponseEntity<ResponsableEmpresaDto> createResponsable(@PathVariable Long empresaId, @Valid @RequestBody ResponsableEmpresaDto dto) { return ResponseEntity.status(HttpStatus.CREATED).body(useCase.saveResponsable(empresaId, dto)); }
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PutMapping("/responsables/{id}")
-    public ResponseEntity<ResponsableEmpresaDto> updateResponsable(@PathVariable Long empresaId, @PathVariable Long id, @Valid @RequestBody ResponsableEmpresaDto dto) { return ResponseEntity.ok(useCase.saveResponsable(empresaId, new ResponsableEmpresaDto(id, dto.rol(), dto.nombre(), dto.email(), dto.telefono()))); }
+    public ResponseEntity<ResponsableEmpresaDto> updateResponsable(@PathVariable Long empresaId, @PathVariable Long id, @Valid @RequestBody ResponsableEmpresaDto dto) { return ResponseEntity.ok(useCase.saveResponsable(empresaId, new ResponsableEmpresaDto(id, dto.rol(), dto.nombre(), dto.email(), dto.telefono(), dto.area()))); }
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @DeleteMapping("/responsables/{id}")
     public ResponseEntity<Void> deleteResponsable(@PathVariable Long empresaId, @PathVariable Long id) { useCase.deleteResponsable(empresaId, id); return ResponseEntity.noContent().build(); }

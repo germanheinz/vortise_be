@@ -57,13 +57,14 @@ public class EmpresaConfiguracionUseCase {
     @Transactional
     public ResponsableEmpresaDto saveResponsable(Long empresaId, ResponsableEmpresaDto dto) {
         Empresa empresa = lockEmpresa(empresaId);
-        ResponsableEmpresa responsable = dto.id() == null ? new ResponsableEmpresa(empresa, dto.rol().trim(), dto.nombre().trim(), dto.email(), dto.telefono())
+        ResponsableEmpresa responsable = dto.id() == null ? new ResponsableEmpresa(empresa, dto.rol().trim(), dto.nombre().trim(), dto.email(), dto.telefono(), normalize(dto.area()))
             : responsableRepository.findById(dto.id()).orElseThrow(() -> new RecursoNoEncontradoException("Responsable no encontrado"));
         if (!responsable.getEmpresa().getId().equals(empresaId)) throw new SolicitudInvalidaException("El responsable no pertenece a la empresa");
         responsable.setRol(dto.rol().trim());
         responsable.setNombre(dto.nombre().trim());
         responsable.setEmail(normalize(dto.email()));
         responsable.setTelefono(normalize(dto.telefono()));
+        responsable.setArea(normalize(dto.area()));
         return toDto(responsableRepository.save(responsable));
     }
 
@@ -175,7 +176,7 @@ public class EmpresaConfiguracionUseCase {
         return empresaRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada"));
     }
     private String normalize(String value) { return value == null || value.trim().isEmpty() ? null : value.trim(); }
-    private ResponsableEmpresaDto toDto(ResponsableEmpresa item) { return new ResponsableEmpresaDto(item.getId(), item.getRol(), item.getNombre(), item.getEmail(), item.getTelefono()); }
+    private ResponsableEmpresaDto toDto(ResponsableEmpresa item) { return new ResponsableEmpresaDto(item.getId(), item.getRol(), item.getNombre(), item.getEmail(), item.getTelefono(), item.getArea()); }
     private UnidadMetricaEmpresaDto toDto(UnidadMetricaEmpresa item) { return new UnidadMetricaEmpresaDto(item.getId(), item.getCodigo(), item.getNombre()); }
     private CatalogoEmpresaDto toDto(CatalogoEmpresa item) { return new CatalogoEmpresaDto(item.getId(), item.getTipo(), item.getCodigo(), item.getNombre()); }
     private CalendarioLaboralEmpresaDto toDto(CalendarioLaboralEmpresa item) { return new CalendarioLaboralEmpresaDto(item.getId(), item.getHorasLunesAViernes(), item.getHorasSabado(), item.isTrabajaDomingo(), item.isPagaDobleFeriado(), item.isPagaDobleSabado(), item.isPagaDobleNoLaborable()); }

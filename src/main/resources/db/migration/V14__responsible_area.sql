@@ -1,0 +1,1 @@
+ALTER TABLE responsables_empresa ADD COLUMN area VARCHAR(120);

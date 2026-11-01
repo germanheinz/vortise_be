@@ -1,5 +1,14 @@
 # 009 — Estado y evidencia backend
 
+## Área asociada a responsables (aprobada 2026-11-01)
+
+- [x] Entidad y DTO extienden el área opcional, con límite de 120 caracteres y constructores compatibles.
+- [x] Use case normaliza/persiste el área; PUT conserva el nuevo campo.
+- [x] V14 y schema.sql H2 contienen cambios aditivos; migración no aplicada.
+- [x] Pruebas fuente para creación, edición, pertenencia empresarial y V14.
+- [x] Diagnósticos editoriales de fuentes y prueba unitaria de use case sin errores.
+- [ ] Maven/tests, aplicación de migración, revisión independiente y release no ejecutados.
+
 Fecha: 2026-10-29. Implementación fuente completa; verificación ejecutable y cierre pendientes.
 
 - [x] Aprobación del dueño para Área independiente, fórmula de cumplimiento y días corridos.

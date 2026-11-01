@@ -7,6 +7,13 @@
 5. No añadir endpoint agregado: las consultas existentes entregan todas las restricciones autorizadas y el frontend agrupa sin requests adicionales. No devolver datos de empresas no autorizadas ni inferir área desde entidades ajenas.
 6. Usar catálogo genérico AREA_RESTRICCION ya soportado por configuración empresarial; el campo de restricción es un snapshot de nombre, no una nueva FK ni un permiso.
 
+### Extensión aprobada 2026-11-01
+
+1. Añadir `ResponsableEmpresa.area` nullable de hasta 120 caracteres y `area?: string | null` a ResponsableEmpresaDto; normalizar espacios en EmpresaConfiguracionUseCase y preservar el campo en la reconstrucción DTO de PUT.
+2. Mantener los constructores existentes de ResponsableEmpresa y ResponsableEmpresaDto mediante overloads fuente compatibles.
+3. Añadir V14__responsible_area.sql y ALTER idempotente a schema.sql para H2 local. No aplicar migraciones ni tocar bases persistentes.
+4. Probar alta/edición normalizadas y fuente de migración. La validación permitida en esta tarea es editorial; Maven queda pendiente de autorización.
+
 ## Verificación propuesta
 
 - Fuente de pruebas context-free: CreateRestriccionUseCaseTest y UpdateRestriccionUseCaseTest para mapping, normalización, cronología, limpieza explícita y preservación de patches antiguos.

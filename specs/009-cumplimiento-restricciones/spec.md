@@ -6,7 +6,8 @@ Enfoque y fórmula aprobados explícitamente por el dueño el 2026-10-29. Implem
 
 ## Comportamiento
 
-- Agregar Área independiente de Responsable; no inferirla desde la persona, el rol o el nombre del rubro. El frontend ofrece nombres del catálogo de empresa AREA_RESTRICCION.
+- Cambio aprobado 2026-11-01: cada responsable de empresa puede tener un área opcional de hasta 120 caracteres. La propiedad se normaliza al guardar, se expone en GET/POST/PUT de configuración de responsables y puede sugerirse como área inicial al asignar a esa persona a una restricción. No cambiar restricciones existentes ni inferir áreas desde roles.
+- El Área de la restricción sigue siendo editable de forma independiente y ofrece el catálogo AREA_RESTRICCION. Al seleccionar un responsable, puede tomar como valor inicial el área asignada explícitamente a esa persona; nunca inferirla desde el rol o el nombre del rubro.
 - Persistir el nombre como snapshot opcional de hasta 120 caracteres en la restricción. Los registros existentes conservan área nula y aparecen como Sin área; no hay backfill inventado ni sincronización retroactiva al renombrar un catálogo.
 - Guardar fecha de solicitud, máxima y real de entrega. Rechazar máxima o real anteriores a solicitud cuando ambas fechas existan. Permitir fechas ausentes para datos históricos y restricciones pendientes.
 - Conservar prioridad, estado, orden, comentarios, rubro y autorización por empresa/obra actuales. Un cambio de estado no crea una fecha real artificial.
@@ -15,6 +16,7 @@ Enfoque y fórmula aprobados explícitamente por el dueño el 2026-10-29. Implem
 
 - POST /api/proyectos/{id}/restricciones: campo aditivo `area?: string | null`; los otros campos conservan contrato. GET de detalle/listados devuelve `area: string | null`.
 - PATCH /api/restricciones/{id}: mantener prioridad/estado/orden; añadir area, responsable y las tres fechas. Area/responsable omitidos o null preservan el valor; cadena vacía lo limpia.
+- GET/POST/PUT /api/empresas/{empresaId}/configuracion/responsables: agregar `area?: string | null` a ResponsableEmpresaDto. Las escrituras recortan espacios y convierten vacío a null; área mayor a 120 caracteres se rechaza.
 - Para fechas, los campos no nulos se actualizan de forma parcial. `actualizarFechas: true` reemplaza explícitamente las tres fechas y permite limpiar alguna con null. Omitir el flag y las fechas preserva el comportamiento del tablero.
 - La actualización valida antes de mutar y guarda/mapea en una transacción. No cambiar endpoints, roles ni validaciones de pertenencia existentes.
 
@@ -28,4 +30,4 @@ El cálculo y su presentación están especificados en el SDD frontend. Días co
 2. No permitir fechas invertidas ni áreas mayores de 120 caracteres.
 3. PATCH anterior de estado/orden no borra área, responsable ni fechas; no fabricar entrega al marcar resuelta.
 4. Acceso ajeno o anónimo sigue denegado en la ruta real; las nuevas propiedades no amplían permisos.
-5. Migración aditiva V12 y esquema local compatibles, sin cambios a migraciones anteriores ni destrucción de datos.
+5. Migración aditiva V12 y esquema local para el área de restricción, más V14 y esquema local para el área opcional del responsable; no cambiar migraciones anteriores ni destruir datos.
