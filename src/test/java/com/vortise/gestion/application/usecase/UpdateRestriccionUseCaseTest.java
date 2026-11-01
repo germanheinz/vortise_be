@@ -38,7 +38,16 @@ class UpdateRestriccionUseCaseTest {
         var result = useCase.execute(2L, new RestriccionUpdateDto(null, "RESUELTO", 3));
         assertEquals("Compras", result.area()); assertEquals("Ana", result.responsable());
         assertEquals(start, result.fechaSolicitud()); assertEquals(due, result.fechaMaximaEntrega());
-        assertNull(result.fechaRealEntrega()); assertEquals("RESUELTO", result.estado());
+        assertEquals("RESUELTO", result.estado());
+        var today = LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"));
+        assertEquals(start.isAfter(today) ? start : today, result.fechaRealEntrega());
+    }
+
+    @Test void resolvingKeepsExistingRealDateAndReopeningClearsIt() {
+        var real = start.plusDays(2);
+        restriction.setFechaRealEntrega(real);
+        assertEquals(real, useCase.execute(2L, new RestriccionUpdateDto(null, "RESUELTO", null)).fechaRealEntrega());
+        assertNull(useCase.execute(2L, new RestriccionUpdateDto(null, "PENDIENTE", null)).fechaRealEntrega());
     }
 
     @Test void linksPreviouslyUnassignedRestrictionToSubrubroFromSameProject() {
