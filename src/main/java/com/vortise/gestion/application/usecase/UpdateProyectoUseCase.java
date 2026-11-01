@@ -19,6 +19,7 @@ import com.vortise.gestion.domain.repository.RegistroHorasRepository;
 import com.vortise.gestion.domain.repository.RestriccionObraRepository;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,13 +34,17 @@ public class UpdateProyectoUseCase {
     private final CatalogoEmpresaRepository catalogoRepository;
     private final RestriccionObraRepository restriccionRepository;
     private final RegistroHorasRepository horas;
+    private final AplicarCambiosEmpresaObraUseCase cambiosEmpresa;
 
+    @Autowired
     public UpdateProyectoUseCase(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository,
             ObraTareaRepository taskRepository,
             RestriccionObraRepository restriccionRepository,
             CurrentIdentity currentTenant,
-            RegistroHorasRepository horas) {
+            RegistroHorasRepository horas,
+            AplicarCambiosEmpresaObraUseCase cambiosEmpresa) {
         this.horas = horas;
+        this.cambiosEmpresa = cambiosEmpresa;
         this.taskRepository = taskRepository;
         this.currentTenant = currentTenant;
         this.proyectoRepository = proyectoRepository;
@@ -48,9 +53,16 @@ public class UpdateProyectoUseCase {
         this.restriccionRepository = restriccionRepository;
     }
 
+    public UpdateProyectoUseCase(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository,
+            ObraTareaRepository taskRepository, RestriccionObraRepository restriccionRepository,
+            CurrentIdentity currentTenant, RegistroHorasRepository horas) {
+        this(proyectoRepository, empresaRepository, catalogoRepository, taskRepository, restriccionRepository, currentTenant, horas, null);
+    }
+
     @SuppressWarnings("null")
     public ProyectoDto execute(Long proyectoId, ProyectoUpdateDto dto) {
         validateDates(dto);
+        validateSurfaces(dto.superficieCubierta(), dto.superficieSemicubierta(), dto.superficieDescubierta());
         if (dto.empresaId() != null) currentTenant.requireEmpresa(dto.empresaId());
         Proyecto proyecto = proyectoRepository.bloquearPorId(proyectoId)
             .orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado"));
@@ -74,19 +86,25 @@ public class UpdateProyectoUseCase {
         proyecto.setResponsablesObra(dto.responsablesObra());
         proyecto.setCategoriasManoObra(dto.categoriasManoObra());
         proyecto.setCantidadSectores(dto.cantidadSectores());
+        if (dto.actualizarSuperficiesGenerales()) {
+            proyecto.setSuperficieCubierta(dto.superficieCubierta());
+            proyecto.setSuperficieSemicubierta(dto.superficieSemicubierta());
+            proyecto.setSuperficieDescubierta(dto.superficieDescubierta());
+        }
         proyecto.setEmpresa(dto.empresa());
         if (dto.empresaId() != null) {
             proyecto.setEmpresaRelacionada(empresaRepository.findById(dto.empresaId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada")));
         }
         proyecto.setHorasPrevistas(dto.horasPrevistas());
-        if (horas.existsByProyectoId(proyectoId)) {
-            proyecto.setHorasReales(RegistroHorasRules.roundHours(horas.sumHorasByProyectoId(proyectoId)));
-        } else {
-            proyecto.setHorasReales(dto.horasReales());
+        proyecto.setHorasReales(horas.existsByProyectoId(proyectoId)
+            ? RegistroHorasRules.roundHours(horas.sumHorasByProyectoId(proyectoId)) : dto.horasReales());
+        List<Long> selectedContractorIds = new ArrayList<>(dto.subcontratistaIds() == null
+            ? existingContractorIds(proyecto) : dto.subcontratistaIds());
+        List<Long> contractorChanges = applyCompanyChanges(empresaDestinoId, dto);
+        for (Long contractorId : contractorChanges) {
+            if (!selectedContractorIds.contains(contractorId)) selectedContractorIds.add(contractorId);
         }
-        List<Long> selectedContractorIds = dto.subcontratistaIds() == null
-            ? existingContractorIds(proyecto) : dto.subcontratistaIds();
         proyecto.setSubcontratistas(resolveSelectedSubcontratistas(proyecto, selectedContractorIds));
 
         // Keep managed collection references to satisfy orphanRemoval semantics.
@@ -146,6 +164,25 @@ public class UpdateProyectoUseCase {
     private void validateDates(ProyectoUpdateDto dto) {
         if (dto.fechaInicio() != null && dto.fechaFin() != null && dto.fechaFin().isBefore(dto.fechaInicio())) {
             throw new SolicitudInvalidaException("La fecha de fin debe ser posterior al inicio de la obra");
+        }
+    }
+
+    private List<Long> applyCompanyChanges(Long empresaId, ProyectoUpdateDto dto) {
+        if (cambiosEmpresa != null) {
+            return cambiosEmpresa.execute(empresaId, dto.costosManoObraModificados(), dto.contratistasObra());
+        }
+        if ((dto.costosManoObraModificados() != null && !dto.costosManoObraModificados().isEmpty())
+                || (dto.contratistasObra() != null && !dto.contratistasObra().isEmpty())) {
+            throw new IllegalStateException("No está configurado el guardado empresarial del asistente de obra");
+        }
+        return List.of();
+    }
+
+    private void validateSurfaces(Double... surfaces) {
+        for (Double surface : surfaces) {
+            if (surface != null && (!Double.isFinite(surface) || surface < 0)) {
+                throw new SolicitudInvalidaException("Las superficies generales deben ser números no negativos");
+            }
         }
     }
 
