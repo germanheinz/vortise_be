@@ -65,6 +65,10 @@ app:
     from: ${APP_PASSWORD_MAIL_FROM:}
   security:
     jwt-secret: ${APP_JWT_SECRET:}
+  cloudinary:
+    # cloudinary://API_KEY:API_SECRET@CLOUD_NAME; leave empty to disable report image uploads.
+    url: ${CLOUDINARY_URL:}
+    folder: ${CLOUDINARY_FOLDER:gestion/reportes}
   environment:
     synthetic-data: ${APP_SYNTHETIC_DATA:false}
     storage-isolated: ${APP_STORAGE_ISOLATED:false}
