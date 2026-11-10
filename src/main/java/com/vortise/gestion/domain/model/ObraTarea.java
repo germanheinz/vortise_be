@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "obra_tareas")
@@ -26,6 +27,7 @@ public class ObraTarea {
     @JoinColumn(name = "rubro_id")
     private RubroObra actividad;
     public Long getRubroId() { return actividad == null ? null : actividad.getId(); }
+    public RubroObra getActividad() { return actividad; }
     public void setActividad(RubroObra value) { actividad = value; }
 
     private String nombre;
@@ -46,6 +48,13 @@ public class ObraTarea {
     @Column(length = 2000)
     private String descripcion;
     private LocalDate fecha;
+    private Long registradoPorUsuarioId;
+    private LocalDateTime registradoEn;
+
+    public Long getRegistradoPorUsuarioId() { return registradoPorUsuarioId; }
+    public void setRegistradoPorUsuarioId(Long value) { registradoPorUsuarioId = value; }
+    public LocalDateTime getRegistradoEn() { return registradoEn; }
+    public void setRegistradoEn(LocalDateTime value) { registradoEn = value; }
 
     public Long getId() {
         return id;

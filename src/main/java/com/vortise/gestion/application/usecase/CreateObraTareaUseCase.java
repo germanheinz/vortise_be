@@ -4,10 +4,13 @@ import com.vortise.gestion.application.dto.ObraTareaCreateDto;
 import com.vortise.gestion.application.dto.ObraTareaDto;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
+import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.model.ObraTarea;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.repository.ObraTareaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
+import java.time.LocalDateTime;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +19,20 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateObraTareaUseCase {
     private final ObraTareaRepository obraTareaRepository;
     private final ProyectoRepository proyectoRepository;
+    private final CertificadoBloqueos bloqueos;
+    private final CurrentIdentity identity;
 
-    public CreateObraTareaUseCase(ObraTareaRepository obraTareaRepository, ProyectoRepository proyectoRepository) {
+    @Autowired
+    public CreateObraTareaUseCase(ObraTareaRepository obraTareaRepository, ProyectoRepository proyectoRepository,
+            CertificadoBloqueos bloqueos, CurrentIdentity identity) {
         this.obraTareaRepository = obraTareaRepository;
         this.proyectoRepository = proyectoRepository;
+        this.bloqueos = bloqueos;
+        this.identity = identity;
+    }
+
+    public CreateObraTareaUseCase(ObraTareaRepository obraTareaRepository, ProyectoRepository proyectoRepository) {
+        this(obraTareaRepository, proyectoRepository, null, null);
     }
 
     public ObraTareaDto execute(Long proyectoId, ObraTareaCreateDto dto) {
@@ -54,6 +67,8 @@ public class CreateObraTareaUseCase {
         tarea.setCantidadPrevista(calculated.cantidadEquivalente());
         tarea.setPorcentajeCumplimiento(calculated.cantidadEquivalente() != null && calculated.cantidadEquivalente() > 0
             ? round(tarea.getCantidadReal() / calculated.cantidadEquivalente() * 100) : null);
+        tarea.setRegistradoEn(LocalDateTime.now());
+        if (identity != null) tarea.setRegistradoPorUsuarioId(identity.usuarioId());
 
         return toDto(obraTareaRepository.save(tarea));
     }
@@ -62,6 +77,7 @@ public class CreateObraTareaUseCase {
         ObraTarea tarea = obraTareaRepository.findById(tareaId)
             .filter(item -> item.getProyecto().getId().equals(proyectoId))
             .orElseThrow(() -> new RecursoNoEncontradoException("Tarea no encontrada"));
+        if (bloqueos != null) bloqueos.validarAvance(proyectoId, tarea.getActividad(), tarea.getFecha());
         applyActivity(tarea, dto);
         tarea.setNombre(dto.nombre());
         tarea.setSector(dto.sector());
@@ -126,6 +142,7 @@ public class CreateObraTareaUseCase {
         if (dto.cantidadPrevista() != null && (!Double.isFinite(dto.cantidadPrevista()) || dto.cantidadPrevista() < 0)) {
             throw new SolicitudInvalidaException("Cantidad prevista inválida");
         }
+        if (bloqueos != null) bloqueos.validarAvance(tarea.getProyecto().getId(), rubro, dto.fecha());
         tarea.setActividad(rubro);
     }
 

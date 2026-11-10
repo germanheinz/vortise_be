@@ -35,6 +35,7 @@ public class UpdateProyectoUseCase {
     private final RestriccionObraRepository restriccionRepository;
     private final RegistroHorasRepository horas;
     private final AplicarCambiosEmpresaObraUseCase cambiosEmpresa;
+    private final CertificadoBloqueos bloqueosCertificados;
 
     @Autowired
     public UpdateProyectoUseCase(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository,
@@ -42,9 +43,11 @@ public class UpdateProyectoUseCase {
             RestriccionObraRepository restriccionRepository,
             CurrentIdentity currentTenant,
             RegistroHorasRepository horas,
-            AplicarCambiosEmpresaObraUseCase cambiosEmpresa) {
+            AplicarCambiosEmpresaObraUseCase cambiosEmpresa,
+            CertificadoBloqueos bloqueosCertificados) {
         this.horas = horas;
         this.cambiosEmpresa = cambiosEmpresa;
+        this.bloqueosCertificados = bloqueosCertificados;
         this.taskRepository = taskRepository;
         this.currentTenant = currentTenant;
         this.proyectoRepository = proyectoRepository;
@@ -56,7 +59,7 @@ public class UpdateProyectoUseCase {
     public UpdateProyectoUseCase(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository,
             ObraTareaRepository taskRepository, RestriccionObraRepository restriccionRepository,
             CurrentIdentity currentTenant, RegistroHorasRepository horas) {
-        this(proyectoRepository, empresaRepository, catalogoRepository, taskRepository, restriccionRepository, currentTenant, horas, null);
+        this(proyectoRepository, empresaRepository, catalogoRepository, taskRepository, restriccionRepository, currentTenant, horas, null, null);
     }
 
     @SuppressWarnings("null")
@@ -130,6 +133,14 @@ public class UpdateProyectoUseCase {
         }
         var linkedIds = taskRepository.findByProyectoId(proyectoId).stream().map(t -> t.getRubroId())
             .filter(java.util.Objects::nonNull).collect(java.util.stream.Collectors.toSet());
+        if (dto.rubros() != null && bloqueosCertificados != null) {
+            var avances = taskRepository.findByProyectoId(proyectoId);
+            for (RubroObra existing : proyecto.getRubros()) {
+                RubroCreateDto requested = existing.getId() == null ? null : dto.rubros().stream()
+                    .filter(candidate -> existing.getId().equals(candidate.id())).findFirst().orElse(null);
+                bloqueosCertificados.validarCambioActividad(proyectoId, existing, requested, avances);
+            }
+        }
         if (dto.rubros() != null) {
             for (var requested : dto.rubros()) {
                 if (requested.id() == null || !linkedIds.contains(requested.id())) continue;
