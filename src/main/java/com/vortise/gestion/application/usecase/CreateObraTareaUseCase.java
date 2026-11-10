@@ -38,8 +38,8 @@ public class CreateObraTareaUseCase {
         tarea.setCumplimiento(dto.cumplimiento());
         tarea.setCausaNoCumplimiento(dto.causaNoCumplimiento());
         tarea.setComentario(dto.comentario());
-        tarea.setHorasOficiales(dto.horasOficiales());
-        tarea.setHorasAyudantes(dto.horasAyudantes());
+        tarea.setHorasOficiales(controlaHoras(proyecto, dto) ? dto.horasOficiales() : null);
+        tarea.setHorasAyudantes(controlaHoras(proyecto, dto) ? dto.horasAyudantes() : null);
         tarea.setCantidadPrevista(dto.cantidadPrevista());
         tarea.setCantidadReal(dto.cantidadReal());
         tarea.setMedidaCorrectiva(dto.medidaCorrectiva());
@@ -72,8 +72,8 @@ public class CreateObraTareaUseCase {
         tarea.setCumplimiento(dto.cumplimiento());
         tarea.setCausaNoCumplimiento(dto.causaNoCumplimiento());
         tarea.setComentario(dto.comentario());
-        tarea.setHorasOficiales(dto.horasOficiales());
-        tarea.setHorasAyudantes(dto.horasAyudantes());
+        tarea.setHorasOficiales(controlaHoras(tarea.getProyecto(), dto) ? dto.horasOficiales() : null);
+        tarea.setHorasAyudantes(controlaHoras(tarea.getProyecto(), dto) ? dto.horasAyudantes() : null);
         tarea.setCantidadPrevista(dto.cantidadPrevista());
         tarea.setCantidadReal(dto.cantidadReal());
         tarea.setMedidaCorrectiva(dto.medidaCorrectiva());
@@ -91,6 +91,16 @@ public class CreateObraTareaUseCase {
         return toDto(obraTareaRepository.save(tarea));
     }
 
+    /** The obra does not control labor hours of subcontracted activities. */
+    private static boolean esSubcontrato(com.vortise.gestion.domain.model.RubroObra rubro) {
+        return "SUBCONTRATO".equals(rubro.getTipoContratista());
+    }
+
+    private static boolean controlaHoras(Proyecto proyecto, ObraTareaCreateDto dto) {
+        return proyecto.getRubros().stream().filter(item -> dto.rubroId().equals(item.getId()))
+            .findFirst().map(item -> !esSubcontrato(item)).orElse(true);
+    }
+
     private void applyActivity(ObraTarea tarea, ObraTareaCreateDto dto) {
         if (dto.rubroId() == null || dto.fecha() == null) {
             throw new SolicitudInvalidaException("Seleccioná una actividad y una fecha");
@@ -98,13 +108,20 @@ public class CreateObraTareaUseCase {
         var rubro = tarea.getProyecto().getRubros().stream()
             .filter(item -> dto.rubroId().equals(item.getId())).findFirst()
             .orElseThrow(() -> new RecursoNoEncontradoException("La actividad no pertenece a la obra"));
-        for (Double value : new Double[]{dto.cantidadReal(), dto.horasOficiales(), dto.horasAyudantes()}) {
+        for (Double value : new Double[]{dto.cantidadReal()}) {
             if (value == null || !Double.isFinite(value) || value < 0) {
                 throw new SolicitudInvalidaException("Cantidad y horas reales deben ser números no negativos");
             }
         }
-        if (!Double.isFinite(dto.horasOficiales() + dto.horasAyudantes())) {
-            throw new SolicitudInvalidaException("Total de horas fuera de rango");
+        if (!esSubcontrato(rubro)) {
+            for (Double value : new Double[]{dto.horasOficiales(), dto.horasAyudantes()}) {
+                if (value == null || !Double.isFinite(value) || value < 0) {
+                    throw new SolicitudInvalidaException("Cantidad y horas reales deben ser números no negativos");
+                }
+            }
+            if (!Double.isFinite(dto.horasOficiales() + dto.horasAyudantes())) {
+                throw new SolicitudInvalidaException("Total de horas fuera de rango");
+            }
         }
         if (dto.cantidadPrevista() != null && (!Double.isFinite(dto.cantidadPrevista()) || dto.cantidadPrevista() < 0)) {
             throw new SolicitudInvalidaException("Cantidad prevista inválida");
@@ -124,7 +141,8 @@ public class CreateObraTareaUseCase {
             && tarea.getHorasOficiales() != null && tarea.getHorasAyudantes() != null ? horasTotales / productividadPresupuesto : null;
         Double cumplimiento = cantidadPrevista != null && cantidadPrevista > 0 && tarea.getCantidadReal() != null
             ? round(tarea.getCantidadReal() / cantidadPrevista * 100) : null;
-        Double productividadReal = tarea.getCantidadReal() == null || tarea.getCantidadReal() == 0 ? null : round(horasTotales / tarea.getCantidadReal());
+        Double productividadReal = tarea.getCantidadReal() == null || tarea.getCantidadReal() == 0
+            || (tarea.getHorasOficiales() == null && tarea.getHorasAyudantes() == null) ? null : round(horasTotales / tarea.getCantidadReal());
         Double rendimiento = productividadPresupuesto == null || productividadReal == null || productividadPresupuesto == 0 ? null : round(productividadReal / productividadPresupuesto);
         Double desvio = rendimiento == null ? null : round((rendimiento - 1) * 100);
         return new ObraTareaDto(

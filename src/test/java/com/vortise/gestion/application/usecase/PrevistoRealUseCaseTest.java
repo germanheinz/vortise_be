@@ -76,5 +76,21 @@ class PrevistoRealUseCaseTest {
         assertThrows(IllegalArgumentException.class,() -> new CreateObraTareaUseCase(tasks,projects).execute(1L,dto(null)));
         verify(tasks,never()).save(any());
     }
+    @Test void subcontractedActivityAcceptsLoadsWithoutHoursAndDropsAnySent() {
+        activity.setTipoContratista("SUBCONTRATO");
+        when(tasks.save(any())).thenAnswer(i -> i.getArgument(0));
+        var withoutHours = new ObraTareaCreateDto("Carga",null,null,"kg","wrong",null,null,null,null,null,null,null,6.,null,null,LocalDate.of(2026,10,14),10L);
+        var saved = new CreateObraTareaUseCase(tasks,projects).execute(1L,withoutHours);
+        assertNull(saved.horasOficiales()); assertNull(saved.horasAyudantes()); assertEquals(6.,saved.cantidadReal());
+        var ignored = new CreateObraTareaUseCase(tasks,projects).execute(1L,dto(10L));
+        assertNull(ignored.horasOficiales()); assertNull(ignored.horasAyudantes());
+        var withoutQuantity = new ObraTareaCreateDto("Carga",null,null,"kg","wrong",null,null,null,null,null,null,null,null,null,null,LocalDate.of(2026,10,14),10L);
+        assertThrows(IllegalArgumentException.class,() -> new CreateObraTareaUseCase(tasks,projects).execute(1L,withoutQuantity));
+    }
+    @Test void ownLaborActivityStillRequiresHours() {
+        var withoutHours = new ObraTareaCreateDto("Carga",null,null,"kg","wrong",null,null,null,null,null,null,null,6.,null,null,LocalDate.of(2026,10,14),10L);
+        assertThrows(IllegalArgumentException.class,() -> new CreateObraTareaUseCase(tasks,projects).execute(1L,withoutHours));
+        verify(tasks,never()).save(any());
+    }
 
 }
