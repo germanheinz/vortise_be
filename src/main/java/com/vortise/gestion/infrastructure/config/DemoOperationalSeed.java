@@ -2,6 +2,7 @@ package com.vortise.gestion.infrastructure.config;
 
 import com.vortise.gestion.application.usecase.PrevistoRealCalculator;
 import com.vortise.gestion.domain.model.*;
+import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.time.*;
 import java.util.*;
 
@@ -17,6 +18,16 @@ final class DemoOperationalSeed {
     private static final double[] HOURS_FACTOR = {.80,.95,1.05,1.25,1.10,.88};
     private DemoOperationalSeed() { }
 
+    /**
+     * Activity row of the demo rubro at {@code index}, found by name and not by code: it is the only row of that rubro
+     * without children (the root rubro and any level that group it have children). Null when absent or ambiguous.
+     */
+    static RubroObra demoActivity(Proyecto p, int index) {
+        var candidates = p.getRubros().stream().filter(r -> RUBROS[index].equals(r.getRubro())
+            && !EstructuraRubros.tieneHijos(r, p.getRubros())).toList();
+        return candidates.size() == 1 ? candidates.get(0) : null;
+    }
+
     static boolean isDemo(Proyecto p) {
         return "PROYECTO DEMO CRONOGRAMA".equals(p.getNombre()) && "P-2026-101".equals(p.getNumeroProyecto())
             && p.getEmpresaRelacionada() != null && "DEMO-0001".equals(p.getEmpresaRelacionada().getIdentificacionFiscal());
@@ -27,10 +38,8 @@ final class DemoOperationalSeed {
         boolean changed = false;
         for (int i = 0; i < RUBROS.length; i++) {
             final int index = i;
-            var candidates = p.getRubros().stream().filter(r -> String.valueOf(5000 + index).equals(r.getnRubro())
-                && RUBROS[index].equals(r.getRubro())).toList();
-            if (candidates.size() != 1) continue;
-            var r = candidates.get(0);
+            var r = demoActivity(p, index);
+            if (r == null) continue;
             changed |= fillMissingActivity(r,p,i);
             if (!positive(r.getCantidad()) || !valid(r.getHorasOficialesPrevistas()) || !valid(r.getHorasAyudantesPrevistas())
                     || r.getCantidadPersonas() == null || r.getCantidadPersonas() <= 0
@@ -167,7 +176,7 @@ final class DemoOperationalSeed {
         boolean changed=false;
         for(int i=0;i<names.length;i++) {
             final int index=i;
-            var activity=p.getRubros().stream().filter(r -> String.valueOf(5000+index).equals(r.getnRubro())).findFirst().orElse(null);
+            var activity=demoActivity(p,index);
             if(activity==null || activity.getFechaInicioPlanificada()==null) continue;
             for(var restriction:p.getRestricciones()) {
                 if(!names[i].equals(restriction.getRestriccion()) || !oldTypes[i].equals(restriction.getTipo())
@@ -204,7 +213,8 @@ final class DemoOperationalSeed {
                 && LocalDate.parse(v[3]).equals(task.getFechaInicio()) && LocalDate.parse(v[4]).equals(task.getFechaFin())
                 && Objects.equals(Double.valueOf(v[5]),task.getCosto()));
             if (!original) continue;
-            var matches = p.getRubros().stream().filter(r -> Objects.equals(r.getRubro(),task.getSistema())).toList();
+            var matches = p.getRubros().stream().filter(r -> Objects.equals(r.getRubro(),task.getSistema())
+                && !EstructuraRubros.tieneHijos(r,p.getRubros())).toList();
             if (matches.size()!=1) continue;
             var r = matches.get(0);
             var daily = p.getObraTareas().stream().filter(t -> t.getDescripcion()!=null && t.getDescripcion().startsWith(MARKER+r.getnRubro()+":")).toList();

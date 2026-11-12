@@ -9,6 +9,7 @@ import com.vortise.gestion.domain.model.ObraTarea;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.repository.ObraTareaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
+import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -124,6 +125,10 @@ public class CreateObraTareaUseCase {
         var rubro = tarea.getProyecto().getRubros().stream()
             .filter(item -> dto.rubroId().equals(item.getId())).findFirst()
             .orElseThrow(() -> new RecursoNoEncontradoException("La actividad no pertenece a la obra"));
+        boolean sameActivity = tarea.getActividad() != null && rubro.getId() != null && rubro.getId().equals(tarea.getActividad().getId());
+        if (!sameActivity && !EstructuraRubros.esHoja(rubro, tarea.getProyecto().getRubros())) {
+            throw new SolicitudInvalidaException("Seleccioná una actividad (último nivel de la estructura), no un rubro o nivel agrupador");
+        }
         for (Double value : new Double[]{dto.cantidadReal()}) {
             if (value == null || !Double.isFinite(value) || value < 0) {
                 throw new SolicitudInvalidaException("Cantidad y horas reales deben ser números no negativos");

@@ -70,12 +70,13 @@ class DemoSeederCoverageTest {
     }
     @Test void fillsEveryDemoSectionAndDoesNotDuplicateOnRestart() {
         seeder.run();var p=ps.get(0);
-        assertEquals(6,p.getRubros().size());assertEquals(4,p.getPlantas().size());assertEquals(5,p.getRestricciones().size());
+        assertEquals(13,p.getRubros().size());assertEquals(6,com.vortise.gestion.domain.service.EstructuraRubros.hojas(p.getRubros()).size());
+        assertEquals(4,p.getPlantas().size());assertEquals(5,p.getRestricciones().size());
         assertEquals(2,p.getEntregas().size());assertFalse(p.getObraTareas().isEmpty());assertFalse(p.getRegistrosHoras().isEmpty());
         assertEquals(12,us.size());assertEquals(3,cs.size());assertEquals(3,contactData.size());assertEquals(1,calendarData.size());
         assertEquals(7,catalogData.stream().filter(c->"CAUSA_INCUMPLIMIENTO".equals(c.getTipo())).count());
         assertEquals(6,bs.size());assertEquals(7,ins.size());assertEquals(5,gs.size());assertEquals(7,ys.size());
-        double plannedCost=p.getRubros().stream().mapToDouble(r->r.getHorasOficialesPrevistas()*2000+r.getHorasAyudantesPrevistas()*1000).sum();
+        double plannedCost=com.vortise.gestion.domain.service.EstructuraRubros.hojas(p.getRubros()).stream().mapToDouble(r->r.getHorasOficialesPrevistas()*2000+r.getHorasAyudantesPrevistas()*1000).sum();
         assertEquals(plannedCost,bs.stream().mapToDouble(b->b.getM2()*b.getHhPorM2()*b.getPrecioPorHh()).sum(),1e-6);
         assertEquals(plannedCost*1.25,ins.stream().mapToDouble(Ingreso::getMonto).sum(),1e-6);
         int count=p.getObraTareas().size(),catalogCount=catalogData.size();

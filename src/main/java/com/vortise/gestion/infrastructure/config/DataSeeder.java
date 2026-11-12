@@ -22,6 +22,9 @@ import com.vortise.gestion.domain.model.Rendimiento;
 import com.vortise.gestion.domain.model.RubroObra;
 import com.vortise.gestion.domain.model.StatusTarea;
 import com.vortise.gestion.domain.model.Tarea;
+import com.vortise.gestion.domain.model.TipoNodoRubro;
+import com.vortise.gestion.domain.model.VarianteEstructura;
+import com.vortise.gestion.domain.service.EstructuraRubros;
 import com.vortise.gestion.domain.model.CalendarioLaboralEmpresa;
 import com.vortise.gestion.domain.model.CatalogoEmpresa;
 import com.vortise.gestion.domain.model.CategoriaManoObraEmpresa;
@@ -112,8 +115,8 @@ public class DataSeeder {
         for (int i = 0; i < names.length; i++) {
             final int index = i;
             RubroObra rubro = proyecto.getRubros().stream()
-                .filter(r -> String.valueOf(5000 + index).equals(r.getnRubro())
-                    && names[index].equals(r.getRubro()) && subNames[index].equals(r.getSubRubro()))
+                .filter(r -> names[index].equals(r.getRubro()) && subNames[index].equals(r.getSubRubro())
+                    && !EstructuraRubros.tieneHijos(r, proyecto.getRubros()))
                 .findFirst().orElse(null);
             if (rubro == null || rubro.getCantidad() == null || rubro.getCantidad() <= 0) continue;
             LocalDate plannedStart = rubro.getFechaInicioPlanificada() != null ? rubro.getFechaInicioPlanificada()
@@ -308,9 +311,13 @@ public class DataSeeder {
         var budgets = presupuestoLineaRepository.findByProyectoId(proyecto.getId());
         // A user-created budget is authoritative; do not add a second simulated budget to it.
         boolean demoBudget = budgets.stream().allMatch(b -> b.getEtapa() != null && b.getEtapa().startsWith(prefix));
-        if (demoBudget) for (var r : proyecto.getRubros()) {
+        if (demoBudget) for (var r : EstructuraRubros.hojas(proyecto.getRubros())) {
             String key = prefix + r.getnRubro();
-            if (budgets.stream().anyMatch(b -> key.equals(b.getEtapa()))) continue;
+            // Rubro codes were rewritten to the hierarchical scheme: also recognise lines created under the old codes.
+            if (budgets.stream().anyMatch(b -> key.equals(b.getEtapa())
+                    || (b.getEtapa() != null && b.getEtapa().startsWith(prefix)
+                        && java.util.Objects.equals(b.getFuncion(), r.getSubRubro())
+                        && java.util.Objects.equals(b.getSistema(), r.getRubro())))) continue;
             double hoursOf = r.getHorasOficialesPrevistas() == null ? 0 : r.getHorasOficialesPrevistas();
             double hoursAy = r.getHorasAyudantesPrevistas() == null ? 0 : r.getHorasAyudantesPrevistas();
             double hours = hoursOf + hoursAy;
@@ -393,7 +400,6 @@ public class DataSeeder {
 
         demoCronograma.setRubros(new ArrayList<>());
         String[] rubrosNombre = new String[]{"Hormigón armado", "Vaciado de losas", "Mampostería", "Pintura", "Instalaciones sanitarias", "Instalaciones eléctricas"};
-        Integer[] rubrosNumero = new Integer[]{5000, 5001, 5002, 5003, 5004, 5005};
         String[] subRubros = new String[]{"Fundación", "Planta Baja", "Piso 1", "Piso 2", "Sanitarios", "Eléctricas"};
         Double[] cantidades = new Double[]{155.4, 118.0, 96.5, 430.0, 220.0, 180.0};
         String[] unidades = new String[]{"m3", "m3", "m3", "m2", "m2", "m2"};
@@ -402,10 +408,39 @@ public class DataSeeder {
         Double[] hhAyudantes = new Double[]{1881.5, 1430.0, 969.25, 1762.0, 1184.0, 944.0};
         Integer[] personasPorRubro = new Integer[]{8, 6, 5, 10, 6, 5};
         List<CatalogoEmpresa> subcontratistas = this.catalogoEmpresaRepository.findByEmpresaIdAndTipo(demoCronograma.getEmpresaRelacionada().getId(), "SUBCONTRATISTA");
+        // Activity structure: each demo rubro is a root with one activity (leaf). The first one uses the three-layer
+        // variant (rubro -> nivel -> subrubro) with a nivel named like the floor plan level it measures.
+        List<RubroObra> actividadesDemo = new ArrayList<>();
         for (int i = 0; i < rubrosNombre.length; ++i) {
+            String codigoRaiz = String.valueOf(i + 1);
+            RubroObra raiz = new RubroObra();
+            raiz.setProyecto(demoCronograma);
+            raiz.setnRubro(codigoRaiz);
+            raiz.setTipoNodo(TipoNodoRubro.RUBRO);
+            raiz.setVarianteEstructura(i == 0 ? VarianteEstructura.RUBRO_NIVEL_SUBRUBRO : VarianteEstructura.RUBRO_SUBRUBRO);
+            raiz.setNombre(rubrosNombre[i]);
+            raiz.setRubro(rubrosNombre[i]);
+            demoCronograma.getRubros().add(raiz);
+            RubroObra padre = raiz;
+            String codigoHoja = codigoRaiz + ".1";
+            if (i == 0) {
+                RubroObra agrupadorNivel = new RubroObra();
+                agrupadorNivel.setProyecto(demoCronograma);
+                agrupadorNivel.setnRubro(codigoHoja);
+                agrupadorNivel.setTipoNodo(TipoNodoRubro.NIVEL);
+                agrupadorNivel.setNombre(nivelesRubros[i]);
+                agrupadorNivel.setRubro(rubrosNombre[i]);
+                agrupadorNivel.setParent(raiz);
+                demoCronograma.getRubros().add(agrupadorNivel);
+                padre = agrupadorNivel;
+                codigoHoja = codigoHoja + ".1";
+            }
             RubroObra rubro = new RubroObra();
             rubro.setProyecto(demoCronograma);
-            rubro.setnRubro(String.valueOf(rubrosNumero[i]));
+            rubro.setParent(padre);
+            rubro.setTipoNodo(TipoNodoRubro.SUBRUBRO);
+            rubro.setnRubro(codigoHoja);
+            rubro.setNombre(subRubros[i]);
             rubro.setRubro(rubrosNombre[i]);
             rubro.setNivel(nivelesRubros[i]);
             rubro.setSubRubro(subRubros[i]);
@@ -424,6 +459,7 @@ public class DataSeeder {
             rubro.setFechaFinPlanificada(inicioPrevisto.plusMonths(2).minusDays(1));
             rubro.setCronogramaManual(true);
             demoCronograma.getRubros().add(rubro);
+            actividadesDemo.add(rubro);
         }
 
         double[] horasPlanificadasPorRubro = new double[]{5881.5, 4130.0, 2369.25, 5762.0, 3784.0, 2844.0};
@@ -499,11 +535,11 @@ public class DataSeeder {
             restriccion.setRestriccion(restriccionesTexto[i]);
             restriccion.setTipo(tipos[i]);
             restriccion.setSector(sectoresRestriccion[i]);
-            restriccion.setNivel(demoCronograma.getRubros().get(i).getNivel());
-            restriccion.setUnidad(demoCronograma.getRubros().get(i).getUnidad());
+            restriccion.setNivel(actividadesDemo.get(i).getNivel());
+            restriccion.setUnidad(actividadesDemo.get(i).getUnidad());
             restriccion.setRubro(rubrosNombre[i % rubrosNombre.length]);
             restriccion.setResponsable(i % 2 == 0 ? "Laura Torres" : "Marina Sosa");
-            LocalDate requested = demoCronograma.getRubros().get(i).getFechaInicioPlanificada();
+            LocalDate requested = actividadesDemo.get(i).getFechaInicioPlanificada();
             restriccion.setFechaSolicitud(requested);
             restriccion.setFechaMaximaEntrega(requested.plusDays(7));
             restriccion.setFechaRealEntrega(i < 2 ? requested.plusDays(5) : null);

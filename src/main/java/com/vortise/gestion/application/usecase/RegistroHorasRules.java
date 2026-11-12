@@ -4,6 +4,7 @@ import com.vortise.gestion.application.dto.RegistroHorasDatos;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RegistroHoras;
+import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.time.Duration;
 
 final class RegistroHorasRules {
@@ -34,7 +35,9 @@ final class RegistroHorasRules {
     }
 
     private static Double findProductividadPresupuesto(Proyecto proyecto, String numeroRubro, String rubro) {
-        return proyecto.getRubros() == null ? null : proyecto.getRubros().stream()
+        if (proyecto.getRubros() == null) return null;
+        // Only leaves are activities; grouping rubros share the root name but carry no productivity.
+        return EstructuraRubros.hojas(proyecto.getRubros()).stream()
             .filter(item -> numeroRubro == null || numeroRubro.equals(item.getnRubro()))
             .filter(item -> rubro == null || rubro.equalsIgnoreCase(item.getRubro()))
             .findFirst()

@@ -11,12 +11,14 @@ import com.vortise.gestion.domain.model.CatalogoEmpresa;
 import com.vortise.gestion.domain.model.Planta;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RubroObra;
+import com.vortise.gestion.domain.model.TipoNodoRubro;
 import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import com.vortise.gestion.domain.repository.ObraTareaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.RegistroHorasRepository;
 import com.vortise.gestion.domain.repository.RestriccionObraRepository;
+import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -150,7 +152,7 @@ public class UpdateProyectoUseCase {
                 }
             }
         }
-        List<RubroObra> updated = dto.rubros() == null ? new ArrayList<>(proyecto.getRubros()) : mapRubros(dto.rubros(), proyecto);
+        List<RubroObra> updated = dto.rubros() == null ? new ArrayList<>(proyecto.getRubros()) : mapRubros(dto.rubros(), proyecto, linkedIds);
         var retainedIds = updated.stream().map(RubroObra::getId).filter(java.util.Objects::nonNull).toList();
         if (linkedIds.stream().anyMatch(id -> !retainedIds.contains(id))) {
             throw new SolicitudInvalidaException("No se puede eliminar una actividad con tareas vinculadas");
@@ -163,7 +165,7 @@ public class UpdateProyectoUseCase {
             if (requested == null) {
                 throw new SolicitudInvalidaException("No se puede eliminar una actividad vinculada a restricciones");
             }
-            if (requested.subRubro() == null || requested.subRubro().isBlank()) {
+            if (!EstructuraRubros.esHoja(existing, updated) || existing.getSubRubro() == null || existing.getSubRubro().isBlank()) {
                 throw new SolicitudInvalidaException("No se puede convertir en rubro padre una actividad vinculada a restricciones");
             }
         }
@@ -226,40 +228,76 @@ public class UpdateProyectoUseCase {
         return result;
     }
 
-    private List<RubroObra> mapRubros(List<RubroCreateDto> rubros, Proyecto proyecto) {
+    private List<RubroObra> mapRubros(List<RubroCreateDto> rubros, Proyecto proyecto, java.util.Set<Long> linkedIds) {
         if (rubros == null) {
             return new ArrayList<>();
         }
 
-        List<RubroObra> result = new ArrayList<>();
         java.util.Set<Long> seen = new java.util.HashSet<>();
-        for (RubroCreateDto rubroDto : rubros) {
-            if (rubroDto.id() != null && !seen.add(rubroDto.id())) throw new SolicitudInvalidaException("Actividad duplicada");
-            RubroObra rubro = rubroDto.id() == null ? new RubroObra() : proyecto.getRubros().stream()
+        RubroObra[] existentes = new RubroObra[rubros.size()];
+        for (int i = 0; i < rubros.size(); i++) {
+            RubroCreateDto rubroDto = rubros.get(i);
+            if (rubroDto.id() == null) continue;
+            if (!seen.add(rubroDto.id())) throw new SolicitudInvalidaException("Actividad duplicada");
+            existentes[i] = proyecto.getRubros().stream()
                 .filter(r -> rubroDto.id().equals(r.getId())).findFirst()
                 .orElseThrow(() -> new SolicitudInvalidaException("La actividad no pertenece a la obra"));
+        }
+        List<EstructuraRubros.Nodo> nodos = RubroEstructura.resolver(rubros, existentes);
+        validateStructureChanges(proyecto, existentes, nodos, seen, linkedIds);
+
+        List<RubroObra> result = new ArrayList<>();
+        for (int i = 0; i < rubros.size(); i++) {
+            RubroCreateDto rubroDto = rubros.get(i);
+            EstructuraRubros.Nodo nodo = nodos.get(i);
+            RubroObra rubro = existentes[i] == null ? new RubroObra() : existentes[i];
             rubro.setProyecto(proyecto);
-            rubro.setnRubro(rubroDto.nRubro());
-            rubro.setRubro(rubroDto.rubro());
-            rubro.setNivel(rubroDto.nivel());
-            rubro.setSubNumeroRubro(rubroDto.subNumeroRubro());
-            rubro.setSubRubro(rubroDto.subRubro());
-            rubro.setCantidad(rubroDto.cantidad());
-            rubro.setUnidad(rubroDto.unidad());
-            rubro.setProductividad(rubroDto.productividad());
-            rubro.setEmpresa(rubroDto.empresa());
-            rubro.setTipoContratista(rubroDto.tipoContratista() == null ? "PROPIA" : rubroDto.tipoContratista());
-            rubro.setSubcontratista(resolveSubcontratista(proyecto, rubroDto.subcontratistaId()));
-            rubro.setHorasOficialesPrevistas(rubroDto.horasOficialesPrevistas());
-            rubro.setHorasAyudantesPrevistas(rubroDto.horasAyudantesPrevistas());
-            rubro.setCantidadPersonas(rubroDto.cantidadPersonas());
-            rubro.setFechaInicioPlanificada(rubroDto.fechaInicioPlanificada());
-            rubro.setFechaFinPlanificada(rubroDto.fechaFinPlanificada());
-            rubro.setCronogramaManual(rubroDto.cronogramaManual());
-            RubroPlanning.apply(rubro, rubroDto);
+            RubroEstructura.aplicarEstructura(rubro, rubroDto, nodo);
+            if (nodo.hoja()) {
+                RubroEstructura.aplicarHoja(rubro, rubroDto, resolveSubcontratista(proyecto, rubroDto.subcontratistaId()));
+            } else if (existentes[i] == null || existentes[i].getId() == null || !linkedIds.contains(existentes[i].getId())) {
+                // Grouping nodes carry no activity data. A node that already has tasks keeps its data untouched.
+                RubroEstructura.limpiarAgrupador(rubro);
+            }
             result.add(rubro);
         }
-        return result;
+        RubroEstructura.enlazarPadres(result, nodos);
+        return RubroEstructura.padresPrimero(result, nodos);
+    }
+
+    /** Runs before any row is modified: rows omitted from the list are deleted, so their children cannot stay. */
+    private void validateStructureChanges(Proyecto proyecto, RubroObra[] existentes, List<EstructuraRubros.Nodo> nodos,
+            java.util.Set<Long> requestedIds, java.util.Set<Long> linkedIds) {
+        for (int i = 0; i < existentes.length; i++) {
+            RubroObra existente = existentes[i];
+            if (existente == null) continue;
+            EstructuraRubros.Nodo nodo = nodos.get(i);
+            RubroObra previousParent = existente.getParent();
+            if (previousParent != null && nodo.parentCodigo() == null && previousParent.getId() != null
+                    && !requestedIds.contains(previousParent.getId())) {
+                throw new SolicitudInvalidaException("No se puede eliminar un nodo que tiene hijos");
+            }
+            boolean kindChanged = existente.getTipoNodo() != nodo.tipo();
+            if (kindChanged && isInUse(existente, linkedIds)) {
+                throw new SolicitudInvalidaException("No se puede cambiar el tipo de una actividad con tareas o restricciones vinculadas");
+            }
+            boolean variantChanged = nodo.tipo() == TipoNodoRubro.RUBRO && existente.getTipoNodo() == TipoNodoRubro.RUBRO
+                && existente.getVarianteEstructura() != nodo.variante();
+            if (!variantChanged) continue;
+            for (RubroObra other : proyecto.getRubros()) {
+                RubroObra root = other == existente ? null : EstructuraRubros.raiz(other, proyecto.getRubros());
+                boolean belongs = root != null && (root == existente
+                    || (existente.getId() != null && existente.getId().equals(root.getId())));
+                if (belongs && isInUse(other, linkedIds)) {
+                    throw new SolicitudInvalidaException("No se puede cambiar la variante de un rubro con actividades con tareas o restricciones vinculadas");
+                }
+            }
+        }
+    }
+
+    private boolean isInUse(RubroObra rubro, java.util.Set<Long> linkedIds) {
+        return rubro.getId() != null
+            && (linkedIds.contains(rubro.getId()) || restriccionRepository.countByRubroVinculadoId(rubro.getId()) > 0);
     }
 
     @SuppressWarnings("null")

@@ -10,6 +10,7 @@ import com.vortise.gestion.domain.model.RubroObra;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.RestriccionObraRepository;
 import com.vortise.gestion.domain.repository.RubroObraRepository;
+import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class CreateRestriccionUseCase {
         RubroObra rubro = dto.rubroId() == null ? null : rubroRepository.findById(dto.rubroId())
             .filter(candidate -> candidate.getProyecto().getId().equals(proyectoId))
             .filter(candidate -> candidate.getSubRubro() != null && !candidate.getSubRubro().isBlank())
+            .filter(candidate -> EstructuraRubros.esHoja(candidate, candidate.getProyecto().getRubros()))
             .orElseThrow(() -> new SolicitudInvalidaException("La actividad debe ser un subrubro de la misma obra"));
 
         RestriccionObra restriccion = new RestriccionObra();

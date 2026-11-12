@@ -20,6 +20,7 @@ import com.vortise.gestion.domain.model.RubroObra;
 import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
+import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -109,31 +110,23 @@ public class CreateProyectoUseCase {
         if (rubros == null) {
             return new ArrayList<>();
         }
+        List<EstructuraRubros.Nodo> nodos = RubroEstructura.resolver(rubros, null);
         List<RubroObra> result = new ArrayList<>();
-        for (RubroCreateDto rubroDto : rubros) {
+        for (int i = 0; i < rubros.size(); i++) {
+            RubroCreateDto rubroDto = rubros.get(i);
+            EstructuraRubros.Nodo nodo = nodos.get(i);
             RubroObra rubro = new RubroObra();
             rubro.setProyecto(proyecto);
-            rubro.setnRubro(rubroDto.nRubro());
-            rubro.setRubro(rubroDto.rubro());
-            rubro.setNivel(rubroDto.nivel());
-            rubro.setSubNumeroRubro(rubroDto.subNumeroRubro());
-            rubro.setSubRubro(rubroDto.subRubro());
-            rubro.setCantidad(rubroDto.cantidad());
-            rubro.setUnidad(rubroDto.unidad());
-            rubro.setProductividad(rubroDto.productividad());
-            rubro.setEmpresa(rubroDto.empresa());
-            rubro.setTipoContratista(rubroDto.tipoContratista() == null ? "PROPIA" : rubroDto.tipoContratista());
-            rubro.setSubcontratista(resolveSubcontratista(proyecto, rubroDto.subcontratistaId()));
-            rubro.setHorasOficialesPrevistas(rubroDto.horasOficialesPrevistas());
-            rubro.setHorasAyudantesPrevistas(rubroDto.horasAyudantesPrevistas());
-            rubro.setCantidadPersonas(rubroDto.cantidadPersonas());
-            rubro.setFechaInicioPlanificada(rubroDto.fechaInicioPlanificada());
-            rubro.setFechaFinPlanificada(rubroDto.fechaFinPlanificada());
-            rubro.setCronogramaManual(rubroDto.cronogramaManual());
-            RubroPlanning.apply(rubro, rubroDto);
+            RubroEstructura.aplicarEstructura(rubro, rubroDto, nodo);
+            if (nodo.hoja()) {
+                RubroEstructura.aplicarHoja(rubro, rubroDto, resolveSubcontratista(proyecto, rubroDto.subcontratistaId()));
+            } else {
+                RubroEstructura.limpiarAgrupador(rubro);
+            }
             result.add(rubro);
         }
-        return result;
+        RubroEstructura.enlazarPadres(result, nodos);
+        return RubroEstructura.padresPrimero(result, nodos);
     }
 
     private CatalogoEmpresa resolveSubcontratista(Proyecto proyecto, Long subcontratistaId) {

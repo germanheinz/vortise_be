@@ -101,6 +101,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({org.springframework.dao.DataIntegrityViolationException.class,
         org.springframework.dao.OptimisticLockingFailureException.class})
     public ResponseEntity<ErrorResponseDto> handlePersistenceConflict(RuntimeException ex) {
+        Throwable root = ex;
+        while (root.getCause() != null && root.getCause() != root) root = root.getCause();
+        String detail = String.valueOf(root.getMessage());
+        log.atWarn().addKeyValue("exception_type", ex.getClass().getSimpleName())
+            .addKeyValue("root_cause", root.getClass().getSimpleName() + ": " + detail.substring(0, Math.min(detail.length(), 400)))
+            .addKeyValue("source_location", sourceLocation(ex)).log("persistence_conflict");
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponseDto(409, "Conflict",
             "Los datos cambiaron o ya existe un registro equivalente. Actualizá la página y volvé a intentar."));
     }

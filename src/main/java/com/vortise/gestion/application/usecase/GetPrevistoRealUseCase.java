@@ -3,6 +3,7 @@ package com.vortise.gestion.application.usecase;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.*;
+import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.util.List;
 import java.util.function.Function;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ public class GetPrevistoRealUseCase {
         var byRubro = new java.util.HashMap<Long, java.util.List<ObraTarea>>();
         for (var load : loads) byRubro.computeIfAbsent(load.getRubroId(), key -> new java.util.ArrayList<>()).add(load);
         var knownIds = rubros.stream().map(RubroObra::getId).collect(java.util.stream.Collectors.toSet());
-        var activities = rubros.stream().map(r -> {
+        var activities = rubros.stream().filter(r -> EstructuraRubros.esHoja(r, rubros)).map(r -> {
             var matching = byRubro.getOrDefault(r.getId(), List.of());
             Double q = sum(matching, ObraTarea::getCantidadReal), hOf = sum(matching, ObraTarea::getHorasOficiales), hAy = sum(matching, ObraTarea::getHorasAyudantes);
             return new Activity(r.getId(), r.getSubRubro() == null ? r.getRubro() : r.getSubRubro(), r.getUnidad(), q, hOf, hAy,

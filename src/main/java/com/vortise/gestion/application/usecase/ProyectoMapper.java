@@ -6,8 +6,8 @@ import com.vortise.gestion.application.dto.RubroDto;
 import com.vortise.gestion.domain.model.Planta;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RubroObra;
+import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.util.List;
-import java.util.Comparator;
 
 final class ProyectoMapper {
     private ProyectoMapper() {
@@ -61,20 +61,14 @@ final class ProyectoMapper {
             proyecto.getHorasReales(),
             proyecto.getPlantas() == null ? List.of() : proyecto.getPlantas().stream().map(ProyectoMapper::toPlantaDto).toList(),
             proyecto.getRubros() == null ? List.of() : proyecto.getRubros().stream()
-                .sorted(Comparator.comparing((RubroObra rubro) -> numericCode(rubro.getnRubro()), Comparator.nullsLast(Comparator.naturalOrder())))
-                .map(ProyectoMapper::toRubroDto).toList(),
+                .sorted(EstructuraRubros.ORDEN_NATURAL)
+                .map(rubro -> toRubroDto(rubro, proyecto.getRubros())).toList(),
             selectedContractorIds(proyecto),
             proyecto.getSuperficieCubierta(),
             proyecto.getSuperficieSemicubierta(),
             proyecto.getSuperficieDescubierta(),
             proyecto.getPedidosDeObraDias()
         );
-    }
-
-    private static Long numericCode(String value) {
-        if (value == null || !value.trim().matches("\\d+")) return null;
-        try { return Long.parseLong(value.trim()); }
-        catch (NumberFormatException ignored) { return null; }
     }
 
     @SuppressWarnings("null")
@@ -100,7 +94,7 @@ final class ProyectoMapper {
         );
     }
 
-    private static RubroDto toRubroDto(RubroObra rubro) {
+    private static RubroDto toRubroDto(RubroObra rubro, java.util.Collection<RubroObra> todos) {
         return new RubroDto(
             rubro.getId(),
             rubro.getProyecto().getId(),
@@ -124,7 +118,13 @@ final class ProyectoMapper {
             rubro.getFechaInicioPlanificada(),
             rubro.getFechaFinPlanificada(),
             rubro.isCronogramaManual(),
-            rubro.getFrentes()
+            rubro.getFrentes(),
+            rubro.getParent() == null ? null : rubro.getParent().getId(),
+            rubro.getTipoNodo().name(),
+            rubro.getVarianteEstructura() == null ? null : rubro.getVarianteEstructura().name(),
+            EstructuraRubros.nombreDe(rubro),
+            EstructuraRubros.esHoja(rubro, todos),
+            rubro.getContrato()
         );
     }
 }

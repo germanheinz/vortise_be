@@ -24,6 +24,7 @@ import com.vortise.gestion.domain.repository.CertificadoObraRepository;
 import com.vortise.gestion.domain.repository.ObraTareaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.TextStyle;
@@ -61,7 +62,7 @@ public class CertificadoObraUseCase {
         this.tareas = tareas; this.identity = identity; this.usuarios = usuarios;
     }
 
-    /** Activity of the obra that can be measured; parent rubros (code multiple of 100) are only titles. */
+    /** Activity of the obra that can be measured: a leaf of the structure; its root rubro is only the group title. */
     private record Actividad(RubroObra rubro, String codigo, String grupoCodigo, String grupoNombre, String nombre, Long empresa) { }
 
     /** Everything needed to measure the certificates of one company. */
@@ -288,27 +289,15 @@ public class CertificadoObraUseCase {
 
     private static List<Actividad> actividades(Proyecto proyecto) {
         List<RubroObra> rubros = proyecto.getRubros() == null ? List.of() : proyecto.getRubros();
-        Map<Integer, RubroObra> padres = new HashMap<>();
-        for (RubroObra rubro : rubros) {
-            Integer codigo = codigo(rubro);
-            if (codigo != null && codigo % 100 == 0) padres.putIfAbsent(codigo, rubro);
-        }
         List<Actividad> result = new ArrayList<>();
-        for (RubroObra rubro : rubros) {
-            Integer codigo = codigo(rubro);
-            if (codigo != null && codigo % 100 == 0) continue;
-            RubroObra padre = codigo == null ? null : padres.get(codigo / 100 * 100);
+        for (RubroObra rubro : EstructuraRubros.hojas(rubros)) {
+            RubroObra padre = EstructuraRubros.raiz(rubro, rubros);
             String nombre = rubro.getSubRubro() != null && !rubro.getSubRubro().isBlank() ? rubro.getSubRubro().trim() : String.valueOf(rubro.getRubro());
             result.add(new Actividad(rubro, rubro.getnRubro(), padre == null ? null : padre.getnRubro(),
                 padre == null ? null : (padre.getRubro() == null || padre.getRubro().isBlank() ? "Rubro " + padre.getnRubro() : padre.getRubro().trim()),
                 nombre, CertificadoBloqueos.empresaDe(rubro)));
         }
         return result;
-    }
-
-    private static Integer codigo(RubroObra rubro) {
-        String value = rubro.getnRubro() == null ? "" : rubro.getnRubro().trim();
-        return value.matches("\\d{1,9}") ? Integer.valueOf(value) : null;
     }
 
     private static List<CertificadoObra> deEmpresa(List<CertificadoObra> todos, Long empresa) {

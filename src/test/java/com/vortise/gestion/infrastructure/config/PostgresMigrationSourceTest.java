@@ -107,6 +107,29 @@ class PostgresMigrationSourceTest {
         assertFalse(migration.toLowerCase(java.util.Locale.ROOT).contains("stripe_customer"));
     }
 
+    @Test
+    void rubroStructureMigrationIsAdditiveKeepsIdsAndUsesPortableSql() throws IOException {
+        String migration = resource("db/migration/V18__rubro_estructura_3_capas.sql");
+        String sql = migration.replaceAll("(?m)^\\s*--.*$", "");
+
+        assertTrue(sql.contains("ALTER TABLE rubros_obra ADD COLUMN parent_id BIGINT;"));
+        assertTrue(sql.contains("ADD COLUMN tipo_nodo VARCHAR(16) DEFAULT 'SUBRUBRO' NOT NULL"));
+        assertTrue(sql.contains("ADD COLUMN variante_estructura VARCHAR(32)"));
+        assertTrue(sql.contains("ADD COLUMN nombre VARCHAR(255)"));
+        assertTrue(sql.contains("FOREIGN KEY (parent_id) REFERENCES rubros_obra (id) ON DELETE SET NULL"));
+        // Hours link to rubros by text: the code must be rewritten consistently.
+        assertTrue(Pattern.compile("(?is)UPDATE registros_horas\\s+SET numero_rubro").matcher(sql).find());
+        // Rubro ids are preserved and legacy columns are kept: the only dropped column is the temporary one.
+        assertFalse(Pattern.compile("(?i)DROP\\s+TABLE|DELETE\\s+FROM|TRUNCATE|INSERT\\s+INTO").matcher(sql).find());
+        Matcher drops = Pattern.compile("(?i)DROP\\s+COLUMN\\s+([a-z_]+)").matcher(sql);
+        Set<String> dropped = new HashSet<>();
+        while (drops.find()) dropped.add(drops.group(1));
+        assertEquals(Set.of("n_rubro_nuevo"), dropped);
+        assertFalse(sql.contains("RENAME") || sql.contains("ALTER COLUMN"));
+        // Portable between H2 and PostgreSQL: no regular expression operators or window functions.
+        assertFalse(Pattern.compile("(?i)\\bREGEXP|SIMILAR\\s+TO|~|\\bOVER\\s*\\(|ROW_NUMBER").matcher(sql).find());
+    }
+
     private String resource(String name) throws IOException {
         try (InputStream input = getClass().getClassLoader().getResourceAsStream(name)) {
             assertNotNull(input, "Missing migration resource: " + name);

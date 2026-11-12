@@ -25,6 +25,12 @@ public record RubroDto(
     LocalDate fechaInicioPlanificada,
     LocalDate fechaFinPlanificada,
     boolean cronogramaManual,
-    Integer frentes
+    Integer frentes,
+    Long parentId,
+    String tipoNodo,
+    String varianteEstructura,
+    String nombre,
+    boolean hoja,
+    String contrato
 ) {
 }

@@ -2,13 +2,18 @@ package com.vortise.gestion.domain.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.time.LocalDate;
 
 @Entity
@@ -22,6 +27,24 @@ public class RubroObra {
     @JoinColumn(name = "proyecto_id", nullable = false)
     private Proyecto proyecto;
 
+    /** Parent node in the activity structure; null for root rubros (and for legacy rows without a resolvable parent). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private RubroObra parent;
+
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.VARCHAR)
+    @Enumerated(EnumType.STRING)
+    @Column(length = 16)
+    private TipoNodoRubro tipoNodo;
+
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.VARCHAR)
+    @Enumerated(EnumType.STRING)
+    @Column(length = 32)
+    private VarianteEstructura varianteEstructura;
+
+    private String nombre;
+    /** Contract reference; only the root rubro carries it. */
+    private String contrato;
     private String nRubro;
     private String rubro;
     private String nivel;
@@ -60,6 +83,56 @@ public class RubroObra {
 
     public void setProyecto(Proyecto proyecto) {
         this.proyecto = proyecto;
+    }
+
+    public RubroObra getParent() {
+        return parent;
+    }
+
+    public void setParent(RubroObra parent) {
+        this.parent = parent;
+    }
+
+    /** Node kind; rows persisted before the 3-layer structure infer it from the legacy numeric code. */
+    public TipoNodoRubro getTipoNodo() {
+        return tipoNodo != null ? tipoNodo : EstructuraRubros.tipoLegado(nRubro);
+    }
+
+    public void setTipoNodo(TipoNodoRubro tipoNodo) {
+        this.tipoNodo = tipoNodo;
+    }
+
+    /** Structure variant; only meaningful on root nodes (legacy roots are RUBRO_SUBRUBRO). */
+    public VarianteEstructura getVarianteEstructura() {
+        if (varianteEstructura != null) return varianteEstructura;
+        return getTipoNodo() == TipoNodoRubro.RUBRO ? VarianteEstructura.RUBRO_SUBRUBRO : null;
+    }
+
+    public void setVarianteEstructura(VarianteEstructura varianteEstructura) {
+        this.varianteEstructura = varianteEstructura;
+    }
+
+    public String getContrato() {
+        return contrato;
+    }
+
+    public void setContrato(String contrato) {
+        this.contrato = contrato;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    @PrePersist
+    @PreUpdate
+    void normalizarEstructura() {
+        tipoNodo = getTipoNodo();
+        varianteEstructura = getVarianteEstructura();
     }
 
     public String getnRubro() {

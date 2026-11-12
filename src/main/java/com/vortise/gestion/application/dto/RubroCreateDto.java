@@ -28,8 +28,43 @@ public record RubroCreateDto(
     Long id,
     Double rendimientoOficial,
     Double rendimientoAyudante,
-    @JsonDeserialize(using = RubroCreateDto.FrentesDeserializer.class) Integer frentes
+    @JsonDeserialize(using = RubroCreateDto.FrentesDeserializer.class) Integer frentes,
+    /** RUBRO | NIVEL | SUBRUBRO. Null on legacy payloads: the kind is inferred from the code. */
+    String tipoNodo,
+    /** Hierarchical code of the parent node in the same request; null on root rubros. */
+    String parentCodigo,
+    /** Only on root rubros: RUBRO_SUBRUBRO | RUBRO_NIVEL_SUBRUBRO | RUBRO_SUBRUBRO_NIVEL. */
+    String varianteEstructura,
+    String nombre,
+    /** Only on root rubros: contract the rubro belongs to. */
+    String contrato
 ) {
+    public RubroCreateDto(String nRubro, String rubro, String nivel, Integer subNumeroRubro,
+            String subRubro, Double cantidad, String unidad, Double productividad, String empresa,
+            String tipoContratista, Long subcontratistaId, Double horasOficialesPrevistas,
+            Double horasAyudantesPrevistas, Integer cantidadPersonas, LocalDate fechaInicioPlanificada,
+            LocalDate fechaFinPlanificada, boolean cronogramaManual, Long id,
+            Double rendimientoOficial, Double rendimientoAyudante, Integer frentes, String tipoNodo,
+            String parentCodigo, String varianteEstructura, String nombre) {
+        this(nRubro, rubro, nivel, subNumeroRubro, subRubro, cantidad, unidad, productividad, empresa,
+            tipoContratista, subcontratistaId, horasOficialesPrevistas, horasAyudantesPrevistas,
+            cantidadPersonas, fechaInicioPlanificada, fechaFinPlanificada, cronogramaManual, id,
+            rendimientoOficial, rendimientoAyudante, frentes, tipoNodo, parentCodigo, varianteEstructura, nombre, null);
+    }
+
+
+    public RubroCreateDto(String nRubro, String rubro, String nivel, Integer subNumeroRubro,
+            String subRubro, Double cantidad, String unidad, Double productividad, String empresa,
+            String tipoContratista, Long subcontratistaId, Double horasOficialesPrevistas,
+            Double horasAyudantesPrevistas, Integer cantidadPersonas, LocalDate fechaInicioPlanificada,
+            LocalDate fechaFinPlanificada, boolean cronogramaManual, Long id,
+            Double rendimientoOficial, Double rendimientoAyudante, Integer frentes) {
+        this(nRubro, rubro, nivel, subNumeroRubro, subRubro, cantidad, unidad, productividad, empresa,
+            tipoContratista, subcontratistaId, horasOficialesPrevistas, horasAyudantesPrevistas,
+            cantidadPersonas, fechaInicioPlanificada, fechaFinPlanificada, cronogramaManual, id,
+            rendimientoOficial, rendimientoAyudante, frentes, null, null, null, null, null);
+    }
+
     public RubroCreateDto(String nRubro, String rubro, String nivel, Integer subNumeroRubro,
             String subRubro, Double cantidad, String unidad, Double productividad, String empresa,
             String tipoContratista, Long subcontratistaId, Double horasOficialesPrevistas,
@@ -39,7 +74,7 @@ public record RubroCreateDto(
         this(nRubro, rubro, nivel, subNumeroRubro, subRubro, cantidad, unidad, productividad, empresa,
             tipoContratista, subcontratistaId, horasOficialesPrevistas, horasAyudantesPrevistas,
             cantidadPersonas, fechaInicioPlanificada, fechaFinPlanificada, cronogramaManual, id,
-            rendimientoOficial, rendimientoAyudante, null);
+            rendimientoOficial, rendimientoAyudante, null, null, null, null, null, null);
     }
 
     public static class FrentesDeserializer extends ValueDeserializer<Integer> {
