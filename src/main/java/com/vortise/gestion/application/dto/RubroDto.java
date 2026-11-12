@@ -31,6 +31,7 @@ public record RubroDto(
     String varianteEstructura,
     String nombre,
     boolean hoja,
-    String contrato
+    Long contratoId,
+    String contratoNombre
 ) {
 }

@@ -35,8 +35,22 @@ public record ProyectoCreateDto(
 	Double superficieDescubierta,
 	@Valid List<CategoriaManoObraCostoDto> costosManoObraModificados,
 	@Valid List<SubcontratistaObraDto> contratistasObra,
-	@Min(0) Integer pedidosDeObraDias
+	@Min(0) Integer pedidosDeObraDias,
+	@Valid List<ContratoObraDto> contratos
 ) {
+	public ProyectoCreateDto(String nombre, String descripcion, Double presupuestoUsd, String direccion, String numeroProyecto,
+			LocalDate fechaInicio, LocalDate fechaFin, String responsablesObra, String categoriasManoObra, Integer cantidadSectores,
+			Long empresaId, String empresa, Double horasPrevistas, Double horasReales, List<PlantaCreateDto> plantas,
+			List<RubroCreateDto> rubros, List<Long> subcontratistaIds, Double superficieCubierta,
+			Double superficieSemicubierta, Double superficieDescubierta,
+			List<CategoriaManoObraCostoDto> costosManoObraModificados, List<SubcontratistaObraDto> contratistasObra,
+			Integer pedidosDeObraDias) {
+		this(nombre, descripcion, presupuestoUsd, direccion, numeroProyecto, fechaInicio, fechaFin, responsablesObra,
+			categoriasManoObra, cantidadSectores, empresaId, empresa, horasPrevistas, horasReales, plantas, rubros,
+			subcontratistaIds, superficieCubierta, superficieSemicubierta, superficieDescubierta,
+			costosManoObraModificados, contratistasObra, pedidosDeObraDias, null);
+	}
+
 	public ProyectoCreateDto(String nombre, String descripcion, Double presupuestoUsd, String direccion, String numeroProyecto,
 			LocalDate fechaInicio, LocalDate fechaFin, String responsablesObra, String categoriasManoObra, Integer cantidadSectores,
 			Long empresaId, String empresa, Double horasPrevistas, Double horasReales, List<PlantaCreateDto> plantas,
@@ -46,7 +60,7 @@ public record ProyectoCreateDto(
 		this(nombre, descripcion, presupuestoUsd, direccion, numeroProyecto, fechaInicio, fechaFin, responsablesObra,
 			categoriasManoObra, cantidadSectores, empresaId, empresa, horasPrevistas, horasReales, plantas, rubros,
 			subcontratistaIds, superficieCubierta, superficieSemicubierta, superficieDescubierta,
-			costosManoObraModificados, contratistasObra, null);
+			costosManoObraModificados, contratistasObra, null, null);
 	}
 
 	public ProyectoCreateDto(String nombre, String descripcion, Double presupuestoUsd, String direccion, String numeroProyecto,
@@ -55,6 +69,6 @@ public record ProyectoCreateDto(
 			List<RubroCreateDto> rubros, List<Long> subcontratistaIds) {
 		this(nombre, descripcion, presupuestoUsd, direccion, numeroProyecto, fechaInicio, fechaFin, responsablesObra,
 			categoriasManoObra, cantidadSectores, empresaId, empresa, horasPrevistas, horasReales, plantas, rubros,
-			subcontratistaIds, null, null, null, null, null, null);
+			subcontratistaIds, null, null, null, null, null, null, null);
 	}
 }

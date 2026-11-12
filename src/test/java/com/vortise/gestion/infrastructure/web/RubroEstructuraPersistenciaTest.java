@@ -149,13 +149,36 @@ class RubroEstructuraPersistenciaTest {
             .andExpect(status().isOk()).andExpect(jsonPath("$.rubros.length()").value(1));
     }
 
-    @Test void keepsTheContractOnTheRootRubroOnly() throws Exception {
-        guardar(List.of(
-            Map.of("nRubro", "1", "tipoNodo", "RUBRO", "varianteEstructura", "RUBRO_SUBRUBRO", "nombre", "Nuevo", "rubro", "Nuevo", "contrato", "  CONTRATO 1 "),
-            Map.of("nRubro", "1.1", "tipoNodo", "SUBRUBRO", "parentCodigo", "1", "nombre", "Pilotes", "rubro", "Nuevo", "subRubro", "Pilotes",
-                "cantidad", 4, "unidad", "m3", "contrato", "NO DEBE GUARDARSE")))
+    private org.springframework.test.web.servlet.ResultActions guardar(List<Map<String, Object>> rubros, List<Map<String, Object>> contratos) throws Exception {
+        var payload = Map.of("nombre", "A", "direccion", "Test", "numeroProyecto", "A", "rubros", rubros, "contratos", contratos);
+        return mvc.perform(put("/api/proyectos/" + proyectoId).header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(payload)));
+    }
+
+    private Map<String, Object> raiz(Object contratoId) {
+        var fila = new java.util.LinkedHashMap<String, Object>(Map.of("nRubro", "1", "tipoNodo", "RUBRO", "varianteEstructura", "RUBRO_SUBRUBRO", "nombre", "Nuevo", "rubro", "Nuevo"));
+        if (contratoId != null) fila.put("contratoId", contratoId);
+        return fila;
+    }
+
+    private static final Map<String, Object> HOJA = Map.of("nRubro", "1.1", "tipoNodo", "SUBRUBRO", "parentCodigo", "1", "nombre", "Pilotes",
+        "rubro", "Nuevo", "subRubro", "Pilotes", "cantidad", 4, "unidad", "m3");
+
+    @Test void assignsAProjectContractToTheRootRubroAndProtectsContractsInUse() throws Exception {
+        var creado = guardar(List.of(raiz(null), HOJA), List.of(Map.of("nombre", "  Contrato 1 ")))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.contratos[0].nombre").value("Contrato 1")).andReturn();
+        long contratoId = mapper.readTree(creado.getResponse().getContentAsString()).get("contratos").get(0).get("id").asLong();
+
+        guardar(List.of(raiz(contratoId), HOJA), List.of(Map.of("id", contratoId, "nombre", "Contrato 1")))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.rubros[?(@.nRubro=='1')].contrato").value("CONTRATO 1"))
-            .andExpect(jsonPath("$.rubros[?(@.nRubro=='1.1')].contrato").value(org.hamcrest.Matchers.contains((Object) null)));
+            .andExpect(jsonPath("$.rubros[?(@.nRubro=='1')].contratoId").value((int) contratoId))
+            .andExpect(jsonPath("$.rubros[?(@.nRubro=='1')].contratoNombre").value("Contrato 1"))
+            .andExpect(jsonPath("$.rubros[?(@.nRubro=='1.1')].contratoId").value(org.hamcrest.Matchers.contains((Object) null)));
+
+        guardar(List.of(raiz(contratoId), HOJA), List.of()).andExpect(status().isBadRequest());
+        guardar(List.of(raiz(999999), HOJA), List.of(Map.of("id", contratoId, "nombre", "Contrato 1"))).andExpect(status().isBadRequest());
+        guardar(List.of(raiz(null), HOJA), List.of(Map.of("id", contratoId, "nombre", "Contrato 1"), Map.of("nombre", "contrato 1")))
+            .andExpect(status().isBadRequest());
+        guardar(List.of(raiz(null), HOJA), List.of()).andExpect(status().isOk()).andExpect(jsonPath("$.contratos.length()").value(0));
     }
 }

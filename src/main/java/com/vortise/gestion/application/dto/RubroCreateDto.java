@@ -36,8 +36,8 @@ public record RubroCreateDto(
     /** Only on root rubros: RUBRO_SUBRUBRO | RUBRO_NIVEL_SUBRUBRO | RUBRO_SUBRUBRO_NIVEL. */
     String varianteEstructura,
     String nombre,
-    /** Only on root rubros: contract the rubro belongs to. */
-    String contrato
+    /** Only on root rubros: id of an existing contract of the project. */
+    Long contratoId
 ) {
     public RubroCreateDto(String nRubro, String rubro, String nivel, Integer subNumeroRubro,
             String subRubro, Double cantidad, String unidad, Double productividad, String empresa,

@@ -18,6 +18,7 @@ import com.vortise.gestion.domain.model.CertificadoItemCompletado;
 import com.vortise.gestion.domain.model.CertificadoObra;
 import com.vortise.gestion.domain.model.ObraTarea;
 import com.vortise.gestion.domain.model.Proyecto;
+import com.vortise.gestion.domain.model.ContratoObra;
 import com.vortise.gestion.domain.model.RubroObra;
 import com.vortise.gestion.domain.repository.CertificadoItemCompletadoRepository;
 import com.vortise.gestion.domain.repository.CertificadoObraRepository;
@@ -63,7 +64,7 @@ public class CertificadoObraUseCase {
     }
 
     /** Activity of the obra that can be measured: a leaf of the structure; its root rubro is only the group title. */
-    private record Actividad(RubroObra rubro, String codigo, String grupoCodigo, String grupoNombre, String nombre, Long empresa) { }
+    private record Actividad(RubroObra rubro, String codigo, String grupoCodigo, String grupoNombre, String nombre, Long empresa, ContratoObra contrato) { }
 
     /** Everything needed to measure the certificates of one company. */
     private record Contexto(Proyecto proyecto, Long empresa, List<Actividad> actividades, List<CertificadoObra> lista,
@@ -264,7 +265,9 @@ public class CertificadoObraUseCase {
                 fila.acumulado(), CalculoCertificado.porcentaje(fila.acumulado(), total),
                 fila.excedente(), CalculoCertificado.porcentaje(fila.excedente(), total),
                 fila.ajuste(), CalculoCertificado.porcentaje(fila.ajuste(), total),
-                fila.completado(), puedeAlternar));
+                fila.completado(), puedeAlternar,
+                actividad.contrato() == null ? null : actividad.contrato().getId(),
+                actividad.contrato() == null ? null : actividad.contrato().getNombre()));
         }
         CertificadoResumenDto resumen = resumen(contexto.lista(), k);
         return new CertificadoDetalleDto(certificado.getId(), certificado.getNumero(), certificado.getEtiqueta(), certificado.getPeriodicidad(),
@@ -295,7 +298,7 @@ public class CertificadoObraUseCase {
             String nombre = rubro.getSubRubro() != null && !rubro.getSubRubro().isBlank() ? rubro.getSubRubro().trim() : String.valueOf(rubro.getRubro());
             result.add(new Actividad(rubro, rubro.getnRubro(), padre == null ? null : padre.getnRubro(),
                 padre == null ? null : (padre.getRubro() == null || padre.getRubro().isBlank() ? "Rubro " + padre.getnRubro() : padre.getRubro().trim()),
-                nombre, CertificadoBloqueos.empresaDe(rubro)));
+                nombre, CertificadoBloqueos.empresaDe(rubro), padre == null ? null : padre.getContrato()));
         }
         return result;
     }

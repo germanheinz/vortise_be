@@ -43,8 +43,11 @@ public class RubroObra {
     private VarianteEstructura varianteEstructura;
 
     private String nombre;
-    /** Contract reference; only the root rubro carries it. */
-    private String contrato;
+    /** Contract of the project this rubro belongs to; only the root rubro carries it. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contrato_id")
+    @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.SET_NULL)
+    private ContratoObra contrato;
     private String nRubro;
     private String rubro;
     private String nivel;
@@ -112,11 +115,11 @@ public class RubroObra {
         this.varianteEstructura = varianteEstructura;
     }
 
-    public String getContrato() {
+    public ContratoObra getContrato() {
         return contrato;
     }
 
-    public void setContrato(String contrato) {
+    public void setContrato(ContratoObra contrato) {
         this.contrato = contrato;
     }
 

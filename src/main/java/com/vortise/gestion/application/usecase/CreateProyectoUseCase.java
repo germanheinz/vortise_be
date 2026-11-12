@@ -14,6 +14,7 @@ import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.model.CatalogoEmpresa;
+import com.vortise.gestion.domain.model.ContratoObra;
 import com.vortise.gestion.domain.model.Planta;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RubroObra;
@@ -64,6 +65,8 @@ public class CreateProyectoUseCase {
         List<Long> selectedIds = new ArrayList<>(dto.subcontratistaIds() == null ? selectedContractorIds(dto) : dto.subcontratistaIds());
         addDistinct(selectedIds, cambiosEmpresa.execute(dto.empresaId(), dto.costosManoObraModificados(), dto.contratistasObra()));
         proyecto.setSubcontratistas(resolveSelectedSubcontratistas(proyecto, selectedIds));
+        List<ContratoObra> contratos = dto.contratos() == null ? new ArrayList<>() : ContratosObra.aplicar(proyecto, dto.contratos());
+        proyecto.setContratos(contratos);
         proyecto.setRubros(mapRubros(dto.rubros(), proyecto));
         Proyecto saved = this.proyectoRepository.save(proyecto);
         return ProyectoMapper.toDetailDto(saved);
@@ -117,7 +120,7 @@ public class CreateProyectoUseCase {
             EstructuraRubros.Nodo nodo = nodos.get(i);
             RubroObra rubro = new RubroObra();
             rubro.setProyecto(proyecto);
-            RubroEstructura.aplicarEstructura(rubro, rubroDto, nodo);
+            RubroEstructura.aplicarEstructura(rubro, rubroDto, nodo, java.util.Map.of());
             if (nodo.hoja()) {
                 RubroEstructura.aplicarHoja(rubro, rubroDto, resolveSubcontratista(proyecto, rubroDto.subcontratistaId()));
             } else {

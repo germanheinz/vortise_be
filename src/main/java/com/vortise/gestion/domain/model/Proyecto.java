@@ -53,6 +53,8 @@ public class Proyecto {
     @OneToMany(mappedBy="proyecto", cascade={CascadeType.ALL}, orphanRemoval=true)
     private List<RubroObra> rubros = new ArrayList<RubroObra>();
     @OneToMany(mappedBy="proyecto", cascade={CascadeType.ALL}, orphanRemoval=true)
+    private List<ContratoObra> contratos = new ArrayList<ContratoObra>();
+    @OneToMany(mappedBy="proyecto", cascade={CascadeType.ALL}, orphanRemoval=true)
     private List<RestriccionObra> restricciones = new ArrayList<RestriccionObra>();
     @OneToMany(mappedBy="proyecto", cascade={CascadeType.ALL}, orphanRemoval=true)
     private List<ObraTarea> obraTareas = new ArrayList<ObraTarea>();
@@ -161,6 +163,14 @@ public class Proyecto {
 
     public List<RubroObra> getRubros() {
         return this.rubros;
+    }
+
+    public List<ContratoObra> getContratos() {
+        return this.contratos;
+    }
+
+    public void setContratos(List<ContratoObra> contratos) {
+        this.contratos = contratos;
     }
 
     public List<RestriccionObra> getRestricciones() {

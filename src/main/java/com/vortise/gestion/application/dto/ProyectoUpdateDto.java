@@ -37,8 +37,23 @@ public record ProyectoUpdateDto(
 	@Valid List<CategoriaManoObraCostoDto> costosManoObraModificados,
 	@Valid List<SubcontratistaObraDto> contratistasObra,
 	@Min(0) Integer pedidosDeObraDias,
-	boolean actualizarPedidosDeObraDias
+	boolean actualizarPedidosDeObraDias,
+	@Valid List<ContratoObraDto> contratos
 ) {
+	public ProyectoUpdateDto(String nombre, String descripcion, Double presupuestoUsd, String direccion, String numeroProyecto,
+			LocalDate fechaInicio, LocalDate fechaFin, String responsablesObra, String categoriasManoObra, Integer cantidadSectores,
+			Long empresaId, String empresa, Double horasPrevistas, Double horasReales, List<PlantaCreateDto> plantas,
+			List<RubroCreateDto> rubros, List<Long> subcontratistaIds, Double superficieCubierta,
+			Double superficieSemicubierta, Double superficieDescubierta, boolean actualizarSuperficiesGenerales,
+			List<CategoriaManoObraCostoDto> costosManoObraModificados, List<SubcontratistaObraDto> contratistasObra,
+			Integer pedidosDeObraDias, boolean actualizarPedidosDeObraDias) {
+		this(nombre, descripcion, presupuestoUsd, direccion, numeroProyecto, fechaInicio, fechaFin, responsablesObra,
+			categoriasManoObra, cantidadSectores, empresaId, empresa, horasPrevistas, horasReales, plantas, rubros,
+			subcontratistaIds, superficieCubierta, superficieSemicubierta, superficieDescubierta,
+			actualizarSuperficiesGenerales, costosManoObraModificados, contratistasObra, pedidosDeObraDias,
+			actualizarPedidosDeObraDias, null);
+	}
+
 	public ProyectoUpdateDto(String nombre, String descripcion, Double presupuestoUsd, String direccion, String numeroProyecto,
 			LocalDate fechaInicio, LocalDate fechaFin, String responsablesObra, String categoriasManoObra, Integer cantidadSectores,
 			Long empresaId, String empresa, Double horasPrevistas, Double horasReales, List<PlantaCreateDto> plantas,
@@ -48,7 +63,7 @@ public record ProyectoUpdateDto(
 		this(nombre, descripcion, presupuestoUsd, direccion, numeroProyecto, fechaInicio, fechaFin, responsablesObra,
 			categoriasManoObra, cantidadSectores, empresaId, empresa, horasPrevistas, horasReales, plantas, rubros,
 			subcontratistaIds, superficieCubierta, superficieSemicubierta, superficieDescubierta,
-			actualizarSuperficiesGenerales, costosManoObraModificados, contratistasObra, null, false);
+			actualizarSuperficiesGenerales, costosManoObraModificados, contratistasObra, null, false, null);
 	}
 
 	public ProyectoUpdateDto(String nombre, String descripcion, Double presupuestoUsd, String direccion, String numeroProyecto,
@@ -57,6 +72,6 @@ public record ProyectoUpdateDto(
 			List<RubroCreateDto> rubros, List<Long> subcontratistaIds) {
 		this(nombre, descripcion, presupuestoUsd, direccion, numeroProyecto, fechaInicio, fechaFin, responsablesObra,
 			categoriasManoObra, cantidadSectores, empresaId, empresa, horasPrevistas, horasReales, plantas, rubros,
-			subcontratistaIds, null, null, null, false, null, null, null, false);
+			subcontratistaIds, null, null, null, false, null, null, null, false, null);
 	}
 }

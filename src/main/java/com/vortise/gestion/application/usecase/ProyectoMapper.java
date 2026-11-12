@@ -1,9 +1,11 @@
 package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.PlantaDto;
+import com.vortise.gestion.application.dto.ContratoObraDto;
 import com.vortise.gestion.application.dto.ProyectoDto;
 import com.vortise.gestion.application.dto.RubroDto;
 import com.vortise.gestion.domain.model.Planta;
+import com.vortise.gestion.domain.model.ContratoObra;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RubroObra;
 import com.vortise.gestion.domain.service.EstructuraRubros;
@@ -37,7 +39,8 @@ final class ProyectoMapper {
             proyecto.getSuperficieCubierta(),
             proyecto.getSuperficieSemicubierta(),
             proyecto.getSuperficieDescubierta(),
-            proyecto.getPedidosDeObraDias()
+            proyecto.getPedidosDeObraDias(),
+            null
         );
     }
 
@@ -67,8 +70,15 @@ final class ProyectoMapper {
             proyecto.getSuperficieCubierta(),
             proyecto.getSuperficieSemicubierta(),
             proyecto.getSuperficieDescubierta(),
-            proyecto.getPedidosDeObraDias()
+            proyecto.getPedidosDeObraDias(),
+            proyecto.getContratos() == null ? List.of() : proyecto.getContratos().stream().map(ProyectoMapper::toContratoDto).toList()
         );
+    }
+
+    private static ContratoObraDto toContratoDto(ContratoObra contrato) {
+        return new ContratoObraDto(contrato.getId(), contrato.getNombre(),
+            contrato.getSubcontratista() == null ? null : contrato.getSubcontratista().getId(),
+            contrato.getSubcontratista() == null ? null : contrato.getSubcontratista().getNombre());
     }
 
     @SuppressWarnings("null")
@@ -124,7 +134,8 @@ final class ProyectoMapper {
             rubro.getVarianteEstructura() == null ? null : rubro.getVarianteEstructura().name(),
             EstructuraRubros.nombreDe(rubro),
             EstructuraRubros.esHoja(rubro, todos),
-            rubro.getContrato()
+            rubro.getContrato() == null ? null : rubro.getContrato().getId(),
+            rubro.getContrato() == null ? null : rubro.getContrato().getNombre()
         );
     }
 }

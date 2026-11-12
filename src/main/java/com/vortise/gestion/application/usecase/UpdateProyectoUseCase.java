@@ -8,6 +8,7 @@ import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.model.CatalogoEmpresa;
+import com.vortise.gestion.domain.model.ContratoObra;
 import com.vortise.gestion.domain.model.Planta;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RubroObra;
@@ -152,7 +153,16 @@ public class UpdateProyectoUseCase {
                 }
             }
         }
-        List<RubroObra> updated = dto.rubros() == null ? new ArrayList<>(proyecto.getRubros()) : mapRubros(dto.rubros(), proyecto, linkedIds);
+        List<ContratoObra> contratos = dto.contratos() == null ? new ArrayList<>(proyecto.getContratos()) : ContratosObra.aplicar(proyecto, dto.contratos());
+        List<RubroObra> updated = dto.rubros() == null ? new ArrayList<>(proyecto.getRubros())
+            : mapRubros(dto.rubros(), proyecto, linkedIds, ContratosObra.porId(contratos));
+        if (updated.stream().anyMatch(rubro -> rubro.getContrato() != null && !contratos.contains(rubro.getContrato()))) {
+            throw new SolicitudInvalidaException("No se puede quitar un contrato asignado a un rubro");
+        }
+        if (dto.contratos() != null) {
+            proyecto.getContratos().removeIf(existing -> !contratos.contains(existing));
+            contratos.stream().filter(contrato -> !proyecto.getContratos().contains(contrato)).forEach(proyecto.getContratos()::add);
+        }
         var retainedIds = updated.stream().map(RubroObra::getId).filter(java.util.Objects::nonNull).toList();
         if (linkedIds.stream().anyMatch(id -> !retainedIds.contains(id))) {
             throw new SolicitudInvalidaException("No se puede eliminar una actividad con tareas vinculadas");
@@ -228,7 +238,8 @@ public class UpdateProyectoUseCase {
         return result;
     }
 
-    private List<RubroObra> mapRubros(List<RubroCreateDto> rubros, Proyecto proyecto, java.util.Set<Long> linkedIds) {
+    private List<RubroObra> mapRubros(List<RubroCreateDto> rubros, Proyecto proyecto, java.util.Set<Long> linkedIds,
+            java.util.Map<Long, ContratoObra> contratos) {
         if (rubros == null) {
             return new ArrayList<>();
         }
@@ -252,7 +263,7 @@ public class UpdateProyectoUseCase {
             EstructuraRubros.Nodo nodo = nodos.get(i);
             RubroObra rubro = existentes[i] == null ? new RubroObra() : existentes[i];
             rubro.setProyecto(proyecto);
-            RubroEstructura.aplicarEstructura(rubro, rubroDto, nodo);
+            RubroEstructura.aplicarEstructura(rubro, rubroDto, nodo, contratos);
             if (nodo.hoja()) {
                 RubroEstructura.aplicarHoja(rubro, rubroDto, resolveSubcontratista(proyecto, rubroDto.subcontratistaId()));
             } else if (existentes[i] == null || existentes[i].getId() == null || !linkedIds.contains(existentes[i].getId())) {

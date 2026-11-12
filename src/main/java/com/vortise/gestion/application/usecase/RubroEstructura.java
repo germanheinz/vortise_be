@@ -2,6 +2,7 @@ package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.RubroCreateDto;
 import com.vortise.gestion.domain.model.CatalogoEmpresa;
+import com.vortise.gestion.domain.model.ContratoObra;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.domain.model.RubroObra;
 import com.vortise.gestion.domain.model.TipoNodoRubro;
@@ -35,7 +36,7 @@ final class RubroEstructura {
     }
 
     /** Identity and structure columns, valid for every node. */
-    static void aplicarEstructura(RubroObra rubro, RubroCreateDto dto, Nodo nodo) {
+    static void aplicarEstructura(RubroObra rubro, RubroCreateDto dto, Nodo nodo, Map<Long, ContratoObra> contratos) {
         rubro.setnRubro(nodo.codigo() != null ? nodo.codigo() : dto.nRubro());
         rubro.setTipoNodo(nodo.tipo());
         rubro.setVarianteEstructura(nodo.variante());
@@ -43,13 +44,14 @@ final class RubroEstructura {
         rubro.setRubro(nodo.rubro());
         rubro.setSubRubro(nodo.subRubro());
         rubro.setNivel(nodo.nivel());
-        rubro.setContrato(nodo.tipo() == TipoNodoRubro.RUBRO ? contratoDe(dto.contrato()) : null);
+        rubro.setContrato(nodo.tipo() == TipoNodoRubro.RUBRO ? contratoDe(dto.contratoId(), contratos) : null);
     }
 
-    private static String contratoDe(String contrato) {
-        String value = contrato == null ? "" : contrato.trim();
-        if (value.length() > 255) throw new SolicitudInvalidaException("El contrato no puede superar los 255 caracteres");
-        return value.isEmpty() ? null : value;
+    private static ContratoObra contratoDe(Long contratoId, Map<Long, ContratoObra> contratos) {
+        if (contratoId == null) return null;
+        ContratoObra contrato = contratos.get(contratoId);
+        if (contrato == null) throw new SolicitudInvalidaException("El contrato no pertenece a la obra");
+        return contrato;
     }
 
     /** Activity data: only leaves carry it. */
