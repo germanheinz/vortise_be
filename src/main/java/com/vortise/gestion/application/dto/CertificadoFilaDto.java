@@ -7,5 +7,7 @@ public record CertificadoFilaDto(
     double excedenteCant, Double excedentePct, double ajusteCant, Double ajustePct,
     boolean completado, boolean puedeAlternarCompletado,
     /** Contract of the rubro the item belongs to; null when it has none. */
-    Long contratoId, String contratoNombre
+    Long contratoId, String contratoNombre,
+    /** Intermediate nodes between the rubro and the item, outermost first; empty in 2-layer structures. */
+    java.util.List<CertificadoNodoDto> intermedios
 ) { }

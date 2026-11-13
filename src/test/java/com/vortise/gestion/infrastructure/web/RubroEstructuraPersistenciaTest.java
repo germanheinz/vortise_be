@@ -59,6 +59,7 @@ class RubroEstructuraPersistenciaTest {
     @MockitoBean UsuarioDemoSeeder usuarioDemoSeeder;
     @MockitoBean com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
     private Long proyectoId;
+    private Long subcontratistaId;
     private String token;
 
     private static String signingKey() {
@@ -87,6 +88,10 @@ class RubroEstructuraPersistenciaTest {
             proyecto.setNumeroProyecto("A");
             proyecto.setEmpresaRelacionada(empresa);
             em.persist(proyecto);
+            var subcontratista = new com.vortise.gestion.domain.model.CatalogoEmpresa(empresa, "SUBCONTRATISTA", "SUB1", "Subcontratista Test");
+            em.persist(subcontratista);
+            proyecto.getSubcontratistas().add(subcontratista);
+            subcontratistaId = subcontratista.getId();
             fila(proyecto, "5000", "Hormigón", null);
             fila(proyecto, "5001", "Hormigón", "Fundaciones");
             fila(proyecto, "5002", "Hormigón", "Losas");
@@ -180,5 +185,18 @@ class RubroEstructuraPersistenciaTest {
         guardar(List.of(raiz(null), HOJA), List.of(Map.of("id", contratoId, "nombre", "Contrato 1"), Map.of("nombre", "contrato 1")))
             .andExpect(status().isBadRequest());
         guardar(List.of(raiz(null), HOJA), List.of()).andExpect(status().isOk()).andExpect(jsonPath("$.contratos.length()").value(0));
+    }
+
+    @Test void keepsTheContractorOfAContractAcrossSaves() throws Exception {
+        var contratos = List.<Map<String, Object>>of(Map.of("nombre", "Contrato Sub", "subcontratistaId", subcontratistaId));
+        var creado = guardar(List.of(raiz(null), HOJA), contratos).andExpect(status().isOk())
+            .andExpect(jsonPath("$.contratos[0].subcontratistaId").value((int) (long) subcontratistaId))
+            .andExpect(jsonPath("$.contratos[0].subcontratistaNombre").value("Subcontratista Test")).andReturn();
+        long contratoId = mapper.readTree(creado.getResponse().getContentAsString()).get("contratos").get(0).get("id").asLong();
+        guardar(List.of(raiz(contratoId), HOJA), List.of(Map.of("id", contratoId, "nombre", "Contrato Sub", "subcontratistaId", subcontratistaId)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.contratos[0].subcontratistaNombre").value("Subcontratista Test"));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/proyectos/" + proyectoId).header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.contratos[0].subcontratistaNombre").value("Subcontratista Test"));
     }
 }

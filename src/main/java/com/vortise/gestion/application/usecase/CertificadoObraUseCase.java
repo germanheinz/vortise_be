@@ -5,6 +5,7 @@ import com.vortise.gestion.application.dto.CertificadoDetalleDto;
 import com.vortise.gestion.application.dto.CertificadoEmpresaDto;
 import com.vortise.gestion.application.dto.CertificadoExcedenteDto;
 import com.vortise.gestion.application.dto.CertificadoFilaDto;
+import com.vortise.gestion.application.dto.CertificadoNodoDto;
 import com.vortise.gestion.application.dto.CertificadoResumenDto;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
@@ -64,7 +65,7 @@ public class CertificadoObraUseCase {
     }
 
     /** Activity of the obra that can be measured: a leaf of the structure; its root rubro is only the group title. */
-    private record Actividad(RubroObra rubro, String codigo, String grupoCodigo, String grupoNombre, String nombre, Long empresa, ContratoObra contrato) { }
+    private record Actividad(RubroObra rubro, String codigo, String grupoCodigo, String grupoNombre, String nombre, Long empresa, ContratoObra contrato, List<CertificadoNodoDto> intermedios) { }
 
     /** Everything needed to measure the certificates of one company. */
     private record Contexto(Proyecto proyecto, Long empresa, List<Actividad> actividades, List<CertificadoObra> lista,
@@ -267,7 +268,7 @@ public class CertificadoObraUseCase {
                 fila.ajuste(), CalculoCertificado.porcentaje(fila.ajuste(), total),
                 fila.completado(), puedeAlternar,
                 actividad.contrato() == null ? null : actividad.contrato().getId(),
-                actividad.contrato() == null ? null : actividad.contrato().getNombre()));
+                actividad.contrato() == null ? null : actividad.contrato().getNombre(), actividad.intermedios()));
         }
         CertificadoResumenDto resumen = resumen(contexto.lista(), k);
         return new CertificadoDetalleDto(certificado.getId(), certificado.getNumero(), certificado.getEtiqueta(), certificado.getPeriodicidad(),
@@ -298,7 +299,9 @@ public class CertificadoObraUseCase {
             String nombre = rubro.getSubRubro() != null && !rubro.getSubRubro().isBlank() ? rubro.getSubRubro().trim() : String.valueOf(rubro.getRubro());
             result.add(new Actividad(rubro, rubro.getnRubro(), padre == null ? null : padre.getnRubro(),
                 padre == null ? null : (padre.getRubro() == null || padre.getRubro().isBlank() ? "Rubro " + padre.getnRubro() : padre.getRubro().trim()),
-                nombre, CertificadoBloqueos.empresaDe(rubro), padre == null ? null : padre.getContrato()));
+                nombre, CertificadoBloqueos.empresaDe(rubro), padre == null ? null : padre.getContrato(),
+                EstructuraRubros.intermedios(rubro).stream()
+                    .map(nodo -> new CertificadoNodoDto(nodo.getnRubro(), EstructuraRubros.nombreDe(nodo), nodo.getTipoNodo().name())).toList()));
         }
         return result;
     }

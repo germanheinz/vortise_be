@@ -148,6 +148,18 @@ public final class EstructuraRubros {
         return null;
     }
 
+    /** Intermediate groupers between the root rubro and the node (outermost first); empty for 2-layer and legacy rows. */
+    public static List<RubroObra> intermedios(RubroObra nodo) {
+        List<RubroObra> result = new ArrayList<>();
+        RubroObra actual = nodo.getParent();
+        int guarda = 0;
+        while (actual != null && actual.getTipoNodo() != TipoNodoRubro.RUBRO && guarda++ <= PROFUNDIDAD_MAXIMA) {
+            result.add(0, actual);
+            actual = actual.getParent();
+        }
+        return result;
+    }
+
     /** Name of the node: {@code nombre}, falling back to the legacy columns. */
     public static String nombreDe(RubroObra nodo) {
         String nombre = texto(nodo.getNombre());
