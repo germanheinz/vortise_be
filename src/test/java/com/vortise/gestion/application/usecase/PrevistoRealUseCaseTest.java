@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import static org.mockito.Mockito.*;
 
 class PrevistoRealUseCaseTest {
@@ -44,6 +45,22 @@ class PrevistoRealUseCaseTest {
     }
     private ObraTareaCreateDto dto(Long rubroId) {
         return new ObraTareaCreateDto("Carga",null,null,"kg","wrong",null,null,null,null,100.,80.,null,6.,null,null,LocalDate.of(2026,10,14),rubroId);
+    }
+    @Test void savesAnActivityInProcessWithoutExecutedQuantity() {
+        when(tasks.save(any())).thenAnswer(i -> i.getArgument(0));
+        var sinCantidad = new ObraTareaCreateDto("Carga",null,null,"kg","x",null,null,null,null,100.,80.,null,null,null,null,LocalDate.of(2026,10,14),10L);
+        var saved = new CreateObraTareaUseCase(tasks,projects).execute(1L,sinCantidad);
+        assertEquals(10L,saved.rubroId()); assertNull(saved.cantidadReal()); assertNull(saved.porcentajeCumplimiento());
+        var invalida = new ObraTareaCreateDto("Carga",null,null,"kg","x",null,null,null,null,100.,80.,null,-1.,null,null,LocalDate.of(2026,10,14),10L);
+        assertThrows(SolicitudInvalidaException.class,() -> new CreateObraTareaUseCase(tasks,projects).execute(1L,invalida));
+    }
+    @Test void loadsWithoutQuantityAddNothingButDoNotErasePhysicalProgress() {
+        var enProceso = task(2,10L,0); enProceso.setCantidadReal(null);
+        when(tasks.findByProyectoId(1L)).thenReturn(List.of(task(1,10L,6),enProceso));
+        var service = new GetPrevistoRealUseCase(projects,tasks,categories,calendars);
+        assertEquals(6.,service.execute(1L).actividades().get(0).cantidadReal());
+        when(tasks.findByProyectoId(1L)).thenReturn(List.of(enProceso));
+        assertNull(service.execute(1L).actividades().get(0).cantidadReal());
     }
     @Test void rejectsForeignActivityBeforeSaving() {
         assertThrows(IllegalArgumentException.class,() -> new CreateObraTareaUseCase(tasks,projects).execute(1L,dto(99L)));
@@ -85,7 +102,8 @@ class PrevistoRealUseCaseTest {
         var ignored = new CreateObraTareaUseCase(tasks,projects).execute(1L,dto(10L));
         assertNull(ignored.horasOficiales()); assertNull(ignored.horasAyudantes());
         var withoutQuantity = new ObraTareaCreateDto("Carga",null,null,"kg","wrong",null,null,null,null,null,null,null,null,null,null,LocalDate.of(2026,10,14),10L);
-        assertThrows(IllegalArgumentException.class,() -> new CreateObraTareaUseCase(tasks,projects).execute(1L,withoutQuantity));
+        // La cantidad ejecutada es opcional: la carga queda como actividad en proceso.
+        assertNull(new CreateObraTareaUseCase(tasks,projects).execute(1L,withoutQuantity).cantidadReal());
     }
     @Test void ownLaborActivityStillRequiresHours() {
         var withoutHours = new ObraTareaCreateDto("Carga",null,null,"kg","wrong",null,null,null,null,null,null,null,6.,null,null,LocalDate.of(2026,10,14),10L);

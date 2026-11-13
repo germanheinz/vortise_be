@@ -66,7 +66,7 @@ public class CreateObraTareaUseCase {
         var calculated = PrevistoRealCalculator.calculate(actividad.getCantidad(), actividad.getHorasOficialesPrevistas(),
             actividad.getHorasAyudantesPrevistas(), tarea.getCantidadReal(), tarea.getHorasOficiales(), tarea.getHorasAyudantes(), null, null, null);
         tarea.setCantidadPrevista(calculated.cantidadEquivalente());
-        tarea.setPorcentajeCumplimiento(calculated.cantidadEquivalente() != null && calculated.cantidadEquivalente() > 0
+        tarea.setPorcentajeCumplimiento(calculated.cantidadEquivalente() != null && calculated.cantidadEquivalente() > 0 && tarea.getCantidadReal() != null
             ? round(tarea.getCantidadReal() / calculated.cantidadEquivalente() * 100) : null);
         tarea.setRegistradoEn(LocalDateTime.now());
         if (identity != null) tarea.setRegistradoPorUsuarioId(identity.usuarioId());
@@ -103,7 +103,7 @@ public class CreateObraTareaUseCase {
         var calculated = PrevistoRealCalculator.calculate(actividad.getCantidad(), actividad.getHorasOficialesPrevistas(),
             actividad.getHorasAyudantesPrevistas(), tarea.getCantidadReal(), tarea.getHorasOficiales(), tarea.getHorasAyudantes(), null, null, null);
         tarea.setCantidadPrevista(calculated.cantidadEquivalente());
-        tarea.setPorcentajeCumplimiento(calculated.cantidadEquivalente() != null && calculated.cantidadEquivalente() > 0
+        tarea.setPorcentajeCumplimiento(calculated.cantidadEquivalente() != null && calculated.cantidadEquivalente() > 0 && tarea.getCantidadReal() != null
             ? round(tarea.getCantidadReal() / calculated.cantidadEquivalente() * 100) : null);
         return toDto(obraTareaRepository.save(tarea));
     }
@@ -129,10 +129,9 @@ public class CreateObraTareaUseCase {
         if (!sameActivity && !EstructuraRubros.esHoja(rubro, tarea.getProyecto().getRubros())) {
             throw new SolicitudInvalidaException("Seleccioná una actividad (último nivel de la estructura), no un rubro o nivel agrupador");
         }
-        for (Double value : new Double[]{dto.cantidadReal()}) {
-            if (value == null || !Double.isFinite(value) || value < 0) {
-                throw new SolicitudInvalidaException("Cantidad y horas reales deben ser números no negativos");
-            }
+        // La cantidad ejecutada es opcional: sin ella la carga queda como actividad en proceso.
+        if (dto.cantidadReal() != null && (!Double.isFinite(dto.cantidadReal()) || dto.cantidadReal() < 0)) {
+            throw new SolicitudInvalidaException("Cantidad y horas reales deben ser números no negativos");
         }
         if (!esSubcontrato(rubro)) {
             for (Double value : new Double[]{dto.horasOficiales(), dto.horasAyudantes()}) {

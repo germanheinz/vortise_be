@@ -41,7 +41,7 @@ public class GetPrevistoRealUseCase {
         var knownIds = rubros.stream().map(RubroObra::getId).collect(java.util.stream.Collectors.toSet());
         var activities = rubros.stream().filter(r -> EstructuraRubros.esHoja(r, rubros)).map(r -> {
             var matching = byRubro.getOrDefault(r.getId(), List.of());
-            Double q = sum(matching, ObraTarea::getCantidadReal), hOf = sum(matching, ObraTarea::getHorasOficiales), hAy = sum(matching, ObraTarea::getHorasAyudantes);
+            Double q = sumQuantity(matching), hOf = sum(matching, ObraTarea::getHorasOficiales), hAy = sum(matching, ObraTarea::getHorasAyudantes);
             return new Activity(r.getId(), r.getSubRubro() == null ? r.getRubro() : r.getSubRubro(), r.getUnidad(), q, hOf, hAy,
                 metrics(r, q, hOf, hAy, of, ay, day), matching.stream().map(t -> new Load(t.getId(),
                     metrics(r, t.getCantidadReal(), t.getHorasOficiales(), t.getHorasAyudantes(), of, ay, day))).toList());
@@ -55,6 +55,14 @@ public class GetPrevistoRealUseCase {
         if (matches.size() != 1) return null;
         Double value = matches.get(0).getCostoHora();
         return value != null && Double.isFinite(value) && value >= 0 ? value : null;
+    }
+
+    /** Loads without a quantity are activities in process: they add nothing; without any quantity there is no data. */
+    private static Double sumQuantity(List<ObraTarea> tasks) {
+        var quantities = tasks.stream().map(ObraTarea::getCantidadReal).filter(java.util.Objects::nonNull).toList();
+        if (quantities.isEmpty() || quantities.stream().anyMatch(v -> !Double.isFinite(v) || v < 0)) return null;
+        double total = quantities.stream().mapToDouble(Double::doubleValue).sum();
+        return Double.isFinite(total) ? total : null;
     }
 
     private static Double sum(List<ObraTarea> tasks, Function<ObraTarea, Double> field) {
