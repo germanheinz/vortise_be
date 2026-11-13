@@ -11,8 +11,6 @@ import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.RestriccionObraRepository;
 import com.vortise.gestion.domain.repository.RubroObraRepository;
 import com.vortise.gestion.domain.service.EstructuraRubros;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -32,7 +30,6 @@ public class CreateRestriccionUseCase {
         String area = RestriccionPlanning.area(dto.area());
         Proyecto proyecto = proyectoRepository.findById(proyectoId)
             .orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado"));
-        RestrictionUploadDeadline.validate(proyecto, LocalDate.now(ZoneId.of("America/Argentina/Buenos_Aires")));
         RubroObra rubro = dto.rubroId() == null ? null : rubroRepository.findById(dto.rubroId())
             .filter(candidate -> candidate.getProyecto().getId().equals(proyectoId))
             .filter(candidate -> candidate.getSubRubro() != null && !candidate.getSubRubro().isBlank())
