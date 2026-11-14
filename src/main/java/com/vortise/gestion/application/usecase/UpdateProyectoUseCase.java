@@ -175,9 +175,6 @@ public class UpdateProyectoUseCase {
             if (requested == null) {
                 throw new SolicitudInvalidaException("No se puede eliminar una actividad vinculada a restricciones");
             }
-            if (!EstructuraRubros.esHoja(existing, updated) || existing.getSubRubro() == null || existing.getSubRubro().isBlank()) {
-                throw new SolicitudInvalidaException("No se puede convertir en rubro padre una actividad vinculada a restricciones");
-            }
         }
         if (dto.rubros() != null) {
             proyecto.getRubros().removeIf(r -> !updated.contains(r));

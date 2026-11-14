@@ -275,6 +275,14 @@ class RubroEstructuraUseCasesTest {
         assertTrue(project.getRubros().contains(leaf));
     }
 
+    @Test void updateAllowsSavingWhenARubroOrNivelHasLinkedRestrictions() {
+        when(restrictions.countByRubroVinculadoId(10L)).thenReturn(1L);
+        updateUseCase.execute(1L, updateRequest(
+            row(10L, "1", null, "RUBRO", null, "Estructura", null, null),
+            row(11L, "1.1", "1", "SUBRUBRO", null, "Losas", 10.0, "m2")));
+        assertTrue(project.getRubros().contains(root));
+    }
+
     @Test void updateBlocksChangingTheVariantWhenAnActivityHasTasks() {
         taskOn(leaf);
         assertThrows(SolicitudInvalidaException.class, () -> updateUseCase.execute(1L, updateRequest(
@@ -398,9 +406,9 @@ class RubroEstructuraUseCasesTest {
         assertEquals(3L, saved.rubroId()); assertEquals("m3", saved.unidad()); assertEquals("General", saved.nivel());
     }
 
-    @Test void restrictionsCanOnlyBeLinkedToLeaves() {
+    @Test void restrictionsCanBeLinkedToAnyNodeOfTheSameProject() {
         Proyecto p = threeLayerProject();
-        p.setNombre("Obra"); // the group rubro is given a subrubro text to prove the leaf check is structural
+        p.setNombre("Obra"); // the group rubro is given a subrubro text to prove the label of a group is structural
         p.getRubros().get(1).setSubRubro("General");
         var projectsMock = mock(ProyectoRepository.class);
         var rubrosMock = mock(RubroObraRepository.class);
@@ -410,8 +418,9 @@ class RubroEstructuraUseCasesTest {
         when(restrictionsMock.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
         var useCase = new CreateRestriccionUseCase(restrictionsMock, projectsMock, rubrosMock);
 
-        assertThrows(SolicitudInvalidaException.class, () -> useCase.execute(1L, restrictionRequest(2L)));
-        verify(restrictionsMock, never()).save(any(RestriccionObra.class));
+        var onGroup = useCase.execute(1L, restrictionRequest(2L));
+        assertEquals(2L, onGroup.rubroId());
+        assertTrue(onGroup.rubro().contains(" › "));
         var saved = useCase.execute(1L, restrictionRequest(3L));
         assertEquals("Hormigón · Subrubro 1", saved.rubro());
         assertEquals("General", saved.nivel());

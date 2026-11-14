@@ -86,15 +86,22 @@ class CreateRestriccionUseCaseTest {
     }
 
     @Test
-    void rejectsParentWithoutSubrubro() {
-        RubroObra parent = new RubroObra();
-        parent.setId(32L);
-        parent.setProyecto(proyecto);
-        parent.setRubro("Instalaciones");
-        when(rubros.findById(32L)).thenReturn(Optional.of(parent));
+    void acceptsRubroAndNivelAndLabelsThemWithTheirPath() {
+        RubroObra rubro = new RubroObra();
+        rubro.setId(32L); rubro.setProyecto(proyecto); rubro.setRubro("Estructura"); rubro.setNombre("Estructura");
+        RubroObra nivel = new RubroObra();
+        nivel.setId(33L); nivel.setProyecto(proyecto); nivel.setRubro("Estructura"); nivel.setNombre("Fundaciones"); nivel.setParent(rubro);
+        when(rubros.findById(32L)).thenReturn(Optional.of(rubro));
+        when(rubros.findById(33L)).thenReturn(Optional.of(nivel));
+        when(restricciones.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThrows(IllegalArgumentException.class, () -> useCase.execute(10L, request(32L)));
-        verify(restricciones, never()).save(any());
+        var onRubro = useCase.execute(10L, request(32L));
+        var onNivel = useCase.execute(10L, request(33L));
+
+        assertEquals(32L, onRubro.rubroId());
+        assertEquals("Estructura", onRubro.rubro());
+        assertEquals(33L, onNivel.rubroId());
+        assertEquals("Estructura › Fundaciones", onNivel.rubro());
     }
 
     @Test
