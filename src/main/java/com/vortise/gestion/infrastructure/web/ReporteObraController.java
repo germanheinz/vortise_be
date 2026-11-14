@@ -39,8 +39,11 @@ public class ReporteObraController {
 
     @PostMapping(value = "/imagenes", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ReporteImagenDto> subirImagen(@PathVariable Long proyectoId, @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "leyenda", required = false) String leyenda) throws IOException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(useCase.subirImagen(proyectoId, file.getBytes(), leyenda));
+            @RequestParam(value = "leyenda", required = false) String leyenda,
+            @RequestParam(value = "fecha", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fecha,
+            @RequestParam(value = "rubroId", required = false) Long rubroId,
+            @RequestParam(value = "nivelId", required = false) Long nivelId) throws IOException {
+        return ResponseEntity.status(HttpStatus.CREATED).body(useCase.subirImagen(proyectoId, file.getBytes(), leyenda, fecha, rubroId, nivelId));
     }
 
     @PutMapping("/imagenes/{imagenId}")

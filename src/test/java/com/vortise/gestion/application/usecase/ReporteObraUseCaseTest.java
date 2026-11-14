@@ -13,6 +13,9 @@ import com.vortise.gestion.application.port.ImagenReporteStorage;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.ReporteEmitido;
 import com.vortise.gestion.domain.model.ReporteImagen;
+import com.vortise.gestion.domain.model.RubroObra;
+import com.vortise.gestion.domain.model.TipoNodoRubro;
+import com.vortise.gestion.domain.model.VarianteEstructura;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.ReporteEmitidoRepository;
@@ -61,6 +64,47 @@ class ReporteObraUseCaseTest {
         assertEquals("Losa  nivel 2", first.leyenda()); assertNull(second.leyenda());
         assertEquals(2, useCase.borrador(1L).imagenes().size());
         assertTrue(useCase.borrador(1L).subidaDisponible());
+    }
+
+    private RubroObra node(long id, String code, TipoNodoRubro type, RubroObra parent, String name) {
+        RubroObra node = new RubroObra();
+        node.setId(id); node.setnRubro(code); node.setTipoNodo(type); node.setNombre(name); node.setRubro("Estructura");
+        node.setParent(parent); node.setProyecto(project);
+        project.getRubros().add(node);
+        return node;
+    }
+
+    @Test void storesDateRubroAndNivelOfTheImageWithTheirNames() {
+        RubroObra rubro = node(10, "1", TipoNodoRubro.RUBRO, null, "Estructura");
+        rubro.setVarianteEstructura(VarianteEstructura.RUBRO_NIVEL_SUBRUBRO);
+        RubroObra nivel = node(11, "1.1", TipoNodoRubro.NIVEL, rubro, "Fundaciones");
+        node(12, "1.1.1", TipoNodoRubro.SUBRUBRO, nivel, "Platea");
+
+        var onNivel = useCase.subirImagen(1L, PNG, null, LocalDate.of(2026, 11, 14), 10L, 11L);
+        var onRubro = useCase.subirImagen(1L, PNG, null, LocalDate.of(2026, 11, 14), 10L, null);
+
+        assertEquals(LocalDate.of(2026, 11, 14), onNivel.fecha());
+        assertEquals(10L, onNivel.rubroId()); assertEquals("Estructura", onNivel.rubroNombre());
+        assertEquals(11L, onNivel.nivelId()); assertEquals("Fundaciones", onNivel.nivelNombre());
+        assertNull(onRubro.nivelId()); assertNull(onRubro.nivelNombre());
+        assertNull(useCase.subirImagen(1L, PNG, null).rubroId());
+    }
+
+    @Test void rejectsRubroAndNivelThatDoNotMatchTheStructureOfTheObra() {
+        RubroObra rubro = node(10, "1", TipoNodoRubro.RUBRO, null, "Estructura");
+        rubro.setVarianteEstructura(VarianteEstructura.RUBRO_NIVEL_SUBRUBRO);
+        RubroObra nivel = node(11, "1.1", TipoNodoRubro.NIVEL, rubro, "Fundaciones");
+        node(12, "1.1.1", TipoNodoRubro.SUBRUBRO, nivel, "Platea");
+        RubroObra otherRubro = node(20, "2", TipoNodoRubro.RUBRO, null, "Terminaciones");
+        otherRubro.setVarianteEstructura(VarianteEstructura.RUBRO_NIVEL_SUBRUBRO);
+        node(21, "2.1", TipoNodoRubro.NIVEL, otherRubro, "PB");
+
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.subirImagen(1L, PNG, null, null, 999L, null));
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.subirImagen(1L, PNG, null, null, 11L, null));
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.subirImagen(1L, PNG, null, null, null, 11L));
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.subirImagen(1L, PNG, null, null, 10L, 21L));
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.subirImagen(1L, PNG, null, null, 10L, 12L));
+        assertEquals(0, useCase.borrador(1L).imagenes().size());
     }
 
     @Test void rejectsUnconfiguredStorageEmptyOversizedAndUnknownFiles() {

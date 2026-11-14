@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /** Image hosted in Cloudinary. It is a draft while {@code reporte} is null and becomes part of the report once issued. */
@@ -38,6 +39,13 @@ public class ReporteImagen {
     private Long tamanoBytes;
     private String leyenda;
 
+    /** Where and when the photo was taken; the names are copied so an issued report stays readable if the structure changes. */
+    private LocalDate fecha;
+    private Long rubroId;
+    private String rubroNombre;
+    private Long nivelId;
+    private String nivelNombre;
+
     @Column(nullable = false)
     private Integer orden;
 
@@ -64,6 +72,16 @@ public class ReporteImagen {
     public void setTamanoBytes(Long tamanoBytes) { this.tamanoBytes = tamanoBytes; }
     public String getLeyenda() { return leyenda; }
     public void setLeyenda(String leyenda) { this.leyenda = leyenda; }
+    public LocalDate getFecha() { return fecha; }
+    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
+    public Long getRubroId() { return rubroId; }
+    public void setRubroId(Long rubroId) { this.rubroId = rubroId; }
+    public String getRubroNombre() { return rubroNombre; }
+    public void setRubroNombre(String rubroNombre) { this.rubroNombre = rubroNombre; }
+    public Long getNivelId() { return nivelId; }
+    public void setNivelId(Long nivelId) { this.nivelId = nivelId; }
+    public String getNivelNombre() { return nivelNombre; }
+    public void setNivelNombre(String nivelNombre) { this.nivelNombre = nivelNombre; }
     public Integer getOrden() { return orden; }
     public void setOrden(Integer orden) { this.orden = orden; }
     public Long getSubidoPorUsuarioId() { return subidoPorUsuarioId; }

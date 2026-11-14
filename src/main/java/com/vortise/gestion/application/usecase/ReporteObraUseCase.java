@@ -14,11 +14,15 @@ import com.vortise.gestion.application.port.ImagenReporteStorage;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.ReporteEmitido;
 import com.vortise.gestion.domain.model.ReporteImagen;
+import com.vortise.gestion.domain.model.RubroObra;
+import com.vortise.gestion.domain.model.TipoNodoRubro;
+import com.vortise.gestion.domain.service.EstructuraRubros;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.ReporteEmitidoRepository;
 import com.vortise.gestion.domain.repository.ReporteImagenRepository;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
@@ -65,6 +69,11 @@ public class ReporteObraUseCase {
     }
 
     public ReporteImagenDto subirImagen(Long proyectoId, byte[] datos, String leyenda) {
+        return subirImagen(proyectoId, datos, leyenda, null, null, null);
+    }
+
+    /** The photo can be dated and tied to a rubro and, within it, to one of its niveles; all three are optional. */
+    public ReporteImagenDto subirImagen(Long proyectoId, byte[] datos, String leyenda, LocalDate fecha, Long rubroId, Long nivelId) {
         Proyecto proyecto = proyecto(proyectoId);
         if (!storage.disponible()) throw new FeatureUnavailableException("La subida de imágenes no está configurada.");
         if (datos == null || datos.length == 0) throw new SolicitudInvalidaException("La imagen está vacía");
@@ -72,6 +81,8 @@ public class ReporteObraUseCase {
         TipoImagen tipo = TipoImagen.detectar(datos)
             .orElseThrow(() -> new SolicitudInvalidaException("Formato no soportado. Usá JPG, PNG o WEBP"));
         String leyendaLimpia = limpiar(leyenda);
+        RubroObra rubro = ubicacion(proyecto, rubroId, true, null);
+        RubroObra nivel = ubicacion(proyecto, nivelId, false, rubro);
         List<ReporteImagen> borrador = imagenes.findByProyectoIdAndReporteIsNullOrderByOrdenAsc(proyectoId);
         if (borrador.size() >= MAX_IMAGENES) throw new SolicitudInvalidaException("El reporte admite hasta " + MAX_IMAGENES + " imágenes");
 
@@ -84,6 +95,11 @@ public class ReporteObraUseCase {
         imagen.setAlto(subida.alto());
         imagen.setTamanoBytes(subida.tamanoBytes());
         imagen.setLeyenda(leyendaLimpia);
+        imagen.setFecha(fecha);
+        imagen.setRubroId(rubro == null ? null : rubro.getId());
+        imagen.setRubroNombre(rubro == null ? null : nombreDe(rubro));
+        imagen.setNivelId(nivel == null ? null : nivel.getId());
+        imagen.setNivelNombre(nivel == null ? null : nombreDe(nivel));
         imagen.setOrden(borrador.stream().map(ReporteImagen::getOrden).max(Integer::compare).orElse(0) + 1);
         imagen.setSubidoPorUsuarioId(identity.usuarioId());
         imagen.setSubidoEn(LocalDateTime.now());
@@ -191,7 +207,30 @@ public class ReporteObraUseCase {
         return limpia.isEmpty() ? null : limpia;
     }
 
+    /** A rubro must be a root of the obra; a nivel must be a grouping node (not an activity) inside the chosen rubro. */
+    private static RubroObra ubicacion(Proyecto proyecto, Long id, boolean esRubro, RubroObra rubro) {
+        if (id == null) return null;
+        if (!esRubro && rubro == null) throw new SolicitudInvalidaException("Elegí el rubro antes del nivel");
+        RubroObra nodo = proyecto.getRubros().stream().filter(candidate -> id.equals(candidate.getId())).findFirst()
+            .orElseThrow(() -> new SolicitudInvalidaException(esRubro ? "El rubro no pertenece a la obra" : "El nivel no pertenece a la obra"));
+        if (esRubro) {
+            if (nodo.getTipoNodo() != TipoNodoRubro.RUBRO) throw new SolicitudInvalidaException("Elegí un rubro de la obra");
+            return nodo;
+        }
+        boolean dentro = false;
+        for (RubroObra actual = nodo.getParent(); actual != null; actual = actual.getParent()) dentro |= actual == rubro || rubro.getId().equals(actual.getId());
+        if (!dentro || nodo.getTipoNodo() == TipoNodoRubro.RUBRO || EstructuraRubros.esHoja(nodo, proyecto.getRubros())) {
+            throw new SolicitudInvalidaException("El nivel debe pertenecer al rubro elegido");
+        }
+        return nodo;
+    }
+
+    private static String nombreDe(RubroObra nodo) {
+        return nodo.getNombre() != null && !nodo.getNombre().isBlank() ? nodo.getNombre() : nodo.getRubro();
+    }
+
     private static ReporteImagenDto toDto(ReporteImagen imagen) {
-        return new ReporteImagenDto(imagen.getId(), imagen.getUrl(), imagen.getLeyenda(), imagen.getAncho(), imagen.getAlto(), imagen.getOrden());
+        return new ReporteImagenDto(imagen.getId(), imagen.getUrl(), imagen.getLeyenda(), imagen.getAncho(), imagen.getAlto(), imagen.getOrden(),
+            imagen.getFecha(), imagen.getRubroId(), imagen.getRubroNombre(), imagen.getNivelId(), imagen.getNivelNombre());
     }
 }
