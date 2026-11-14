@@ -125,6 +125,7 @@ public class CreateProyectoUseCase {
                 RubroEstructura.aplicarHoja(rubro, rubroDto, resolveSubcontratista(proyecto, rubroDto.subcontratistaId()));
             } else {
                 RubroEstructura.limpiarAgrupador(rubro);
+                RubroEstructura.aplicarPlanificacionAgrupador(rubro, rubroDto);
             }
             result.add(rubro);
         }

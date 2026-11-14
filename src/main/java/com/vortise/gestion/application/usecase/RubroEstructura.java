@@ -72,7 +72,7 @@ final class RubroEstructura {
         RubroPlanning.apply(rubro, dto);
     }
 
-    /** Grouping nodes (root rubro and intermediate nodes) carry no activity data. */
+    /** Grouping nodes (root rubro and intermediate nodes) carry no activity data; their schedule is applied separately. */
     static void limpiarAgrupador(RubroObra rubro) {
         rubro.setSubNumeroRubro(null);
         rubro.setCantidad(null);
@@ -85,11 +85,24 @@ final class RubroEstructura {
         rubro.setHorasAyudantesPrevistas(null);
         rubro.setRendimientoOficial(null);
         rubro.setRendimientoAyudante(null);
-        rubro.setCantidadPersonas(null);
-        rubro.setFechaInicioPlanificada(null);
-        rubro.setFechaFinPlanificada(null);
-        rubro.setCronogramaManual(false);
-        rubro.setFrentes(1);
+    }
+
+    /**
+     * Schedule of a grouping node (a nivel, or a rubro without niveles): start, finish, manual flag, people and fronts.
+     * Its planned hours are the sum of its activities, so the node only stores what the user plans.
+     */
+    static void aplicarPlanificacionAgrupador(RubroObra rubro, RubroCreateDto dto) {
+        if (dto.frentes() != null && dto.frentes() < 1) throw new SolicitudInvalidaException("Frentes debe ser un entero mayor o igual a 1");
+        if (dto.cantidadPersonas() != null && dto.cantidadPersonas() < 1) throw new SolicitudInvalidaException("Personas debe ser un entero mayor o igual a 1");
+        if (dto.fechaInicioPlanificada() != null && dto.fechaFinPlanificada() != null
+                && dto.fechaFinPlanificada().isBefore(dto.fechaInicioPlanificada())) {
+            throw new SolicitudInvalidaException("Fin del cronograma anterior al inicio");
+        }
+        rubro.setCantidadPersonas(dto.cantidadPersonas());
+        rubro.setFechaInicioPlanificada(dto.fechaInicioPlanificada());
+        rubro.setFechaFinPlanificada(dto.fechaFinPlanificada());
+        rubro.setCronogramaManual(dto.cronogramaManual());
+        rubro.setFrentes(dto.frentes() == null ? (rubro.getFrentes() == null ? 1 : rubro.getFrentes()) : dto.frentes());
     }
 
     /** Links each row to its parent row (resolved by code inside the same request). {@code rubros} is parallel to {@code nodos}. */

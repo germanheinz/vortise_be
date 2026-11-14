@@ -283,6 +283,37 @@ class RubroEstructuraUseCasesTest {
         assertTrue(project.getRubros().contains(root));
     }
 
+    private static RubroCreateDto scheduled(Long id, String code, String parent, String tipo, String nombre,
+            java.time.LocalDate start, java.time.LocalDate end, Integer people, Integer fronts, boolean manual) {
+        return new RubroCreateDto(code, null, null, null, null, null, null, null, null, "PROPIA", null,
+            null, null, people, start, end, manual, id, null, null, fronts, tipo, parent, null, nombre);
+    }
+
+    @Test void updateKeepsTheScheduleOfAGroupingNode() {
+        var start = java.time.LocalDate.of(2026, 10, 1);
+        updateUseCase.execute(1L, updateRequest(
+            scheduled(10L, "1", null, "RUBRO", "Estructura", start, start.plusDays(9), 6, 2, true),
+            row(11L, "1.1", "1", "SUBRUBRO", null, "Losas", 10.0, "m2")));
+
+        assertEquals(start, root.getFechaInicioPlanificada());
+        assertEquals(start.plusDays(9), root.getFechaFinPlanificada());
+        assertEquals(6, root.getCantidadPersonas());
+        assertEquals(2, root.getFrentes());
+        assertTrue(root.isCronogramaManual());
+        assertNull(root.getCantidad());
+    }
+
+    @Test void updateRejectsAnInvalidScheduleOnAGroupingNode() {
+        var start = java.time.LocalDate.of(2026, 10, 10);
+        var leafRow = row(11L, "1.1", "1", "SUBRUBRO", null, "Losas", 10.0, "m2");
+        assertThrows(SolicitudInvalidaException.class, () -> updateUseCase.execute(1L, updateRequest(
+            scheduled(10L, "1", null, "RUBRO", "Estructura", start, start.minusDays(1), 6, 1, true), leafRow)));
+        assertThrows(SolicitudInvalidaException.class, () -> updateUseCase.execute(1L, updateRequest(
+            scheduled(10L, "1", null, "RUBRO", "Estructura", start, start, 0, 1, false), leafRow)));
+        assertThrows(SolicitudInvalidaException.class, () -> updateUseCase.execute(1L, updateRequest(
+            scheduled(10L, "1", null, "RUBRO", "Estructura", start, start, 2, 0, false), leafRow)));
+    }
+
     @Test void updateBlocksChangingTheVariantWhenAnActivityHasTasks() {
         taskOn(leaf);
         assertThrows(SolicitudInvalidaException.class, () -> updateUseCase.execute(1L, updateRequest(

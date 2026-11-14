@@ -267,6 +267,7 @@ public class UpdateProyectoUseCase {
                 // Grouping nodes carry no activity data. A node that already has tasks keeps its data untouched.
                 RubroEstructura.limpiarAgrupador(rubro);
             }
+            if (!nodo.hoja()) RubroEstructura.aplicarPlanificacionAgrupador(rubro, rubroDto);
             result.add(rubro);
         }
         RubroEstructura.enlazarPadres(result, nodos);
