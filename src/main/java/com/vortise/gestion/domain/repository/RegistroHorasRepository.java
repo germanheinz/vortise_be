@@ -11,6 +11,9 @@ public interface RegistroHorasRepository {
     @Query("select h.proyecto.empresaRelacionada.id as empresaId, count(h) as cantidad from RegistroHoras h where h.proyecto.empresaRelacionada.id in :empresaIds group by h.proyecto.empresaRelacionada.id")
     List<EmpresaConteoProjection> contarPorEmpresaRelacionada(@Param("empresaIds") Collection<Long> empresaIds);
 
+    @Query("select coalesce(sum(h.horas), 0.0) from RegistroHoras h where h.proyecto.empresaRelacionada.id = :empresaId")
+    Double sumHorasPorEmpresaRelacionada(@Param("empresaId") Long empresaId);
+
     List<RegistroHoras> findAll();
 
     List<RegistroHoras> findByProyectoId(Long proyectoId);

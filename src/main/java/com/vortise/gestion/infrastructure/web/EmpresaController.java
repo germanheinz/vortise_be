@@ -2,9 +2,13 @@ package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.EmpresaCreateDto;
 import com.vortise.gestion.application.dto.EmpresaDto;
+import com.vortise.gestion.application.dto.EmpresaResumenDto;
+import com.vortise.gestion.application.dto.RestriccionDto;
 import com.vortise.gestion.application.dto.PaginaDto;
 import com.vortise.gestion.application.usecase.DeleteEmpresaUseCase;
 import com.vortise.gestion.application.usecase.GetEmpresaByIdUseCase;
+import com.vortise.gestion.application.usecase.GetEmpresaResumenUseCase;
+import com.vortise.gestion.application.usecase.GetRestriccionesEmpresaUseCase;
 import com.vortise.gestion.application.usecase.GetEmpresasUseCase;
 import com.vortise.gestion.application.usecase.GetObrasByEmpresaUseCase;
 import com.vortise.gestion.application.usecase.GetProyectoPaginaUseCase;
@@ -33,11 +37,16 @@ public class EmpresaController {
     private final SaveEmpresaUseCase saveEmpresaUseCase;
     private final DeleteEmpresaUseCase deleteEmpresaUseCase;
     private final GetObrasByEmpresaUseCase getObrasByEmpresaUseCase;
+    private final GetEmpresaResumenUseCase resumen;
+    private final GetRestriccionesEmpresaUseCase restriccionesEmpresa;
 
     public EmpresaController(GetEmpresasUseCase getEmpresasUseCase, GetEmpresaByIdUseCase getEmpresaByIdUseCase,
             SaveEmpresaUseCase saveEmpresaUseCase, DeleteEmpresaUseCase deleteEmpresaUseCase,
-            GetObrasByEmpresaUseCase getObrasByEmpresaUseCase, GetProyectoPaginaUseCase pagina) {
+            GetObrasByEmpresaUseCase getObrasByEmpresaUseCase, GetProyectoPaginaUseCase pagina,
+            GetEmpresaResumenUseCase resumen, GetRestriccionesEmpresaUseCase restriccionesEmpresa) {
         this.pagina = pagina;
+        this.resumen = resumen;
+        this.restriccionesEmpresa = restriccionesEmpresa;
         this.getEmpresasUseCase = getEmpresasUseCase;
         this.getEmpresaByIdUseCase = getEmpresaByIdUseCase;
         this.saveEmpresaUseCase = saveEmpresaUseCase;
@@ -60,6 +69,16 @@ public class EmpresaController {
             @RequestParam(defaultValue = "25") int size,
             @RequestParam(defaultValue = "") String q) {
         return ResponseEntity.ok(pagina.execute(id, q, page, size));
+    }
+
+    @GetMapping("/{id}/resumen")
+    public ResponseEntity<EmpresaResumenDto> getResumen(@PathVariable Long id) {
+        return ResponseEntity.ok(resumen.execute(id));
+    }
+
+    @GetMapping("/{id}/restricciones")
+    public ResponseEntity<List<RestriccionDto>> getRestricciones(@PathVariable Long id) {
+        return ResponseEntity.ok(restriccionesEmpresa.execute(id));
     }
 
     @GetMapping("/{id}/obras")

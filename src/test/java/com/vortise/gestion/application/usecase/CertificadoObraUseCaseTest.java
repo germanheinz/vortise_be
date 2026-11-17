@@ -260,6 +260,7 @@ class CertificadoObraUseCaseTest {
         final List<ObraTarea> all = new ArrayList<>();
         public List<ObraTarea> findByProyectoId(Long id) { return all.stream().filter(t -> t.getProyecto().getId().equals(id)).toList(); }
         public Optional<ObraTarea> findById(Long id) { return all.stream().filter(t -> t.getId().equals(id)).findFirst(); }
+        public List<ObraTarea> findConActividadByEmpresaRelacionadaId(Long empresaId) { return List.of(); }
         public ObraTarea save(ObraTarea t) { all.add(t); return t; }
         public void deleteById(Long id) { all.removeIf(t -> t.getId().equals(id)); }
     }

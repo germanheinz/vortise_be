@@ -21,4 +21,8 @@ public interface JpaRestriccionObraRepository extends JpaRepository<RestriccionO
     @Override
     @EntityGraph(attributePaths = {"proyecto", "proyecto.empresaRelacionada", "rubroVinculado"})
     @NonNull List<RestriccionObra> findByProyectoId(@NonNull Long proyectoId);
+
+    @Override
+    @EntityGraph(attributePaths = {"proyecto", "proyecto.empresaRelacionada", "rubroVinculado"})
+    @NonNull List<RestriccionObra> findByProyectoEmpresaRelacionadaIdOrderByIdAsc(@NonNull Long empresaId);
 }

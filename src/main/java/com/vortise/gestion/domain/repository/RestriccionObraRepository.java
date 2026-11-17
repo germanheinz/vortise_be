@@ -16,6 +16,8 @@ public interface RestriccionObraRepository {
 
     @NonNull List<RestriccionObra> findByProyectoId(@NonNull Long proyectoId);
 
+    @NonNull List<RestriccionObra> findByProyectoEmpresaRelacionadaIdOrderByIdAsc(@NonNull Long empresaId);
+
     long countByRubroVinculadoId(Long rubroId);
 
     @NonNull Optional<RestriccionObra> findById(@NonNull Long restriccionId);
