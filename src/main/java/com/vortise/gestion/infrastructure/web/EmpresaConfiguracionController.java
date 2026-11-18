@@ -23,7 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/empresas/{empresaId}/configuracion")
-@PreAuthorize("hasAnyRole('ADMINISTRADOR', 'COLABORADOR')")
+// Reads are open to every role of the company (matrix: "Consulta"); each write method declares ADMINISTRADOR itself.
+@PreAuthorize("hasAnyRole('ADMINISTRADOR', 'JEFE_DE_OBRA', 'CONSULTA', 'RESPONSABLE', 'COLABORADOR')")
 public class EmpresaConfiguracionController {
     private final EmpresaConfiguracionUseCase useCase;
     private final InicializarEmpresaUseCase inicializar;

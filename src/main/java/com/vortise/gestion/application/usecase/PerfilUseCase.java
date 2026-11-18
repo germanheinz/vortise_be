@@ -37,7 +37,9 @@ public class PerfilUseCase {
         return new MeDto(usuario.getId(), usuario.getNombre(), usuario.getEmail(), usuario.getRol().name(),
             empresa.getId(), empresa.getNombre(), usuario.isSuperAdmin(),
             plan.isPresent(), plan.map(s -> s.getPlan().getCodigo()).orElse(null), plan.map(Suscripcion::getTitular).orElse(null),
-            fotos.existe(usuario.getId()));
+            fotos.existe(usuario.getId()),
+            usuario.getRol() == com.vortise.gestion.domain.model.RolEmpresa.JEFE_DE_OBRA
+                ? usuario.getObrasAsignadas().stream().sorted().toList() : java.util.List.of());
     }
 
     public void subirFoto(byte[] datos) {
