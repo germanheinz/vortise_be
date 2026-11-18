@@ -3,6 +3,7 @@ package com.vortise.gestion.application.usecase;
 import com.vortise.gestion.application.dto.RestriccionCreateDto;
 import com.vortise.gestion.application.dto.RestriccionDto;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
+import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RestriccionObra;
 import com.vortise.gestion.domain.model.RubroObra;
@@ -28,6 +29,7 @@ public class CreateRestriccionUseCase {
         String area = RestriccionPlanning.area(dto.area());
         Proyecto proyecto = proyectoRepository.findById(proyectoId)
             .orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado"));
+        requireWithinUploadDeadline(proyecto);
         RubroObra rubro = RestriccionVinculoEstructura.resolver(dto.rubroId(), proyectoId, rubroRepository);
 
         RestriccionObra restriccion = new RestriccionObra();
@@ -47,5 +49,14 @@ public class CreateRestriccionUseCase {
         restriccion.setOrden(0);
 
         return RestriccionMapper.toDto(restriccionRepository.save(restriccion));
+    }
+
+    // Same rule as the frontend: new restrictions are accepted until start date + pedidosDeObraDias (Buenos Aires time).
+    private static void requireWithinUploadDeadline(Proyecto proyecto) {
+        if (proyecto.getFechaInicio() == null || proyecto.getPedidosDeObraDias() == null) return;
+        var deadline = proyecto.getFechaInicio().plusDays(proyecto.getPedidosDeObraDias());
+        if (java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")).isAfter(deadline)) {
+            throw new SolicitudInvalidaException("Venció el plazo para cargar restricciones de esta obra (" + deadline + ").");
+        }
     }
 }

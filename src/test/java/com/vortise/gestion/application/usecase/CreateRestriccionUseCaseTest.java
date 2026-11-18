@@ -86,6 +86,28 @@ class CreateRestriccionUseCaseTest {
     }
 
     @Test
+    void acceptsRestrictionOnTheLastDayOfTheUploadDeadline() {
+        when(restricciones.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        proyecto.setFechaInicio(java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")).minusDays(1));
+        proyecto.setPedidosDeObraDias(1);
+
+        useCase.execute(10L, request(null));
+
+        verify(restricciones).save(any());
+    }
+
+    @Test
+    void acceptsRestrictionWhenTheProjectHasNoDeadline() {
+        when(restricciones.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        proyecto.setFechaInicio(java.time.LocalDate.now().minusYears(1));
+        proyecto.setPedidosDeObraDias(null);
+
+        useCase.execute(10L, request(null));
+
+        verify(restricciones).save(any());
+    }
+
+    @Test
     void acceptsRubroAndNivelAndLabelsThemWithTheirPath() {
         RubroObra rubro = new RubroObra();
         rubro.setId(32L); rubro.setProyecto(proyecto); rubro.setRubro("Estructura"); rubro.setNombre("Estructura");
