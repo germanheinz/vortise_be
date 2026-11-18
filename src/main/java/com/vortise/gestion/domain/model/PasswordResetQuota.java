@@ -16,4 +16,5 @@ public class PasswordResetQuota {
         return solicitudes < limite;
     }
     public void registrar() { solicitudes++; }
+    public void reiniciar(Instant now) { inicio = now; solicitudes = 0; }
 }

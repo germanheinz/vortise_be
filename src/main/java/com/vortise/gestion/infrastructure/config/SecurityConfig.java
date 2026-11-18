@@ -19,7 +19,8 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter,
+            @org.springframework.beans.factory.annotation.Value("${app.security.read-only-write-guard.enabled:true}") boolean readOnlyWriteGuardEnabled) throws Exception {
         return http.csrf(csrf -> csrf.disable())
             .cors(cors -> { })
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -42,6 +43,7 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/stripe/webhook").permitAll()
                 .anyRequest().authenticated())
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(new com.vortise.gestion.infrastructure.security.SoloLecturaWriteGuard(readOnlyWriteGuardEnabled), JwtAuthenticationFilter.class)
             .build();
     }
 }

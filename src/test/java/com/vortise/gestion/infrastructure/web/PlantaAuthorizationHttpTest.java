@@ -185,15 +185,25 @@ class PlantaAuthorizationHttpTest {
     enum Operation { PUT, DELETE }
     enum Denial { SAME_COMPANY, OTHER_COMPANY, MISSING }
 
+    // CONSULTA and RESPONSABLE are read-only (SoloLecturaWriteGuard); the other roles keep the write semantics under test.
+    static final List<RolEmpresa> READ_ONLY_ROLES = List.of(RolEmpresa.CONSULTA, RolEmpresa.RESPONSABLE);
+    static final List<RolEmpresa> WRITER_ROLES = Stream.of(RolEmpresa.values())
+        .filter(role -> !READ_ONLY_ROLES.contains(role)).toList();
+
     static Stream<Arguments> ownedOperations() {
-        return Stream.of(RolEmpresa.values()).flatMap(role -> Stream.of(Operation.values())
+        return WRITER_ROLES.stream().flatMap(role -> Stream.of(Operation.values())
             .map(operation -> Arguments.of(role, operation)));
     }
 
     static Stream<Arguments> deniedOperations() {
-        return Stream.of(RolEmpresa.values()).flatMap(role -> Stream.of(Operation.values())
+        return WRITER_ROLES.stream().flatMap(role -> Stream.of(Operation.values())
             .flatMap(operation -> Stream.of(Denial.values())
                 .map(denial -> Arguments.of(role, operation, denial))));
+    }
+
+    static Stream<Arguments> readOnlyOperations() {
+        return READ_ONLY_ROLES.stream().flatMap(role -> Stream.of(Operation.values())
+            .map(operation -> Arguments.of(role, operation)));
     }
 
     @ParameterizedTest
@@ -238,7 +248,7 @@ class PlantaAuthorizationHttpTest {
     }
 
     @ParameterizedTest
-    @EnumSource(RolEmpresa.class)
+    @EnumSource(value = RolEmpresa.class, names = {"CONSULTA", "RESPONSABLE"}, mode = EnumSource.Mode.EXCLUDE)
     void repeatedDeleteReturnsNotFoundWithoutFurtherChanges(RolEmpresa role) throws Exception {
         request(role, Operation.DELETE, fixtures.targetId())
             .andExpect(status().isNoContent()).andExpect(content().string(""));
@@ -399,7 +409,7 @@ class PlantaAuthorizationHttpTest {
     void invalidNivelReturnsBadRequestWithoutMutation(String nivel) throws Exception {
         DatabaseState before = snapshot();
         clearInvocations(plantaRepository);
-        request(token(RolEmpresa.CONSULTA), Operation.PUT, fixtures.projectId(), fixtures.targetId(),
+        request(token(RolEmpresa.JEFE_DE_OBRA), Operation.PUT, fixtures.projectId(), fixtures.targetId(),
             new PlantaDto(null, null, nivel, 200.0, 120.0, 80.0, 160.0, 0.8))
             .andExpect(status().isBadRequest()).andExpect(jsonPath("$.status").value(400));
         assertDeniedState(before, true);
@@ -413,7 +423,7 @@ class PlantaAuthorizationHttpTest {
         Long id = wrongParent ? fixtures.foreignCompanyId() : fixtures.targetId();
         PlantaDto body = new PlantaDto(fixtures.sameCompanyId(), fixtures.foreignProjectId(),
             "Updated", 200.0, 120.0, 80.0, 160.0, 0.8);
-        ResultActions result = request(token(RolEmpresa.CONSULTA), Operation.PUT,
+        ResultActions result = request(token(RolEmpresa.JEFE_DE_OBRA), Operation.PUT,
             fixtures.projectId(), id, body);
         if (wrongParent) {
             assertNotFound(result);
@@ -429,7 +439,7 @@ class PlantaAuthorizationHttpTest {
     }
 
     @ParameterizedTest
-    @EnumSource(RolEmpresa.class)
+    @EnumSource(value = RolEmpresa.class, names = {"CONSULTA", "RESPONSABLE"}, mode = EnumSource.Mode.EXCLUDE)
     void nullableNumericFieldsRemainSupported(RolEmpresa role) throws Exception {
         DatabaseState before = snapshot();
         clearInvocations(plantaRepository);
@@ -449,7 +459,7 @@ class PlantaAuthorizationHttpTest {
     void validationPrecedesWrongParentLookup(boolean foreignCompany) throws Exception {
         DatabaseState before = snapshot();
         clearInvocations(plantaRepository);
-        request(token(RolEmpresa.CONSULTA), Operation.PUT, fixtures.projectId(),
+        request(token(RolEmpresa.JEFE_DE_OBRA), Operation.PUT, fixtures.projectId(),
             foreignCompany ? fixtures.foreignCompanyId() : fixtures.sameCompanyId(),
             new PlantaDto(null, null, " ", null, null, null, null, null))
             .andExpect(status().isBadRequest());
@@ -464,11 +474,22 @@ class PlantaAuthorizationHttpTest {
         String childId = invalidPathId ? "not-a-number" : fixtures.targetId().toString();
         // CODE-QUALITY-14 intentionally classifies malformed input as 400 before child lookup.
         mockMvc.perform(put("/api/proyectos/" + fixtures.projectId() + "/plantas/" + childId)
-            .header("Authorization", "Bearer " + token(RolEmpresa.CONSULTA))
+            .header("Authorization", "Bearer " + token(RolEmpresa.JEFE_DE_OBRA))
             .contentType(MediaType.APPLICATION_JSON)
             .content(invalidPathId ? objectMapper.writeValueAsString(validBody()) : "{"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("El formato de la solicitud no es válido."));
+        assertDeniedState(before, true);
+    }
+
+    @ParameterizedTest
+    @MethodSource("readOnlyOperations")
+    void readOnlyRolesAreDeniedBeforeAnyLookup(RolEmpresa role, Operation operation) throws Exception {
+        DatabaseState before = snapshot();
+        clearInvocations(plantaRepository);
+        request(token(role), operation, fixtures.projectId(), fixtures.targetId(), validBody())
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value("ACCESO_SOLO_LECTURA"));
         assertDeniedState(before, true);
     }
 

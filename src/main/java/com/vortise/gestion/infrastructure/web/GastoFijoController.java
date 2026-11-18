@@ -58,6 +58,7 @@ public class GastoFijoController {
     }
 
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<GastoFijoDto> create(@Valid @RequestBody GastoFijoDto dto) {
         requireFeatureEnabled();
         GastoFijoDto sinId = new GastoFijoDto(null, dto.concepto(), dto.monto(), dto.categoria(), dto.mes());
@@ -65,6 +66,7 @@ public class GastoFijoController {
     }
 
     @PutMapping(value={"/{id}"})
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<GastoFijoDto> update(@PathVariable Long id, @Valid @RequestBody GastoFijoDto dto) {
         requireFeatureEnabled();
         GastoFijoDto conId = new GastoFijoDto(id, dto.concepto(), dto.monto(), dto.categoria(), dto.mes());
@@ -72,6 +74,7 @@ public class GastoFijoController {
     }
 
     @DeleteMapping(value={"/{id}"})
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         requireFeatureEnabled();
         this.deleteGastoFijoUseCase.execute(id);

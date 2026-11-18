@@ -36,6 +36,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleAuthentication(org.springframework.security.core.AuthenticationException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDto(401, "Unauthorized", "Email o contraseña incorrectos"));
     }
+    @ExceptionHandler(com.vortise.gestion.application.exception.DemasiadosIntentosException.class)
+    public ResponseEntity<ErrorResponseDto> handleTooManyAttempts(com.vortise.gestion.application.exception.DemasiadosIntentosException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+            .header("Retry-After", String.valueOf(com.vortise.gestion.application.exception.DemasiadosIntentosException.REINTENTO_SEGUNDOS))
+            .header("Cache-Control", "no-store")
+            .body(new ErrorResponseDto(429, "Too Many Requests", ex.getMessage()));
+    }
     @ExceptionHandler(value={BackupValidationException.class})
     public ResponseEntity<ErrorResponseDto> handleBackupValidation(BackupValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponseDto(400, "Bad Request", ex.getMessage()));

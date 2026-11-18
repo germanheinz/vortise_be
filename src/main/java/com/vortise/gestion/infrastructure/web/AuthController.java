@@ -19,7 +19,9 @@ public class AuthController {
         this.autenticacionUseCase = autenticacionUseCase; this.registroUseCase = registroUseCase;
     }
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto request) { return ResponseEntity.ok(autenticacionUseCase.login(request)); }
+    public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto request, jakarta.servlet.http.HttpServletRequest http) {
+        return ResponseEntity.ok(autenticacionUseCase.login(request, http.getRemoteAddr()));
+    }
     @PostMapping("/registro")
     public ResponseEntity<LoginResponseDto> registro(@Valid @RequestBody com.vortise.gestion.application.dto.RegistroRequestDto request) {
         return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(registroUseCase.registrar(request));

@@ -176,7 +176,7 @@ class PrP0SecurityHttpTest {
             fixtures.ownProjectId(), "Etapa alterada", "Otra superficie", "Otra función", "Otro sistema",
             999.0, 99.0, 999.0, 999.0, 12);
 
-        mockMvc.perform(put(budgetPath()).header("Authorization", bearer(fixtures.ownCompanyId(), RolEmpresa.CONSULTA))
+        mockMvc.perform(put(budgetPath()).header("Authorization", bearer(fixtures.ownCompanyId(), RolEmpresa.JEFE_DE_OBRA))
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(attemptedUpdate)))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.message").value("Presupuesto no encontrado"));
@@ -186,7 +186,7 @@ class PrP0SecurityHttpTest {
         verify(presupuestoLineaRepository, never()).deleteById(any());
 
         clearInvocations(presupuestoLineaRepository);
-        mockMvc.perform(delete(budgetPath()).header("Authorization", bearer(fixtures.ownCompanyId(), RolEmpresa.CONSULTA)))
+        mockMvc.perform(delete(budgetPath()).header("Authorization", bearer(fixtures.ownCompanyId(), RolEmpresa.JEFE_DE_OBRA)))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.message").value("Presupuesto no encontrado"));
         assertEquals(before, budgetState());

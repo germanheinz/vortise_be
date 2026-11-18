@@ -20,25 +20,47 @@ public class AutenticacionUseCase {
     private final SuscripcionConsultaService suscripciones;
     private final FotoPerfilStorage fotos;
     private final EquipoAccessPolicy equipo;
+    private final LoginThrottle throttle;
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AutenticacionUseCase.class);
 
     public AutenticacionUseCase(UsuarioEmpresaRepository usuarioRepository, PasswordEncoder passwordEncoder, JwtService jwtService,
-            SuscripcionConsultaService suscripciones, FotoPerfilStorage fotos, EquipoAccessPolicy equipo) {
+            SuscripcionConsultaService suscripciones, FotoPerfilStorage fotos, EquipoAccessPolicy equipo, LoginThrottle throttle) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.suscripciones = suscripciones;
-        this.fotos = fotos; this.equipo = equipo;
+        this.fotos = fotos; this.equipo = equipo; this.throttle = throttle;
     }
 
     @Transactional
-    public LoginResponseDto login(LoginRequestDto request) {
-        UsuarioEmpresa usuario = usuarioRepository.findByEmail(request.email().trim().toLowerCase())
+    public LoginResponseDto login(LoginRequestDto request, String clientAddress) {
+        String email = request.email().trim().toLowerCase();
+        if (throttle.bloqueado(email, clientAddress)) {
+            log.warn("Login blocked by rate limit");
+            throw new com.vortise.gestion.application.exception.DemasiadosIntentosException();
+        }
+        UsuarioEmpresa usuario = usuarioRepository.findByEmail(email)
             .filter(item -> item.isActivo())
             .filter(item -> passwordEncoder.matches(request.password(), item.getPasswordHash()))
-            .orElseThrow(() -> new org.springframework.security.authentication.BadCredentialsException("Email o contraseña incorrectos"));
+            .orElse(null);
+        if (usuario == null) {
+            registrarFallo(email, clientAddress);
+            throw new org.springframework.security.authentication.BadCredentialsException("Email o contraseña incorrectos");
+        }
+        throttle.limpiarCuenta(email);
         usuario.setUltimoLoginExitosoEn(Instant.now());
         usuarioRepository.save(usuario);
         return sesion(usuario);
+    }
+
+    // A storage failure while counting must not turn a wrong password into a server error.
+    private void registrarFallo(String email, String clientAddress) {
+        try {
+            throttle.registrarFallo(email, clientAddress);
+            log.warn("Failed login attempt recorded");
+        } catch (org.springframework.dao.DataAccessException ex) {
+            log.warn("Failed login attempt could not be recorded: {}", ex.getClass().getSimpleName());
+        }
     }
 
     @Transactional(readOnly = true)

@@ -48,17 +48,20 @@ public class RendimientoController {
     }
 
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<RendimientoDto> create(@Valid @RequestBody RendimientoDto dto) {
         return ResponseEntity.status((HttpStatusCode)HttpStatus.CREATED).body(this.saveRendimientoUseCase.execute(dto));
     }
 
     @PutMapping(value={"/{id}"})
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<RendimientoDto> update(@PathVariable Long id, @Valid @RequestBody RendimientoDto dto) {
         RendimientoDto withId = new RendimientoDto(id, dto.fase(), dto.etapa(), dto.sistema(), dto.rol(), dto.hhPorM2(), dto.precioPorHh());
         return ResponseEntity.ok(this.saveRendimientoUseCase.execute(withId));
     }
 
     @DeleteMapping(value={"/{id}"})
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         this.deleteRendimientoUseCase.execute(id);
         return ResponseEntity.noContent().build();

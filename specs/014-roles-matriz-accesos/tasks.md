@@ -1,0 +1,43 @@
+# Tasks 014 — Roles con Spring Security y permisos en el token
+
+Spec: [spec.md](./spec.md) · Plan: [plan.md](./plan.md)
+Estado global: **pendiente de aprobación de spec y plan**. Nada implementado.
+
+Hitos: H1 especificación · H2 plan aprobado · H3 implementación con checks enfocados · H4 verificación completa · H5 revisión independiente y cierre.
+
+| ID | Fase | Tarea | Depende de | Estado | Criterio de aceptación |
+|---|---|---|---|---|---|
+| T-001 | H1 | Spec y plan 014 simplificados | — | Hecho | spec.md y plan.md |
+| T-002 | H2 | Aprobación de spec/plan y de Q-1 a Q-3 | T-001 | Pendiente | Decisión registrada |
+| T-010 | F0 | Inventariar endpoints de escritura y `POST` que sean lecturas | T-002 | Pendiente | Lista de excepciones revisada |
+| T-011 | F0 | `SoloLecturaWriteGuard` + propiedad de desactivación | T-010 | Pendiente | 403 `ACCESO_SOLO_LECTURA` a CONSULTA/RESPONSABLE |
+| T-012 | F0 | Prueba endpoints × 5 roles | T-011 | Pendiente | ADMIN/JEFE/COLABORADOR sin cambios |
+| T-013 | F0 | Aprobar y ejecutar pruebas HTTP (base efímera); desplegar con aprobación | T-012 | Pendiente | Resultados reportados |
+| T-020 | F1 | `V22__usuario_obra.sql` + relación en `UsuarioEmpresa` | T-002 | Pendiente | Migración aditiva probada en base efímera |
+| T-021 | F1 | `JwtService`: claim `obras`; login y `/me` lo devuelven | T-020 | Pendiente | Token trae `rol` y `obras` |
+| T-022 | F1 | `JwtAuthenticationFilter`: authorities desde el token + validación de base | T-021 | Pendiente | Token viejo/usuario inactivo rechazado |
+| T-023 | F1 | `TenantAccessInterceptor`: obra asignada para jefe | T-022 | Pendiente | 403 `OBRA_NO_ASIGNADA`, sin IDOR |
+| T-024 | F1 | `extract-empresas.py` (clasificar `usuario_obra`) y `AGENTS.md` | T-020 | Pendiente | Prueba de spec 012 verde; documento actualizado |
+| T-030 | F2 | Clase `Guards` con `SOLO_GERENTE` y `GERENTE_O_JEFE` | T-022 | Pendiente | Usada en `@PreAuthorize` |
+| T-031 | F2 | Guards en tareas, restricciones y reportes | T-030, T-023 | Pendiente | Anexo A cumplido en esos módulos |
+| T-032 | F2 | Guards en certificados (D3) | T-030, T-023 | Pendiente | Jefe solo en obra asignada |
+| T-033 | F2 | Guards en plantas, rendimiento, presupuesto, finanzas | T-030 | Pendiente | Anexo A cumplido |
+| T-034 | F2 | Guards en proyecto, empresa, configuración, importación | T-030 | Pendiente | Dueño conserva facturación |
+| T-035 | F2 | Reglas finas (restricción una vez, ítem completado, tarea abierta) | T-031, T-032 | Pendiente | `REGLA_DE_ESTADO` |
+| T-036 | F2 | Test que exige guard o excepción en todo endpoint de escritura | T-034 | Pendiente | Falla al agregar endpoint sin guard |
+| T-040 | F3 | Gestión de usuarios: rol, obras, anti-escalada, `sessionVersion++` | T-022 | Pendiente | Criterio 7 de la spec |
+| T-050 | F4 | Tipos TS, sesión y helper por rol | T-021 | Pendiente | `tsc` sin errores |
+| T-051 | F4 | Reemplazar checks de rol sueltos y manejar 403 por `code` | T-050 | Pendiente | Sin acciones visibles rechazables |
+| T-052 | F4 | Pantalla de usuarios: rol y obras | T-040, T-050 | Pendiente | Estados de carga/error explícitos |
+| T-060 | F5 | Pruebas: endpoint × 3 roles, IDOR, aislamiento entre empresas, token inválido | T-036 | Pendiente | Todas verdes |
+| T-061 | F5 | Verificación completa: backend (`mvn verify`) y frontend (`tsc`, `npm run build`) | T-060, T-052 | Pendiente | Resultados reales por repositorio |
+| T-062 | H5 | Revisión de seguridad independiente y cierre | T-061 | Pendiente | Hallazgos resueltos o aceptados |
+
+## Aprobaciones de ejecución a solicitar (agrupadas)
+1. Pruebas enfocadas sin contexto (mocks).
+2. Pruebas HTTP con Spring + H2 efímero, incluida la migración V22 sobre base vacía.
+3. `mvn verify`, `tsc` y `npm run build`.
+No se autoriza nada sobre el H2 persistente, despliegues ni escrituras remotas sin aprobación explícita adicional.
+
+## Evidencia
+(Se completa durante la ejecución: comandos, resultados, fecha, repositorio.)
