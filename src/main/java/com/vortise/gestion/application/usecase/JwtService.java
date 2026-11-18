@@ -15,7 +15,7 @@ public class JwtService {
     private final long expirationMs;
 
     public JwtService(@Value("${app.security.jwt-secret}") String secret,
-            @Value("${app.security.jwt-expiration-ms:3600000}") long expirationMs) {
+            @Value("${app.security.jwt-expiration-ms:900000}") long expirationMs) {
         if (secret == null || secret.isBlank() || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
             throw new ConflictoEstadoException("app.security.jwt-secret must be explicitly configured with at least 32 bytes");
         }
@@ -48,6 +48,8 @@ public class JwtService {
         if (obras != null && !obras.isEmpty()) builder.claim("obras", obras.stream().sorted().toList());
         return builder.issuedAt(now).expiration(new Date(now.getTime() + expirationMs)).signWith(signingKey).compact();
     }
+
+    public long getExpirationMs() { return expirationMs; }
 
     public io.jsonwebtoken.Claims parse(String token) {
         return Jwts.parser().verifyWith((javax.crypto.SecretKey) signingKey).build().parseSignedClaims(token).getPayload();

@@ -68,7 +68,7 @@ PARENT = {table: (column, parent) for table, column, parent in OWNERSHIP}
 SPECIAL = ['empresas', 'usuario_empresa_accesos', 'usuario_obra', 'invitaciones_equipo', 'invitacion_empresas']
 # Cleared children first. Stripe sandbox, ephemeral reset data and ownerless global tables.
 EXCLUDED = ['devoluciones_pago', 'pagos_suscripcion', 'stripe_eventos_procesados', 'suscripciones',
-            'password_reset_tokens', 'password_reset_quotas', 'gastos_fijos', 'rendimientos']
+            'password_reset_tokens', 'password_reset_quotas', 'refresh_tokens', 'gastos_fijos', 'rendimientos']
 KEEP_ALL = ['planes_suscripcion', 'flyway_schema_history']
 CLASSIFIED = {table for table, _, _ in OWNERSHIP} | set(SPECIAL) | set(EXCLUDED) | set(KEEP_ALL)
 

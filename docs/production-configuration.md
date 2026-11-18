@@ -9,6 +9,8 @@ Variables que debe configurar el operador mediante secretos del entorno (sin val
 | `SPRING_PROFILES_ACTIVE` | Seleccionar `production` o `prod` |
 | `APP_DATABASE_JDBC_URL`, `APP_DATABASE_USERNAME`, `APP_DATABASE_PASSWORD` | Conexión PostgreSQL explícita |
 | `APP_JWT_SECRET` | Clave de firma exigida por JwtService |
+| `APP_COOKIE_SECURE` | `true` por defecto: la sesión del navegador viaja en cookies `HttpOnly; Secure; SameSite=Strict`. Solo `false` para ejecuciones locales por http plano |
+| `APP_ALLOWED_ORIGINS` | Además de CORS, el `Origin` de toda escritura con cookie de sesión debe estar en esta lista (defensa CSRF) |
 | `APP_ALLOWED_ORIGINS`, `APP_FRONTEND_URL` | Orígenes HTTPS explícitos admitidos por WebEnvironmentConfiguration |
 | `APP_SUPERADMIN_EMAIL`, `APP_SUPERADMIN_PASSWORD` | Alta opcional y explícita del administrador; no rota una cuenta existente |
 

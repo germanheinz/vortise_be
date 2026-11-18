@@ -74,7 +74,10 @@ abstract class TeamInvitationsContract {
         var result = mvc.perform(post("/api/auth/invitaciones/aceptar").contentType("application/json").content(json.writeValueAsString(dto)))
             .andExpect(status().isCreated()).andExpect(jsonPath("$.rol").value("COLABORADOR")).andExpect(jsonPath("$.planCodigo").value("PRO")).andReturn();
         var body = json.readTree(result.getResponse().getContentAsString()); invitedId = body.get("usuarioId").asLong();
-        return "Bearer " + body.get("token").asText();
+        org.junit.jupiter.api.Assertions.assertTrue(body.get("token") == null || body.get("token").isNull(), "the token must not be in the body");
+        String access = result.getResponse().getHeaders("Set-Cookie").stream().filter(c -> c.startsWith("gestion_at=")).findFirst().orElseThrow();
+        org.junit.jupiter.api.Assertions.assertTrue(access.contains("HttpOnly"));
+        return "Bearer " + access.substring("gestion_at=".length(), access.indexOf(';'));
     }
     @Test void multiCompanyInvitationGrantsOnlyAssignedAccessAndCannotBeReused() throws Exception {
         String token = createLink(), collaborator = accept(token);

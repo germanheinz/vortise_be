@@ -29,9 +29,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         String authorization = request.getHeader("Authorization");
-        if (authorization != null && authorization.startsWith("Bearer ")) {
+        // The browser session travels in an HttpOnly cookie; a Bearer header is still accepted for API clients.
+        String token = authorization != null && authorization.startsWith("Bearer ") ? authorization.substring(7)
+            : SessionCookies.read(request, SessionCookies.ACCESS);
+        if (token != null) {
             try {
-                Claims claims = jwtService.parse(authorization.substring(7));
+                Claims claims = jwtService.parse(token);
                 Number userId = claims.get("userId", Number.class);
                 Number version = claims.get("sessionVersion", Number.class);
                 var usuario = userId == null || version == null ? null : usuarios.findById(userId.longValue()).orElse(null);

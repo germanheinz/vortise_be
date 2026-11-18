@@ -65,6 +65,9 @@ app:
     from: ${APP_PASSWORD_MAIL_FROM:}
   security:
     jwt-secret: ${APP_JWT_SECRET:}
+    # Session cookies are Secure by default; set APP_COOKIE_SECURE=false only for plain-http local runs.
+    cookie:
+      secure: ${APP_COOKIE_SECURE:true}
   cloudinary:
     # cloudinary://API_KEY:API_SECRET@CLOUD_NAME; leave empty to disable report image uploads.
     url: ${CLOUDINARY_URL:}

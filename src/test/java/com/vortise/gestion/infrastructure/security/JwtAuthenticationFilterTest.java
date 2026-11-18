@@ -26,6 +26,25 @@ class JwtAuthenticationFilterTest {
         var request = new MockHttpServletRequest(); request.addHeader("Authorization", "Bearer " + token);
         filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
     }
+    private void authenticateWithCookie(String token) throws Exception {
+        var request = new MockHttpServletRequest(); request.setCookies(new jakarta.servlet.http.Cookie(SessionCookies.ACCESS, token));
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+    }
+    @Test void aValidAccessCookieAuthenticatesTheRequest() throws Exception {
+        authenticateWithCookie(jwt.generate(1L, 2L, user.getEmail(), "CONSULTA", false, user.getSessionVersion()));
+        assertEquals(List.of("ROLE_CONSULTA"), SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream().map(Object::toString).toList());
+    }
+    @Test void anInvalidOrRevokedAccessCookieDoesNotAuthenticate() throws Exception {
+        authenticateWithCookie("not-a-token"); assertNull(SecurityContextHolder.getContext().getAuthentication());
+        String token = jwt.generate(1L, 2L, user.getEmail(), "CONSULTA", false, user.getSessionVersion()); user.setPasswordHash("new");
+        authenticateWithCookie(token); assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+    @Test void aBearerHeaderTakesPrecedenceOverTheCookie() throws Exception {
+        var request = new MockHttpServletRequest(); request.addHeader("Authorization", "Bearer not-a-token");
+        request.setCookies(new jakarta.servlet.http.Cookie(SessionCookies.ACCESS, jwt.generate(1L, 2L, user.getEmail(), "CONSULTA", false, user.getSessionVersion())));
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
     @Test void tokenWithARoleThatDoesNotMatchTheAccountIsRejected() throws Exception {
         authenticate(jwt.generate(1L, 99L, "stale@example.invalid", "ADMINISTRADOR", true, user.getSessionVersion()));
         assertNull(SecurityContextHolder.getContext().getAuthentication());

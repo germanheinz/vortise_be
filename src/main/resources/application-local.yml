@@ -26,6 +26,8 @@ server:
 app:
   security:
     jwt-secret: ${APP_JWT_SECRET:}
+    cookie:
+      secure: ${APP_COOKIE_SECURE:false}
   stripe:
     secret-key: ${STRIPE_SECRET_KEY:}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET:}

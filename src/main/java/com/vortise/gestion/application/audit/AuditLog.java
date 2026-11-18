@@ -22,6 +22,10 @@ public final class AuditLog {
             actorUserId, targetUserId, clean(role), assignedSites, active);
     }
 
+    public static void refreshReuseDetected(Long userId) {
+        LOG.warn("event=refresh_token_reuse actor={} action=family_revoked", userId);
+    }
+
     // Strips line breaks and control characters so a request cannot forge log entries.
     static String clean(String value) {
         if (value == null) return "-";
