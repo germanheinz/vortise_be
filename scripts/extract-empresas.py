@@ -62,6 +62,8 @@ OWNERSHIP = [
     ('tareas', 'entrega_id', 'entregas'),
     ('restriccion_comentarios', 'restriccion_id', 'restricciones_obra'),
     ('certificado_items_completados', 'certificado_id', 'certificados_obra'),
+    ('invitaciones_usuario', 'empresa_id', 'empresas'),
+    ('invitacion_usuario_obras', 'invitacion_id', 'invitaciones_usuario'),
 ]
 PARENT = {table: (column, parent) for table, column, parent in OWNERSHIP}
 # Tables with two ownership references or a rule of their own.

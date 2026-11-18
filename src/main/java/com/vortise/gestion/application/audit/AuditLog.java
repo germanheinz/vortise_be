@@ -22,6 +22,14 @@ public final class AuditLog {
             actorUserId, targetUserId, clean(role), assignedSites, active);
     }
 
+    public static void userInvited(Long actorUserId, Long invitationId, String role, int assignedSites) {
+        LOG.info("event=user_invited actor={} invitation={} role={} sites={}", actorUserId, invitationId, clean(role), assignedSites);
+    }
+
+    public static void userInvitationAccepted(Long userId, Long invitationId, String role) {
+        LOG.info("event=user_invitation_accepted user={} invitation={} role={}", userId, invitationId, clean(role));
+    }
+
     public static void refreshReuseDetected(Long userId) {
         LOG.warn("event=refresh_token_reuse actor={} action=family_revoked", userId);
     }
