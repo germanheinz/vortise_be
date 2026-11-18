@@ -21,6 +21,7 @@ public class TenantAccessInterceptor implements HandlerInterceptor {
     private static final Pattern RESTRICTION_ROUTE = Pattern.compile("/api/restricciones/(\\d+)(?:/.*)?");
     private static final Pattern HOURS_ROUTE = Pattern.compile("/api/registro-horas/(\\d+)");
     private static final Pattern TASK_ROUTE = Pattern.compile("/api/tareas/(\\d+)/status");
+    private static final java.util.Set<String> WRITE_METHODS = java.util.Set.of("POST", "PUT", "PATCH", "DELETE");
     private final CurrentTenantService currentTenant;
     private final ProyectoRepository proyectoRepository;
     private final RestriccionObraRepository restriccionRepository;
@@ -54,29 +55,39 @@ public class TenantAccessInterceptor implements HandlerInterceptor {
                 .orElseThrow(() -> new AccessDeniedException("Obra no encontrada o sin acceso"));
             if (companyId == null) throw new AccessDeniedException("La obra no tiene empresa asignada");
             currentTenant.requireEmpresa(companyId);
+            requireObraAsignada(request, projectId);
         }
         Matcher restriction = RESTRICTION_ROUTE.matcher(path);
         if (restriction.matches()) {
             restriccionRepository.findById(Long.valueOf(restriction.group(1)))
-                .ifPresentOrElse(item -> requireOwnedProject(item.getProyecto()), () -> { throw new AccessDeniedException("Restricción no encontrada o sin acceso"); });
+                .ifPresentOrElse(item -> requireOwnedProject(item.getProyecto(), request), () -> { throw new AccessDeniedException("Restricción no encontrada o sin acceso"); });
         }
         Matcher hours = HOURS_ROUTE.matcher(path);
         if (hours.matches()) {
             registroHorasRepository.findById(Long.valueOf(hours.group(1)))
-                .ifPresentOrElse(item -> requireOwnedProject(item.getProyecto()), () -> { throw new AccessDeniedException("Registro no encontrado o sin acceso"); });
+                .ifPresentOrElse(item -> requireOwnedProject(item.getProyecto(), request), () -> { throw new AccessDeniedException("Registro no encontrado o sin acceso"); });
         }
         Matcher task = TASK_ROUTE.matcher(path);
         if (task.matches()) {
             obraTareaRepository.findById(Long.valueOf(task.group(1)))
-                .ifPresentOrElse(item -> requireOwnedProject(item.getProyecto()), () -> { throw new AccessDeniedException("Tarea no encontrada o sin acceso"); });
+                .ifPresentOrElse(item -> requireOwnedProject(item.getProyecto(), request), () -> { throw new AccessDeniedException("Tarea no encontrada o sin acceso"); });
         }
         return true;
     }
 
-    private void requireOwnedProject(Proyecto project) {
+    private void requireOwnedProject(Proyecto project, HttpServletRequest request) {
         if (project == null || project.getEmpresaRelacionada() == null) {
             throw new AccessDeniedException("Recurso sin empresa asignada");
         }
         currentTenant.requireEmpresa(project.getEmpresaRelacionada().getId());
+        requireObraAsignada(request, project.getId());
+    }
+
+    // A JEFE_DE_OBRA reads every site of its company but writes only on the sites assigned in its token.
+    private void requireObraAsignada(HttpServletRequest request, Long projectId) {
+        if (WRITE_METHODS.contains(request.getMethod()) && currentTenant.isJefeDeObra()
+                && !currentTenant.obrasAsignadas().contains(projectId)) {
+            throw new ObraNoAsignadaException();
+        }
     }
 }

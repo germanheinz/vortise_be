@@ -78,6 +78,10 @@ public class CreateObraTareaUseCase {
         ObraTarea tarea = obraTareaRepository.findById(tareaId)
             .filter(item -> item.getProyecto().getId().equals(proyectoId))
             .orElseThrow(() -> new RecursoNoEncontradoException("Tarea no encontrada"));
+        // Jefatura completes the loads it registered; editing someone else's load is for Gerencia/Coordinación.
+        if (identity != null && identity.isJefeDeObra() && !identity.usuarioId().equals(tarea.getRegistradoPorUsuarioId())) {
+            throw new com.vortise.gestion.application.exception.ReglaDeEstadoException("Solo podés modificar las tareas que cargaste vos.");
+        }
         if (bloqueos != null) bloqueos.validarAvance(proyectoId, tarea.getActividad(), tarea.getFecha());
         applyActivity(tarea, dto);
         tarea.setNombre(dto.nombre());

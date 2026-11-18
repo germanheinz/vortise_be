@@ -185,10 +185,9 @@ class PlantaAuthorizationHttpTest {
     enum Operation { PUT, DELETE }
     enum Denial { SAME_COMPANY, OTHER_COMPANY, MISSING }
 
-    // CONSULTA and RESPONSABLE are read-only (SoloLecturaWriteGuard); the other roles keep the write semantics under test.
+    // CONSULTA and RESPONSABLE are read-only (SoloLecturaWriteGuard); JEFE_DE_OBRA cannot edit plantas (Guards.GERENTE).
     static final List<RolEmpresa> READ_ONLY_ROLES = List.of(RolEmpresa.CONSULTA, RolEmpresa.RESPONSABLE);
-    static final List<RolEmpresa> WRITER_ROLES = Stream.of(RolEmpresa.values())
-        .filter(role -> !READ_ONLY_ROLES.contains(role)).toList();
+    static final List<RolEmpresa> WRITER_ROLES = List.of(RolEmpresa.ADMINISTRADOR, RolEmpresa.COLABORADOR);
 
     static Stream<Arguments> ownedOperations() {
         return WRITER_ROLES.stream().flatMap(role -> Stream.of(Operation.values())
@@ -248,7 +247,7 @@ class PlantaAuthorizationHttpTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = RolEmpresa.class, names = {"CONSULTA", "RESPONSABLE"}, mode = EnumSource.Mode.EXCLUDE)
+    @EnumSource(value = RolEmpresa.class, names = {"ADMINISTRADOR", "COLABORADOR"})
     void repeatedDeleteReturnsNotFoundWithoutFurtherChanges(RolEmpresa role) throws Exception {
         request(role, Operation.DELETE, fixtures.targetId())
             .andExpect(status().isNoContent()).andExpect(content().string(""));
@@ -409,7 +408,7 @@ class PlantaAuthorizationHttpTest {
     void invalidNivelReturnsBadRequestWithoutMutation(String nivel) throws Exception {
         DatabaseState before = snapshot();
         clearInvocations(plantaRepository);
-        request(token(RolEmpresa.JEFE_DE_OBRA), Operation.PUT, fixtures.projectId(), fixtures.targetId(),
+        request(token(RolEmpresa.ADMINISTRADOR), Operation.PUT, fixtures.projectId(), fixtures.targetId(),
             new PlantaDto(null, null, nivel, 200.0, 120.0, 80.0, 160.0, 0.8))
             .andExpect(status().isBadRequest()).andExpect(jsonPath("$.status").value(400));
         assertDeniedState(before, true);
@@ -423,7 +422,7 @@ class PlantaAuthorizationHttpTest {
         Long id = wrongParent ? fixtures.foreignCompanyId() : fixtures.targetId();
         PlantaDto body = new PlantaDto(fixtures.sameCompanyId(), fixtures.foreignProjectId(),
             "Updated", 200.0, 120.0, 80.0, 160.0, 0.8);
-        ResultActions result = request(token(RolEmpresa.JEFE_DE_OBRA), Operation.PUT,
+        ResultActions result = request(token(RolEmpresa.ADMINISTRADOR), Operation.PUT,
             fixtures.projectId(), id, body);
         if (wrongParent) {
             assertNotFound(result);
@@ -439,7 +438,7 @@ class PlantaAuthorizationHttpTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = RolEmpresa.class, names = {"CONSULTA", "RESPONSABLE"}, mode = EnumSource.Mode.EXCLUDE)
+    @EnumSource(value = RolEmpresa.class, names = {"ADMINISTRADOR", "COLABORADOR"})
     void nullableNumericFieldsRemainSupported(RolEmpresa role) throws Exception {
         DatabaseState before = snapshot();
         clearInvocations(plantaRepository);
@@ -459,7 +458,7 @@ class PlantaAuthorizationHttpTest {
     void validationPrecedesWrongParentLookup(boolean foreignCompany) throws Exception {
         DatabaseState before = snapshot();
         clearInvocations(plantaRepository);
-        request(token(RolEmpresa.JEFE_DE_OBRA), Operation.PUT, fixtures.projectId(),
+        request(token(RolEmpresa.ADMINISTRADOR), Operation.PUT, fixtures.projectId(),
             foreignCompany ? fixtures.foreignCompanyId() : fixtures.sameCompanyId(),
             new PlantaDto(null, null, " ", null, null, null, null, null))
             .andExpect(status().isBadRequest());
@@ -474,11 +473,21 @@ class PlantaAuthorizationHttpTest {
         String childId = invalidPathId ? "not-a-number" : fixtures.targetId().toString();
         // CODE-QUALITY-14 intentionally classifies malformed input as 400 before child lookup.
         mockMvc.perform(put("/api/proyectos/" + fixtures.projectId() + "/plantas/" + childId)
-            .header("Authorization", "Bearer " + token(RolEmpresa.JEFE_DE_OBRA))
+            .header("Authorization", "Bearer " + token(RolEmpresa.ADMINISTRADOR))
             .contentType(MediaType.APPLICATION_JSON)
             .content(invalidPathId ? objectMapper.writeValueAsString(validBody()) : "{"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("El formato de la solicitud no es válido."));
+        assertDeniedState(before, true);
+    }
+
+    @ParameterizedTest
+    @EnumSource(Operation.class)
+    void jefeDeObraCannotEditPlantas(Operation operation) throws Exception {
+        DatabaseState before = snapshot();
+        clearInvocations(plantaRepository);
+        request(token(RolEmpresa.JEFE_DE_OBRA), operation, fixtures.projectId(), fixtures.targetId(), validBody())
+            .andExpect(status().isForbidden());
         assertDeniedState(before, true);
     }
 

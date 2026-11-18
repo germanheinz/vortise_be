@@ -84,9 +84,11 @@ class StatementTest(unittest.TestCase):
         self.assertIn('creado_por_usuario_id = u.id', statements[move])
 
     def test_expected_users_include_members_and_creators_of_kept_companies(self):
-        for table in ('usuarios_empresa', 'usuario_empresa_accesos', 'invitaciones_equipo', 'invitacion_empresas'):
+        for table in ('usuarios_empresa', 'usuario_empresa_accesos', 'usuario_obra', 'invitaciones_equipo', 'invitacion_empresas'):
             self.assertIn('creado_por_usuario_id', extract.expected_sql(table, CUITS), table)
         self.assertEqual(extract.expected_sql('usuarios_empresa', CUITS).count('identificacion_fiscal IN'), 2)
+        # user: member or creator (2 mentions); project's company (1)
+        self.assertEqual(extract.expected_sql('usuario_obra', CUITS).count('identificacion_fiscal IN'), 3)
 
     def test_expected_counts_are_computed_by_joins_up_to_the_company(self):
         deep = extract.expected_sql('restriccion_comentarios', CUITS)

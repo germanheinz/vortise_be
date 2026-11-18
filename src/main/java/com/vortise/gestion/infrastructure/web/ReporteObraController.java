@@ -38,6 +38,7 @@ public class ReporteObraController {
     }
 
     @PostMapping(value = "/imagenes", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ResponseEntity<ReporteImagenDto> subirImagen(@PathVariable Long proyectoId, @RequestParam("file") MultipartFile file,
             @RequestParam(value = "leyenda", required = false) String leyenda,
             @RequestParam(value = "fecha", required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate fecha,
@@ -47,18 +48,21 @@ public class ReporteObraController {
     }
 
     @PutMapping("/imagenes/{imagenId}")
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ReporteImagenDto actualizarLeyenda(@PathVariable Long proyectoId, @PathVariable Long imagenId,
             @Valid @RequestBody ReporteImagenLeyendaDto dto) {
         return useCase.actualizarLeyenda(proyectoId, imagenId, dto.leyenda());
     }
 
     @DeleteMapping("/imagenes/{imagenId}")
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ResponseEntity<Void> eliminarImagen(@PathVariable Long proyectoId, @PathVariable Long imagenId) {
         useCase.eliminarImagen(proyectoId, imagenId);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ResponseEntity<ReporteDetalleDto> emitir(@PathVariable Long proyectoId, @Valid @RequestBody ReporteEmitirDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(useCase.emitir(proyectoId, dto));
     }

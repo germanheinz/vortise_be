@@ -68,8 +68,11 @@ public class AutenticacionUseCase {
         equipo.requireAcceso(usuario);
         Optional<Suscripcion> plan = suscripciones.planEfectivo(usuario);
         var empresa = usuario.isColaborador() ? equipo.empresaInicial(usuario) : usuario.getEmpresa();
-        return new LoginResponseDto(jwtService.generate(usuario.getId(), empresa.getId(), usuario.getEmail(), usuario.getRol().name(), usuario.isSuperAdmin(), usuario.getSessionVersion()),
+        // Only a JEFE_DE_OBRA carries sites in the token; the claim is the source the interceptor checks.
+        java.util.List<Long> obras = usuario.getRol() == com.vortise.gestion.domain.model.RolEmpresa.JEFE_DE_OBRA
+            ? usuario.getObrasAsignadas().stream().sorted().toList() : java.util.List.of();
+        return new LoginResponseDto(jwtService.generate(usuario.getId(), empresa.getId(), usuario.getEmail(), usuario.getRol().name(), usuario.isSuperAdmin(), usuario.getSessionVersion(), obras),
             usuario.getId(), empresa.getId(), empresa.getNombre(), usuario.getNombre(), usuario.getEmail(), usuario.getRol().name(),
-            usuario.isSuperAdmin(), plan.isPresent(), plan.map(s -> s.getPlan().getCodigo()).orElse(null), fotos.existe(usuario.getId()));
+            usuario.isSuperAdmin(), plan.isPresent(), plan.map(s -> s.getPlan().getCodigo()).orElse(null), fotos.existe(usuario.getId()), obras);
     }
 }

@@ -2,7 +2,11 @@ package com.vortise.gestion.application.usecase;
 
 import com.vortise.gestion.application.dto.RestriccionDto;
 import com.vortise.gestion.application.dto.RestriccionUpdateDto;
+import com.vortise.gestion.application.exception.ReglaDeEstadoException;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
+import com.vortise.gestion.application.port.CurrentIdentity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import com.vortise.gestion.domain.model.RestriccionObra;
 import com.vortise.gestion.domain.model.RubroObra;
 import com.vortise.gestion.domain.repository.RestriccionObraRepository;
@@ -17,16 +21,24 @@ import java.time.ZoneId;
 public class UpdateRestriccionUseCase {
     private final RestriccionObraRepository restriccionRepository;
     private final RubroObraRepository rubroRepository;
+    private final CurrentIdentity identity;
 
-    public UpdateRestriccionUseCase(RestriccionObraRepository restriccionRepository, RubroObraRepository rubroRepository) {
+    @Autowired
+    public UpdateRestriccionUseCase(RestriccionObraRepository restriccionRepository, RubroObraRepository rubroRepository, CurrentIdentity identity) {
         this.restriccionRepository = restriccionRepository;
         this.rubroRepository = rubroRepository;
+        this.identity = identity;
+    }
+
+    public UpdateRestriccionUseCase(RestriccionObraRepository restriccionRepository, RubroObraRepository rubroRepository) {
+        this(restriccionRepository, rubroRepository, null);
     }
 
     @Transactional
     public RestriccionDto execute(Long restriccionId, RestriccionUpdateDto dto) {
         RestriccionObra restriccion = restriccionRepository.findById(restriccionId)
             .orElseThrow(() -> new RecursoNoEncontradoException("Restriccion no encontrada"));
+        if (identity != null && identity.isJefeDeObra()) requireReleaseOnly(restriccion, dto);
 
         boolean datesChanged = dto.actualizarFechas() || dto.fechaSolicitud() != null
             || dto.fechaMaximaEntrega() != null || dto.fechaRealEntrega() != null;
@@ -59,6 +71,20 @@ public class UpdateRestriccionUseCase {
         }
 
         return RestriccionMapper.toDto(restriccionRepository.save(restriccion));
+    }
+
+    // A JEFE_DE_OBRA may only change the state (the board also sends the card position), and only once:
+    // a resolved restriction cannot be changed again.
+    private static void requireReleaseOnly(RestriccionObra restriccion, RestriccionUpdateDto dto) {
+        boolean onlyState = dto.estado() != null && dto.prioridad() == null && dto.area() == null
+            && dto.responsable() == null && dto.rubroId() == null && !dto.actualizarFechas()
+            && dto.fechaSolicitud() == null && dto.fechaMaximaEntrega() == null && dto.fechaRealEntrega() == null;
+        if (!onlyState) {
+            throw new AccessDeniedException("Solo Gerencia o Coordinación de obras puede editar los datos de la restricción.");
+        }
+        if ("RESUELTO".equalsIgnoreCase(restriccion.getEstado())) {
+            throw new ReglaDeEstadoException("Una restricción resuelta solo puede modificarla Gerencia o Coordinación de obras.");
+        }
     }
 
     // The real date is the resolution date: set it on resolve, clear it on reopen.

@@ -38,6 +38,18 @@ public class UsuarioEmpresa {
         uniqueConstraints = @jakarta.persistence.UniqueConstraint(columnNames = {"usuario_id", "empresa_id"}))
     @Column(name = "empresa_id", nullable = false)
     private java.util.Set<Long> empresasAsignadas = new java.util.HashSet<>();
+    // Obras donde un JEFE_DE_OBRA puede escribir; cualquier cambio invalida las sesiones emitidas.
+    @jakarta.persistence.ElementCollection
+    @jakarta.persistence.CollectionTable(name = "usuario_obra", joinColumns = @JoinColumn(name = "usuario_id"),
+        uniqueConstraints = @jakarta.persistence.UniqueConstraint(columnNames = {"usuario_id", "proyecto_id"}))
+    @Column(name = "proyecto_id", nullable = false)
+    private java.util.Set<Long> obrasAsignadas = new java.util.HashSet<>();
+    public java.util.Set<Long> getObrasAsignadas() { return java.util.Set.copyOf(obrasAsignadas); }
+    public void asignarObras(java.util.Set<Long> obras) {
+        java.util.Set<Long> nuevas = obras == null ? new java.util.HashSet<>() : new java.util.HashSet<>(obras);
+        if (!nuevas.equals(obrasAsignadas)) sessionVersion++;
+        obrasAsignadas = nuevas;
+    }
     public Long getInvitanteId() { return invitanteId; }
     public java.util.Set<Long> getEmpresasAsignadas() { return java.util.Set.copyOf(empresasAsignadas); }
     public boolean isColaborador() { return rol == RolEmpresa.COLABORADOR; }

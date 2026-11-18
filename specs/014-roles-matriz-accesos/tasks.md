@@ -40,4 +40,25 @@ Hitos: H1 especificación · H2 plan aprobado · H3 implementación con checks e
 No se autoriza nada sobre el H2 persistente, despliegues ni escrituras remotas sin aprobación explícita adicional.
 
 ## Evidencia
-(Se completa durante la ejecución: comandos, resultados, fecha, repositorio.)
+
+### Estado tras la S1 (2026-11-18, gestion_be)
+| Tarea | Estado |
+|---|---|
+| T-020 `V22__usuario_obra.sql` + `UsuarioEmpresa.obrasAsignadas` | Hecho (migración no ejecutada contra una base real) |
+| T-021 claim `obras`; login lo devuelve | Hecho (`/api/me` aún no devuelve `obras`: va con F4) |
+| T-022 authorities desde el token + validación de base | Hecho |
+| T-023 obra asignada en `TenantAccessInterceptor` | Hecho (403 `OBRA_NO_ASIGNADA`) |
+| T-024 `extract-empresas.py` | Hecho (17 pruebas python OK); `AGENTS.md` sigue pendiente |
+| T-030 a T-034 guards | Hecho, con la clase `Guards` (ver cambios de diseño) |
+| T-035 reglas finas | Parcial: restricción una sola vez (hecho), certificado abierto (ya existía), tareas: no existe estado abierta/cerrada, se aplicó "solo las que cargó el jefe" |
+| T-036 test de guards | Hecho (`WriteEndpointsGuardTest`) |
+| T-040 gestión de usuarios y obras | Hecho (`UsuarioObrasAsignadasTest`, 7 pruebas) |
+| T-050 a T-052 frontend, T-060 a T-062 | Pendiente |
+
+### Cambios de diseño respecto de la spec (a confirmar)
+- **Guards (`infrastructure/security/Guards`)**: `SOLO_ADMINISTRADOR`, `GERENTE` (`ADMINISTRADOR` + `COLABORADOR`), `OBRA` (`ADMINISTRADOR` + `COLABORADOR` + `JEFE_DE_OBRA`) y `CERTIFICADOS` (`ADMINISTRADOR` + `JEFE_DE_OBRA`, como ya estaba). `COLABORADOR` se conserva donde ya tenía acceso (Q-2, sin cambios).
+- **Permisos desde el token**: el rol del token debe coincidir con el de la cuenta; si no, la sesión se rechaza. `obras` del token se ignora para cualquier rol que no sea `JEFE_DE_OBRA`.
+- **`JEFE_DE_OBRA` pierde**: editar obra, plantas, importar Excel, eliminar tareas/horas/restricciones, editar la fecha de corte de un certificado, y checkout/portal de suscripción.
+- **Restricción**: el jefe solo puede cambiar el estado (con la posición de la tarjeta) y solo si aún no está `RESUELTO` (403 `REGLA_DE_ESTADO`); editar otros datos devuelve 403.
+- **Tareas**: no hay estado abierta/cerrada; el jefe solo modifica las que cargó él (`REGLA_DE_ESTADO`). Los cierres por certificado ya bloquean ediciones para todos los roles.
+- **Sin cambios de comportamiento**: `EmpresaConfiguracionController` mantiene su lectura limitada a `ADMINISTRADOR`/`COLABORADOR` (el jefe y consulta no ven la configuración de empresa; la matriz dice "Consulta"): decisión pendiente.

@@ -55,16 +55,19 @@ public class RegistroHorasController {
     }
 
     @PostMapping("/proyectos/{proyectoId}/registro-horas")
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ResponseEntity<RegistroHorasDto> create(@PathVariable Long proyectoId, @Valid @RequestBody RegistroHorasCreateDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(createRegistroHorasUseCase.execute(proyectoId, dto));
     }
 
     @PutMapping("/registro-horas/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ResponseEntity<RegistroHorasDto> update(@PathVariable Long id, @Valid @RequestBody RegistroHorasUpdateDto dto) {
         return ResponseEntity.ok(updateRegistroHorasUseCase.execute(id, dto));
     }
 
     @DeleteMapping("/registro-horas/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.GERENTE)
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         deleteRegistroHorasUseCase.execute(id);
         return ResponseEntity.noContent().build();

@@ -2,7 +2,9 @@ package com.vortise.gestion.infrastructure.security;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -93,6 +95,22 @@ class CurrentTenantServiceTest {
         assertEquals(USER_ID, service.usuarioId());
     }
 
+    @Test
+    void jefeDeObraSitesComeFromTheToken() {
+        authenticate(OWN_COMPANY, java.util.List.of(7, 9L), "ROLE_JEFE_DE_OBRA");
+
+        assertTrue(service.isJefeDeObra());
+        assertEquals(java.util.Set.of(7L, 9L), service.obrasAsignadas());
+    }
+
+    @Test
+    void otherRolesAreNotJefeDeObraAndHaveNoSites() {
+        authenticate(OWN_COMPANY, "ROLE_ADMINISTRADOR");
+
+        assertFalse(service.isJefeDeObra());
+        assertTrue(service.obrasAsignadas().isEmpty());
+    }
+
     private static Empresa company(Long creatorId) {
         Empresa empresa = new Empresa("Foreign", null);
         empresa.setCreadoPorUsuarioId(creatorId);
@@ -100,8 +118,13 @@ class CurrentTenantServiceTest {
     }
 
     private static void authenticate(Long companyId, String... authorities) {
+        authenticate(companyId, null, authorities);
+    }
+
+    private static void authenticate(Long companyId, java.util.List<?> sites, String... authorities) {
         var claimsBuilder = Jwts.claims().add("userId", USER_ID);
         if (companyId != null) claimsBuilder.add("empresaId", companyId);
+        if (sites != null) claimsBuilder.add("obras", sites);
         var authentication = new UsernamePasswordAuthenticationToken("user@example.invalid", null,
             Arrays.stream(authorities).map(SimpleGrantedAuthority::new).toList());
         authentication.setDetails(claimsBuilder.build());

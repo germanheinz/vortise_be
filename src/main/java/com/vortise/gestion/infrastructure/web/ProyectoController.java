@@ -72,17 +72,19 @@ public class ProyectoController {
     }
 
     @PostMapping
-    @org.springframework.security.access.prepost.PreAuthorize("!hasRole('COLABORADOR')")
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.SOLO_ADMINISTRADOR)
     public ResponseEntity<ProyectoDto> create(@Valid @RequestBody ProyectoCreateDto dto) {
         return ResponseEntity.status((HttpStatusCode)HttpStatus.CREATED).body(this.createProyectoUseCase.execute(dto));
     }
 
     @PutMapping(value="/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.GERENTE)
     public ResponseEntity<ProyectoDto> update(@PathVariable Long id, @Valid @RequestBody ProyectoUpdateDto dto) {
         return ResponseEntity.ok(this.updateProyectoUseCase.execute(id, dto));
     }
 
     @DeleteMapping(value="/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.GERENTE)
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         this.deleteProyectoUseCase.execute(id);
         return ResponseEntity.noContent().build();

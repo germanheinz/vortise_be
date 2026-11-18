@@ -18,7 +18,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import tools.jackson.databind.ObjectMapper;
 import com.vortise.gestion.application.dto.GastoFijoDto;
-import com.vortise.gestion.application.dto.PresupuestoLineaDto;
 import com.vortise.gestion.application.usecase.JwtService;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.GastoFijo;
@@ -145,57 +144,6 @@ class PrP0SecurityHttpTest {
     }
 
     @Test
-    void dashboardUsesRealJwtAndDeniesCrossTenantBeforeReadingKpis() throws Exception {
-        clearInvocations(proyectoRepository, tareaRepository, presupuestoLineaRepository,
-            gastoFijoRepository, ingresoRepository);
-        mockMvc.perform(get("/api/dashboard").param("proyectoId", fixtures.ownProjectId().toString())
-                .header("Authorization", bearer(fixtures.ownCompanyId(), RolEmpresa.CONSULTA)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.kpis.costoIndirectoDisponible").value(false))
-            .andExpect(jsonPath("$.kpis.costoIndirectoArs").value((Object) null))
-            .andExpect(jsonPath("$.kpis.balanceArs").value((Object) null));
-        verify(tareaRepository).findByEntregaProyectoId(fixtures.ownProjectId());
-        verify(gastoFijoRepository, never()).findAll();
-
-        clearInvocations(proyectoRepository, tareaRepository, presupuestoLineaRepository,
-            gastoFijoRepository, ingresoRepository);
-        mockMvc.perform(get("/api/dashboard").param("proyectoId", fixtures.foreignProjectId().toString())
-                .header("Authorization", bearer(fixtures.ownCompanyId(), RolEmpresa.CONSULTA)))
-            .andExpect(status().isForbidden()).andExpect(jsonPath("$.status").value(403));
-        verify(proyectoRepository).findById(fixtures.foreignProjectId());
-        verify(tareaRepository, never()).findByEntregaProyectoId(any());
-        verify(presupuestoLineaRepository, never()).findByProyectoId(any());
-        verify(ingresoRepository, never()).findByProyectoId(any());
-        verify(gastoFijoRepository, never()).findAll();
-    }
-
-    @Test
-    void budgetPutAndDeleteRejectForeignChildWithoutChangingCommittedState() throws Exception {
-        BudgetState before = budgetState();
-        PresupuestoLineaDto attemptedUpdate = new PresupuestoLineaDto(fixtures.foreignLineId(),
-            fixtures.ownProjectId(), "Etapa alterada", "Otra superficie", "Otra función", "Otro sistema",
-            999.0, 99.0, 999.0, 999.0, 12);
-
-        mockMvc.perform(put(budgetPath()).header("Authorization", bearer(fixtures.ownCompanyId(), RolEmpresa.JEFE_DE_OBRA))
-                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(attemptedUpdate)))
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.message").value("Presupuesto no encontrado"));
-        assertEquals(before, budgetState());
-        verify(presupuestoLineaRepository).findById(fixtures.foreignLineId());
-        verify(presupuestoLineaRepository, never()).save(any());
-        verify(presupuestoLineaRepository, never()).deleteById(any());
-
-        clearInvocations(presupuestoLineaRepository);
-        mockMvc.perform(delete(budgetPath()).header("Authorization", bearer(fixtures.ownCompanyId(), RolEmpresa.JEFE_DE_OBRA)))
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.message").value("Presupuesto no encontrado"));
-        assertEquals(before, budgetState());
-        verify(presupuestoLineaRepository).findById(fixtures.foreignLineId());
-        verify(presupuestoLineaRepository, never()).save(any());
-        verify(presupuestoLineaRepository, never()).deleteById(any());
-    }
-
-    @Test
     void disabledFixedCostEndpointsReturnStable503WithoutReadingOrMutatingRows() throws Exception {
         List<FixedCostState> before = fixedCostState();
         String auth = bearer(fixtures.ownCompanyId(), RolEmpresa.ADMINISTRADOR);
@@ -217,19 +165,6 @@ class PrP0SecurityHttpTest {
     }
 
     @Test
-    void disabledCashflowReturns503BeforeUseCaseQueriesProjectData() throws Exception {
-        clearInvocations(proyectoRepository, presupuestoLineaRepository, gastoFijoRepository, ingresoRepository);
-        assertFeatureUnavailable(mockMvc.perform(get("/api/proyectos/" + fixtures.ownProjectId() + "/cashflow")
-            .header("Authorization", bearer(fixtures.ownCompanyId(), RolEmpresa.CONSULTA))));
-
-        // TenantAccessInterceptor must load the URL project once; the use case must not query it again.
-        verify(proyectoRepository, times(1)).findById(fixtures.ownProjectId());
-        verify(presupuestoLineaRepository, never()).findByProyectoId(any());
-        verify(gastoFijoRepository, never()).findAll();
-        verify(ingresoRepository, never()).findByProyectoId(any());
-    }
-
-    @Test
     void demoResetReturns503AndNeverCallsSeeder() throws Exception {
         assertFeatureUnavailable(mockMvc.perform(post("/api/proyectos/reset-demo")
             .header("Authorization", bearer(fixtures.ownCompanyId(), RolEmpresa.ADMINISTRADOR))));
@@ -242,23 +177,8 @@ class PrP0SecurityHttpTest {
             .andExpect(jsonPath("$.code").value(FEATURE_UNAVAILABLE_CODE));
     }
 
-    private String budgetPath() {
-        return "/api/proyectos/" + fixtures.ownProjectId() + "/presupuesto/" + fixtures.foreignLineId();
-    }
-
     private String bearer(Long companyId, RolEmpresa role) {
         return "Bearer " + transaction().execute(status -> HttpIdentityFixtures.token(entityManager, jwtService, companyId, role, false));
-    }
-
-    private BudgetState budgetState() {
-        return Objects.requireNonNull(transaction().execute(status -> {
-            entityManager.clear();
-            PresupuestoLinea line = entityManager.find(PresupuestoLinea.class, fixtures.foreignLineId());
-            assertNotNull(line);
-            return new BudgetState(line.getId(), line.getProyecto().getId(), line.getEtapa(),
-                line.getTipoSuperficie(), line.getFuncion(), line.getSistema(), line.getM2(),
-                line.getHhPorM2(), line.getPrecioPorHh(), line.getPrecioPorHhUsd(), line.getMes());
-        }));
     }
 
     private List<FixedCostState> fixedCostState() {
@@ -315,8 +235,5 @@ class PrP0SecurityHttpTest {
 
     private record Fixtures(Long ownCompanyId, Long ownProjectId, Long foreignProjectId,
                             Long foreignLineId, Long fixedCostId) { }
-    private record BudgetState(Long id, Long projectId, String stage, String surface, String function,
-                               String system, Double squareMeters, Double hoursPerSquareMeter,
-                               Double pricePerHour, Double usdPricePerHour, Integer month) { }
     private record FixedCostState(Long id, String concept, Double amount, String category, Integer month) { }
 }

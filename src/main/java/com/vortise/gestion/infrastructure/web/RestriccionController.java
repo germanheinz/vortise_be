@@ -70,16 +70,20 @@ public class RestriccionController {
     }
 
     @PostMapping("/proyectos/{proyectoId}/restricciones")
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ResponseEntity<RestriccionDto> create(@PathVariable Long proyectoId, @Valid @RequestBody RestriccionCreateDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(createRestriccionUseCase.execute(proyectoId, dto));
     }
 
+    // A JEFE_DE_OBRA may only release a restriction once; UpdateRestriccionUseCase enforces it.
     @PatchMapping("/restricciones/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ResponseEntity<RestriccionDto> update(@PathVariable Long id, @RequestBody RestriccionUpdateDto dto) {
         return ResponseEntity.ok(updateRestriccionUseCase.execute(id, dto));
     }
 
     @DeleteMapping("/restricciones/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.GERENTE)
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         deleteRestriccionUseCase.execute(id);
         return ResponseEntity.noContent().build();
@@ -91,6 +95,7 @@ public class RestriccionController {
     }
 
     @PostMapping("/restricciones/{id}/comentarios")
+    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ResponseEntity<RestriccionComentarioDto> createComentario(@PathVariable Long id, @Valid @RequestBody RestriccionComentarioCreateDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(createRestriccionComentarioUseCase.execute(id, dto));
     }

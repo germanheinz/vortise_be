@@ -6,8 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,7 +18,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
  */
 public class SoloLecturaWriteGuard extends OncePerRequestFilter {
     public static final String CODE = "ACCESO_SOLO_LECTURA";
-    private static final Logger log = LoggerFactory.getLogger(SoloLecturaWriteGuard.class);
     private static final Set<String> WRITE_METHODS = Set.of("POST", "PUT", "PATCH", "DELETE");
     private static final Set<String> READ_ONLY_AUTHORITIES = Set.of("ROLE_CONSULTA", "ROLE_RESPONSABLE");
     private static final String SUPER_ADMIN = "ROLE_SUPER_ADMIN";
@@ -49,7 +46,7 @@ public class SoloLecturaWriteGuard extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull FilterChain chain) throws ServletException, IOException {
         if (isReadOnlyUser()) {
-            log.warn("Write denied to read-only role: method={} path={}", request.getMethod(), request.getRequestURI());
+            com.vortise.gestion.application.audit.AuditLog.accessDenied(CODE, SecurityActor.userId(), request.getMethod(), request.getRequestURI());
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setCharacterEncoding("UTF-8");
             response.setContentType("application/json");

@@ -35,11 +35,18 @@ public class JwtService {
     }
 
     public String generate(Long userId, Long empresaId, String email, String rol, boolean superAdmin, long sessionVersion) {
+        return generate(userId, empresaId, email, rol, superAdmin, sessionVersion, java.util.Set.of());
+    }
+
+    /** {@code obras} are the sites a JEFE_DE_OBRA may write to; the claim is omitted when empty. */
+    public String generate(Long userId, Long empresaId, String email, String rol, boolean superAdmin, long sessionVersion,
+            java.util.Collection<Long> obras) {
         Date now = new Date();
-        return Jwts.builder().subject(email).claim("userId", userId).claim("empresaId", empresaId).claim("rol", rol)
+        var builder = Jwts.builder().subject(email).claim("userId", userId).claim("empresaId", empresaId).claim("rol", rol)
             .claim("superAdmin", superAdmin)
-            .claim("sessionVersion", sessionVersion)
-            .issuedAt(now).expiration(new Date(now.getTime() + expirationMs)).signWith(signingKey).compact();
+            .claim("sessionVersion", sessionVersion);
+        if (obras != null && !obras.isEmpty()) builder.claim("obras", obras.stream().sorted().toList());
+        return builder.issuedAt(now).expiration(new Date(now.getTime() + expirationMs)).signWith(signingKey).compact();
     }
 
     public io.jsonwebtoken.Claims parse(String token) {

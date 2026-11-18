@@ -26,11 +26,39 @@ class JwtAuthenticationFilterTest {
         var request = new MockHttpServletRequest(); request.addHeader("Authorization", "Bearer " + token);
         filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
     }
-    @Test void usesCurrentRoleInsteadOfStaleClaims() throws Exception {
+    @Test void tokenWithARoleThatDoesNotMatchTheAccountIsRejected() throws Exception {
         authenticate(jwt.generate(1L, 99L, "stale@example.invalid", "ADMINISTRADOR", true, user.getSessionVersion()));
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+    @Test void tokenWithoutRoleClaimIsRejected() throws Exception {
+        authenticate(io.jsonwebtoken.Jwts.builder().subject("t").claim("userId", 1L).claim("sessionVersion", user.getSessionVersion())
+            .expiration(new Date(System.currentTimeMillis() + 60_000))
+            .signWith(io.jsonwebtoken.security.Keys.hmacShaKeyFor("test-only-signing-key-with-enough-length-1234567890".getBytes(java.nio.charset.StandardCharsets.UTF_8))).compact());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+    @Test void authoritiesComeFromTheTokenAndCompanyFromTheAccount() throws Exception {
+        authenticate(jwt.generate(1L, 99L, "stale@example.invalid", "CONSULTA", false, user.getSessionVersion()));
         var auth = SecurityContextHolder.getContext().getAuthentication();
         assertEquals(List.of("ROLE_CONSULTA"), auth.getAuthorities().stream().map(Object::toString).toList());
         assertEquals(2L, ((io.jsonwebtoken.Claims) auth.getDetails()).get("empresaId", Number.class).longValue());
+    }
+    @Test void assignedSitesAreExposedOnlyToAJefeDeObra() throws Exception {
+        user.setRol(RolEmpresa.JEFE_DE_OBRA);
+        authenticate(jwt.generate(1L, 2L, user.getEmail(), "JEFE_DE_OBRA", false, user.getSessionVersion(), List.of(9L, 7L)));
+        var details = (io.jsonwebtoken.Claims) SecurityContextHolder.getContext().getAuthentication().getDetails();
+        assertEquals(List.of(7L, 9L), details.get("obras", List.class).stream().map(v -> ((Number) v).longValue()).toList());
+    }
+    @Test void sitesInTheTokenAreIgnoredForOtherRoles() throws Exception {
+        authenticate(jwt.generate(1L, 2L, user.getEmail(), "CONSULTA", false, user.getSessionVersion(), List.of(7L)));
+        var details = (io.jsonwebtoken.Claims) SecurityContextHolder.getContext().getAuthentication().getDetails();
+        assertEquals(List.of(), details.get("obras", List.class));
+    }
+    @Test void changingAssignedSitesRevokesPreviousTokens() throws Exception {
+        user.setRol(RolEmpresa.JEFE_DE_OBRA);
+        String token = jwt.generate(1L, 2L, user.getEmail(), "JEFE_DE_OBRA", false, user.getSessionVersion(), List.of(7L));
+        user.asignarObras(Set.of(7L, 8L));
+        authenticate(token);
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
     @Test void currentSuperAdminGetsAuthority() throws Exception {
         user.setSuperAdmin(true);

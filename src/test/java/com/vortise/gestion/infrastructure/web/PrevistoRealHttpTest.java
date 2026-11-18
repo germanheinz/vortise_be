@@ -69,7 +69,7 @@ class PrevistoRealHttpTest {
         em.persist(new CategoriaManoObraEmpresa(a,"AYUDANTE",1000.,true));
         em.persist(new CalendarioLaboralEmpresa(a));
         em.flush();
-        token = HttpIdentityFixtures.token(em, jwt, a.getId(), RolEmpresa.JEFE_DE_OBRA, false);
+        token = HttpIdentityFixtures.token(em, jwt, a.getId(), RolEmpresa.ADMINISTRADOR, false);
     }
     private Proyecto project(Empresa company,String name) {
         var p = new Proyecto(); p.setNombre(name); p.setDireccion("Test"); p.setNumeroProyecto(name);

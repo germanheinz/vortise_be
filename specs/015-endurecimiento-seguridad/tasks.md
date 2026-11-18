@@ -11,11 +11,11 @@ Estado global: **pendiente de aprobación**. Nada implementado.
 | T-011 | S0 | Documentar riesgo aceptado de S-02; escritura de `rendimientos`/`gastos-fijos` a `ADMINISTRADOR` (con guards de la spec 014) | T-002 | Implementado; verificación HTTP pendiente | Otros roles 403; riesgo registrado |
 | T-012 | S0 | Límite de intentos de login por cuenta e IP | T-002 | Implementado; verificación HTTP pendiente | Bloqueo temporal, respuesta uniforme, evento registrado |
 | T-013 | S0 | Semillas demo con activación opt-in (perfil explícito); sin borrar clases ni pruebas | T-002 | Implementado (pruebas sin contexto verdes) | Sin perfil explícito no se crea ningún usuario/credencial demo; pruebas de semillas, `ProductionConfigurationTest` y `SeedersSkipOnInitializedDatabaseTest` verdes |
-| T-020 | S1 | Spec 014 F1–F3 (token con rol/obras, guards, gestión de usuarios) | T-010 | Pendiente | Criterios de la spec 014 |
+| T-020 | S1 | Spec 014 F1–F3 (token con rol/obras, guards, gestión de usuarios) | T-010 | Implementado; verificación HTTP pendiente | Criterios de la spec 014 |
 | T-021 | S1 | Diferido: modelo por empresa de `Rendimiento`/`GastoFijo` (revisar antes de abrir a más empresas reales) | T-002 | Diferido | Decisión registrada |
-| T-022 | S1 | Eliminar endpoints, casos de uso, repositorios y pruebas sin uso del frontend | T-002 | Pendiente | Lista de eliminados; build y pruebas verdes |
-| T-023 | S1 | Inventario de rutas fuera del interceptor y pruebas de IDOR anidado | T-020 | Pendiente | Pruebas por ruta verdes |
-| T-024 | S1 | Auditoría de seguridad (log estructurado) | T-020 | Pendiente | Eventos definidos y probados |
+| T-022 | S1 | Eliminar endpoints, casos de uso, repositorios y pruebas sin uso del frontend | T-002 | Hecho (salvo `PlantaController`, ver evidencia) | Lista de eliminados; build y pruebas verdes |
+| T-023 | S1 | Inventario de rutas fuera del interceptor y pruebas de IDOR anidado | T-020 | Revisión hecha; pruebas HTTP de IDOR pendientes | Pruebas por ruta verdes |
+| T-024 | S1 | Auditoría de seguridad (log estructurado) | T-020 | Implementado (`AuditLog`, 4 pruebas) | Eventos definidos y probados |
 | T-030 | S2 | Cookie `HttpOnly` + access corto + refresh rotativo + CSRF (aprobado) | T-020 | Pendiente | Token no accesible desde JS |
 | T-031 | S2 | Proxy/`rewrites` para mismo origen | T-030 | Pendiente | Sin CORS con credenciales entre orígenes |
 | T-032 | S2 | Cabeceras de seguridad y CSP en el frontend | T-002 | Pendiente | Cabeceras presentes; build sin violaciones |
@@ -49,3 +49,18 @@ Resultado (informes surefire): 63 pruebas, 0 fallos, 0 errores, 0 omitidas. Esta
 - El límite por IP usa `getRemoteAddr()`; detrás de un proxy inverso (y con el proxy de Next.js de S2) todos los usuarios compartirían IP. Por eso el límite por IP es amplio (50 fallos/15 min) y el de cuenta es 5 fallos/15 min. Configurar `server.forward-headers-strategy` con proxies de confianza antes de producción.
 - `DatabaseInitializationPolicy`, `AdminBackupController` y `H2LogicalBackupService` mantienen la regla antigua (`!staging & !prod & ...`), por lo que siguen activos sin perfil explícito. Quedan fuera de T-013; revisarlos en S1.
 - Sin un perfil explícito (`demo`, `local`, `payments-local` o `planta-authorization-test`) ya no se siembran datos demo: el arranque local con H2 ahora requiere `-Dspring-boot.run.profiles=demo`.
+
+### S1 — 2026-11-18 (gestion_be)
+**T-022 — endpoints eliminados** (el frontend nunca los llama): `EntregaController`, `TareaController`, `RendimientoController`, `IngresoController`, `CostoIndirectoController`, `PresupuestoLineaController`, `CashflowController` y `DashboardController`, con 15 casos de uso exclusivos, 10 DTO, `CashflowCalculadorService` y 3 pruebas dedicadas (`CashflowFeatureAvailabilityTest`, `DashboardTenantAuthorizationTest`, `PresupuestoLineaOwnershipTest`); en `PrP0SecurityHttpTest` se quitaron las pruebas de dashboard, presupuesto y cashflow. Se conservan entidades, repositorios y tablas (los usan las semillas y `ExcelImportService`). **No se eliminó `PlantaController`** (el frontend tampoco lo llama) porque `AGENTS.md` mantiene protegida su suite de autorización: pendiente de decisión. La tarea T-011 sobre `RendimientoController` quedó sin objeto al eliminarse el controlador; `GastoFijoController` conserva su guard.
+
+**T-023 — revisión de IDs anidados:** los casos de uso ya validan que el hijo pertenece a la obra de la ruta (`certificados.findByIdAndProyectoId`, `reportes.findByIdAndProyectoId` / `findByIdAndProyectoId` de imágenes, `ObraTarea` en `update` y `delete`, `Planta`); restricciones y registro de horas se resuelven por su obra en `TenantAccessInterceptor`. Faltan pruebas HTTP por ruta.
+
+**T-024 — auditoría:** `AuditLog` (logger `AUDIT`) registra `access_denied` (códigos `ACCESO_SOLO_LECTURA`, `CAPACIDAD_DENEGADA`, `OBRA_NO_ASIGNADA`, `REGLA_DE_ESTADO`) y `user_access_changed`; sin emails, contraseñas ni cuerpos; limpia saltos de línea y trunca valores.
+
+**Verificación ejecutada (sin Spring ni base de datos):**
+- `mvn -o -Dtest='!<16 clases @SpringBootTest>' -Dsurefire.failIfNoSpecifiedTests=false test`: **495 pruebas, 1 fallo, 0 errores**.
+- El fallo es `CreateRestriccionUseCaseTest.rejectsNewRestrictionAfterProjectUploadDeadline`: **preexistente y ajeno a estos cambios**. `CreateRestriccionUseCase` no valida el plazo de carga de restricciones en el código commiteado (no está modificado) y la prueba espera `SolicitudInvalidaException`. Pendiente de decisión del usuario.
+- `python3 -m unittest test_extract_empresas` (scripts/tests): 17 pruebas OK, con `usuario_obra` clasificada.
+- `StagingSeedRunPolicyTest` se actualizó para fijar `SeedProfiles.DEMO_ONLY` (cambio de S0).
+
+**No ejecutado:** las 11 pruebas HTTP con H2 en memoria (ampliadas en S1: `RestriccionDetalleHttpTest`, `PrevistoRealHttpTest` y `RubroEstructuraPersistenciaTest` pasaron a token `ADMINISTRADOR`; `PlantaAuthorizationHttpTest` ahora cubre `ADMINISTRADOR`/`COLABORADOR` y que `JEFE_DE_OBRA` recibe 403), la migración V22 contra una base real, `mvn verify`, `tsc` y `npm run build`.

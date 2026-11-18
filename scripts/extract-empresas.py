@@ -65,7 +65,7 @@ OWNERSHIP = [
 ]
 PARENT = {table: (column, parent) for table, column, parent in OWNERSHIP}
 # Tables with two ownership references or a rule of their own.
-SPECIAL = ['empresas', 'usuario_empresa_accesos', 'invitaciones_equipo', 'invitacion_empresas']
+SPECIAL = ['empresas', 'usuario_empresa_accesos', 'usuario_obra', 'invitaciones_equipo', 'invitacion_empresas']
 # Cleared children first. Stripe sandbox, ephemeral reset data and ownerless global tables.
 EXCLUDED = ['devoluciones_pago', 'pagos_suscripcion', 'stripe_eventos_procesados', 'suscripciones',
             'password_reset_tokens', 'password_reset_quotas', 'gastos_fijos', 'rendimientos']
@@ -106,6 +106,8 @@ def prune_statements(cuits):
     statements += [
         'DELETE FROM public.usuario_empresa_accesos WHERE usuario_id NOT IN (SELECT id FROM public.usuarios_empresa)'
         ' OR empresa_id NOT IN (SELECT id FROM public.empresas);',
+        'DELETE FROM public.usuario_obra WHERE usuario_id NOT IN (SELECT id FROM public.usuarios_empresa)'
+        ' OR proyecto_id NOT IN (SELECT id FROM public.proyectos);',
         'DELETE FROM public.invitaciones_equipo WHERE titular_id NOT IN (SELECT id FROM public.usuarios_empresa);',
         'DELETE FROM public.invitacion_empresas WHERE invitacion_id NOT IN (SELECT id FROM public.invitaciones_equipo)'
         ' OR empresa_id NOT IN (SELECT id FROM public.empresas);',
@@ -156,6 +158,10 @@ def expected_sql(table, cuits):
     if table == 'usuario_empresa_accesos':
         return ('SELECT count(*) FROM public.usuario_empresa_accesos a JOIN public.usuarios_empresa u ON a.usuario_id = u.id'
             ' JOIN public.empresas ae ON a.empresa_id = ae.id WHERE %s AND ae.identificacion_fiscal IN (%s);' % (kept_user('u', lits), lits))
+    if table == 'usuario_obra':
+        return ('SELECT count(*) FROM public.usuario_obra o JOIN public.usuarios_empresa u ON o.usuario_id = u.id'
+            ' JOIN public.proyectos p ON o.proyecto_id = p.id JOIN public.empresas pe ON p.empresa_id = pe.id'
+            ' WHERE %s AND pe.identificacion_fiscal IN (%s);' % (kept_user('u', lits), lits))
     if table == 'invitaciones_equipo':
         return ('SELECT count(DISTINCT i.id) FROM public.invitaciones_equipo i JOIN public.usuarios_empresa u ON i.titular_id = u.id'
             ' JOIN public.invitacion_empresas ie ON ie.invitacion_id = i.id JOIN public.empresas e ON ie.empresa_id = e.id'

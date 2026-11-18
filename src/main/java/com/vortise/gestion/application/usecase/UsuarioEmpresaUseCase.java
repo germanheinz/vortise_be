@@ -22,11 +22,19 @@ public class UsuarioEmpresaUseCase {
     private final SuscripcionConsultaService suscripciones;
     private final EquipoAccessPolicy equipo;
     private final com.vortise.gestion.application.port.CurrentIdentity identity;
+    private final com.vortise.gestion.domain.repository.ProyectoRepository proyectos;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public UsuarioEmpresaUseCase(EmpresaRepository empresaRepository, UsuarioEmpresaRepository usuarioRepository, PasswordEncoder passwordEncoder,
+            SuscripcionConsultaService suscripciones, EquipoAccessPolicy equipo, com.vortise.gestion.application.port.CurrentIdentity identity,
+            com.vortise.gestion.domain.repository.ProyectoRepository proyectos) {
+        this.empresaRepository = empresaRepository; this.usuarioRepository = usuarioRepository; this.passwordEncoder = passwordEncoder;
+        this.suscripciones = suscripciones; this.equipo = equipo; this.identity = identity; this.proyectos = proyectos;
+    }
 
     public UsuarioEmpresaUseCase(EmpresaRepository empresaRepository, UsuarioEmpresaRepository usuarioRepository, PasswordEncoder passwordEncoder,
             SuscripcionConsultaService suscripciones, EquipoAccessPolicy equipo, com.vortise.gestion.application.port.CurrentIdentity identity) {
-        this.empresaRepository = empresaRepository; this.usuarioRepository = usuarioRepository; this.passwordEncoder = passwordEncoder;
-        this.suscripciones = suscripciones; this.equipo = equipo; this.identity = identity;
+        this(empresaRepository, usuarioRepository, passwordEncoder, suscripciones, equipo, identity, null);
     }
 
     @Transactional(readOnly = true)
@@ -72,20 +80,46 @@ public class UsuarioEmpresaUseCase {
         }
         if (dto.password() != null && !dto.password().isBlank()) PasswordPolicy.validate(dto.password());
         usuario.setNombre(dto.nombre().trim()); usuario.setRol(dto.rol()); usuario.setActivo(dto.activo());
+        applyObras(usuario, empresaId, dto);
         if (dto.password() != null && !dto.password().isBlank()) {
             usuario.setPasswordHash(passwordEncoder.encode(dto.password()));
         }
-        return toDto(usuarioRepository.save(usuario));
+        UsuarioEmpresa saved = usuarioRepository.save(usuario);
+        com.vortise.gestion.application.audit.AuditLog.userAccessChanged(identity.usuarioId(), saved.getId(), saved.getRol().name(),
+            saved.getObrasAsignadas().size(), saved.isActivo());
+        return toDto(saved);
     }
     @Transactional
     public void delete(Long empresaId, Long id) { requireEmpresa(empresaId); UsuarioEmpresa usuario = findOwned(empresaId, id); if (usuario.isColaborador()) { requireInvitante(usuario); usuarioRepository.bloquearPorId(usuario.getInvitanteId()).orElseThrow(() -> new RecursoNoEncontradoException("Titular no encontrado")); } if (id.equals(identity.usuarioId()) || id.equals(requireEmpresa(empresaId).getCreadoPorUsuarioId())) throw new SolicitudInvalidaException("No podés desactivar tu propio acceso."); usuario.setActivo(false); usuarioRepository.save(usuario); }
     private Empresa lockEmpresa(Long id) {
         return empresaRepository.bloquearPorId(id).orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada"));
     }
+    // Only a JEFE_DE_OBRA has assigned sites, and only sites of the same company; any change revokes its sessions.
+    private void applyObras(UsuarioEmpresa usuario, Long empresaId, UsuarioEmpresaUpdateDto dto) {
+        if (dto.rol() != com.vortise.gestion.domain.model.RolEmpresa.JEFE_DE_OBRA) {
+            if (dto.obrasAsignadas() != null && !dto.obrasAsignadas().isEmpty()) {
+                throw new SolicitudInvalidaException("Solo un jefe de obra tiene obras asignadas.");
+            }
+            usuario.asignarObras(java.util.Set.of());
+            return;
+        }
+        if (dto.obrasAsignadas() == null) return;
+        java.util.Set<Long> ids = new java.util.HashSet<>(dto.obrasAsignadas());
+        for (Long obraId : ids) {
+            boolean propia = obraId != null && proyectos != null && proyectos.findById(obraId)
+                .map(p -> p.getEmpresaRelacionada() != null && empresaId.equals(p.getEmpresaRelacionada().getId())).orElse(false);
+            if (!propia) throw new SolicitudInvalidaException("Una de las obras no pertenece a la empresa.");
+        }
+        usuario.asignarObras(ids);
+    }
     private Empresa requireEmpresa(Long id) { return empresaRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada")); }
-    private UsuarioEmpresa findOwned(Long empresaId, Long id) { UsuarioEmpresa usuario = usuarioRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado")); if (!usuario.getEmpresa().getId().equals(empresaId) && !usuario.getEmpresasAsignadas().contains(empresaId)) throw new SolicitudInvalidaException("El usuario no pertenece a la empresa"); return usuario; }
+    private UsuarioEmpresa findOwned(Long empresaId, Long id) { UsuarioEmpresa usuario = usuarioRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado")); if (!usuario.getEmpresa().getId().equals(empresaId) && !usuario.getEmpresasAsignadas().contains(empresaId)) throw new SolicitudInvalidaException("El usuario no pertenece a la empresa"); if (usuario.isSuperAdmin() && !identity.isSuperAdmin()) throw new org.springframework.security.access.AccessDeniedException("No podés administrar a un administrador de la plataforma."); return usuario; }
     private void requireInvitante(UsuarioEmpresa usuario) {
         if (!identity.usuarioId().equals(usuario.getInvitanteId())) throw new org.springframework.security.access.AccessDeniedException("Solo el titular puede gestionar este invitado.");
     }
-    private UsuarioEmpresaDto toDto(UsuarioEmpresa u) { return new UsuarioEmpresaDto(u.getId(), u.getEmail(), u.getNombre(), u.getRol(), u.isActivo(), null, suscripciones.resumenUsuario(u)); }
+    private UsuarioEmpresaDto toDto(UsuarioEmpresa u) {
+        java.util.List<Long> obras = u.getRol() == com.vortise.gestion.domain.model.RolEmpresa.JEFE_DE_OBRA
+            ? u.getObrasAsignadas().stream().sorted().toList() : java.util.List.of();
+        return new UsuarioEmpresaDto(u.getId(), u.getEmail(), u.getNombre(), u.getRol(), u.isActivo(), null, suscripciones.resumenUsuario(u), obras);
+    }
 }

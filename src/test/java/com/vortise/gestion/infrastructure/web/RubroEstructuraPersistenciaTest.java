@@ -97,7 +97,7 @@ class RubroEstructuraPersistenciaTest {
             fila(proyecto, "5002", "Hormigón", "Losas");
             em.flush();
             proyectoId = proyecto.getId();
-            token = HttpIdentityFixtures.token(em, jwt, empresa.getId(), RolEmpresa.JEFE_DE_OBRA, false);
+            token = HttpIdentityFixtures.token(em, jwt, empresa.getId(), RolEmpresa.ADMINISTRADOR, false);
         });
     }
 

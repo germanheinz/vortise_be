@@ -36,6 +36,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleAuthentication(org.springframework.security.core.AuthenticationException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDto(401, "Unauthorized", "Email o contraseña incorrectos"));
     }
+    @ExceptionHandler(com.vortise.gestion.application.exception.ReglaDeEstadoException.class)
+    public ResponseEntity<java.util.Map<String, Object>> handleReglaDeEstado(com.vortise.gestion.application.exception.ReglaDeEstadoException ex, jakarta.servlet.http.HttpServletRequest request) {
+        audit(com.vortise.gestion.application.exception.ReglaDeEstadoException.CODE, request);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(java.util.Map.of("status", 403, "error", "Forbidden",
+            "code", com.vortise.gestion.application.exception.ReglaDeEstadoException.CODE, "message", ex.getMessage()));
+    }
+    @ExceptionHandler(com.vortise.gestion.infrastructure.security.ObraNoAsignadaException.class)
+    public ResponseEntity<java.util.Map<String, Object>> handleObraNoAsignada(com.vortise.gestion.infrastructure.security.ObraNoAsignadaException ex, jakarta.servlet.http.HttpServletRequest request) {
+        audit(com.vortise.gestion.infrastructure.security.ObraNoAsignadaException.CODE, request);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(java.util.Map.of("status", 403, "error", "Forbidden",
+            "code", com.vortise.gestion.infrastructure.security.ObraNoAsignadaException.CODE, "message", ex.getMessage()));
+    }
     @ExceptionHandler(com.vortise.gestion.application.exception.DemasiadosIntentosException.class)
     public ResponseEntity<ErrorResponseDto> handleTooManyAttempts(com.vortise.gestion.application.exception.DemasiadosIntentosException ex) {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
@@ -69,8 +81,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(value={AccessDeniedException.class})
-    public ResponseEntity<ErrorResponseDto> handleAccessDenied(AccessDeniedException ex) {
+    public ResponseEntity<ErrorResponseDto> handleAccessDenied(AccessDeniedException ex, jakarta.servlet.http.HttpServletRequest request) {
+        audit("CAPACIDAD_DENEGADA", request);
         return ResponseEntity.status((HttpStatusCode)HttpStatus.FORBIDDEN).body(new ErrorResponseDto(403, "Forbidden", ex.getMessage()));
+    }
+
+    private static void audit(String code, jakarta.servlet.http.HttpServletRequest request) {
+        com.vortise.gestion.application.audit.AuditLog.accessDenied(code,
+            com.vortise.gestion.infrastructure.security.SecurityActor.userId(), request.getMethod(), request.getRequestURI());
     }
 
     @ExceptionHandler(value={MethodArgumentNotValidException.class})

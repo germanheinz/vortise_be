@@ -37,11 +37,11 @@ public class SuscripcionController {
     @GetMapping("/suscripciones/mias")
     public ResponseEntity<MisSuscripcionesDto> mias() { return ResponseEntity.ok(useCase.mias()); }
 
-    @PreAuthorize("!hasRole('COLABORADOR')")
+    @PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.SOLO_ADMINISTRADOR)
     @PostMapping("/suscripciones/checkout")
     public ResponseEntity<UrlDto> checkout(@Valid @RequestBody CheckoutRequestDto request) { return ResponseEntity.ok(useCase.checkout(request)); }
 
-    @PreAuthorize("!hasRole('COLABORADOR')")
+    @PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.SOLO_ADMINISTRADOR)
     @PostMapping("/suscripciones/portal")
     public ResponseEntity<UrlDto> portal(@Valid @RequestBody PortalRequestDto request) { return ResponseEntity.ok(useCase.portal(request.titular())); }
 

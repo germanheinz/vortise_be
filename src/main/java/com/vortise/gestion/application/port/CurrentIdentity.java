@@ -10,4 +10,5 @@ public interface CurrentIdentity {
     boolean canAccessEmpresa(Long empresaId);
     boolean isAdministrator();
     boolean isSuperAdmin();
+    default boolean isJefeDeObra() { return false; }
 }

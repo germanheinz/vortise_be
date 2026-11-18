@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/proyectos/{proyectoId}/certificados")
 public class CertificadoObraController {
-    private static final String ESCRITURA = "hasAnyRole('ADMINISTRADOR', 'JEFE_DE_OBRA')";
+    private static final String ESCRITURA = com.vortise.gestion.infrastructure.security.Guards.CERTIFICADOS;
     private final CertificadoObraUseCase useCase;
 
     public CertificadoObraController(CertificadoObraUseCase useCase) { this.useCase = useCase; }
@@ -59,8 +59,9 @@ public class CertificadoObraController {
         return ResponseEntity.status(HttpStatus.CREATED).body(useCase.crear(proyectoId, dto));
     }
 
+    // Editing a certificate (including its cut date) is for Gerencia/Coordinación only.
     @PutMapping("/{certificadoId}/corte")
-    @PreAuthorize(ESCRITURA)
+    @PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.SOLO_ADMINISTRADOR)
     public CertificadoDetalleDto editarCorte(@PathVariable Long proyectoId, @PathVariable Long certificadoId, @Valid @RequestBody CertificadoCorteDto dto) {
         return useCase.editarCorte(proyectoId, certificadoId, dto.fechaCorte());
     }

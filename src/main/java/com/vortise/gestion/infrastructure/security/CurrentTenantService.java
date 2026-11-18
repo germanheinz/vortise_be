@@ -64,6 +64,17 @@ public class CurrentTenantService implements CurrentIdentity {
         return hasAuthority("ROLE_SUPER_ADMIN");
     }
 
+    public boolean isJefeDeObra() {
+        return hasAuthority("ROLE_JEFE_DE_OBRA");
+    }
+
+    /** Sites carried by the signed token of a JEFE_DE_OBRA; empty for any other role. */
+    public java.util.Set<Long> obrasAsignadas() {
+        if (!(claims().get("obras") instanceof java.util.Collection<?> values)) return java.util.Set.of();
+        return values.stream().filter(Number.class::isInstance).map(value -> ((Number) value).longValue())
+            .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
+
     private boolean hasAuthority(String authorityName) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null

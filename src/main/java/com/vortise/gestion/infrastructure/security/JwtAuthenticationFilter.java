@@ -44,19 +44,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     response.getWriter().write("{\"status\":403,\"code\":\"TEAM_PRO_REQUIRED\",\"message\":\"El acceso del equipo está suspendido hasta recuperar Pro.\"}");
                     return;
                 }
-                var authorities = new java.util.ArrayList<SimpleGrantedAuthority>(List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getRol().name())));
+                // Authorities come from the signed token; a token whose role no longer matches the account is rejected.
+                String tokenRole = claims.get("rol", String.class);
+                if (tokenRole == null || !tokenRole.equals(usuario.getRol().name())) {
+                    throw new IllegalArgumentException("Invalid session");
+                }
+                var authorities = new java.util.ArrayList<SimpleGrantedAuthority>(List.of(new SimpleGrantedAuthority("ROLE_" + tokenRole)));
                 if (usuario.isSuperAdmin()) {
                     authorities.add(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN"));
                 }
                 var authentication = new UsernamePasswordAuthenticationToken(usuario.getEmail(), null, authorities);
                 authentication.setDetails(io.jsonwebtoken.Jwts.claims().add(claims)
                     .add("userId", usuario.getId()).add("empresaId", usuario.getEmpresa().getId())
-                    .add("rol", usuario.getRol().name()).add("superAdmin", usuario.isSuperAdmin()).build());
+                    .add("rol", tokenRole).add("superAdmin", usuario.isSuperAdmin())
+                    .add("obras", "JEFE_DE_OBRA".equals(tokenRole) ? obrasFrom(claims) : List.<Long>of()).build());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (io.jsonwebtoken.JwtException | IllegalArgumentException ignored) {
                 SecurityContextHolder.clearContext();
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    private static List<Long> obrasFrom(Claims claims) {
+        Object raw = claims.get("obras");
+        if (!(raw instanceof java.util.Collection<?> values)) return List.of();
+        return values.stream().filter(Number.class::isInstance).map(value -> ((Number) value).longValue()).sorted().toList();
     }
 }
