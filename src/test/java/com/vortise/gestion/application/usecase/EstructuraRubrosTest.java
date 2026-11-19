@@ -264,6 +264,23 @@ class EstructuraRubrosTest {
 
     // ------------------------------------------------------- stored structure
 
+    @Test
+    void advanceTargetsLevelsOrSubrubrosAccordingToTheirRoot() {
+        var root = rubro(1L, "1", TipoNodoRubro.RUBRO, null);
+        root.setVarianteEstructura(VarianteEstructura.RUBRO_NIVEL_SUBRUBRO);
+        var level = rubro(2L, "1.1", TipoNodoRubro.NIVEL, root);
+        var nested = rubro(3L, "1.1.1", TipoNodoRubro.SUBRUBRO, level);
+        var flatRoot = rubro(4L, "2", TipoNodoRubro.RUBRO, null);
+        var flatSubrubro = rubro(5L, "2.1", TipoNodoRubro.SUBRUBRO, flatRoot);
+        var nodes = List.of(root, level, nested, flatRoot, flatSubrubro);
+
+        assertFalse(EstructuraRubros.admiteCargaDeAvance(root, nodes));
+        assertTrue(EstructuraRubros.admiteCargaDeAvance(level, nodes));
+        assertFalse(EstructuraRubros.admiteCargaDeAvance(nested, nodes));
+        assertFalse(EstructuraRubros.admiteCargaDeAvance(flatRoot, nodes));
+        assertTrue(EstructuraRubros.admiteCargaDeAvance(flatSubrubro, nodes));
+    }
+
     private static RubroObra rubro(Long id, String codigo, TipoNodoRubro tipo, RubroObra padre) {
         RubroObra rubro = new RubroObra();
         rubro.setId(id);

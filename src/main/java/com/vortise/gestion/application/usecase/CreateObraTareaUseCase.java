@@ -7,6 +7,7 @@ import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.model.ObraTarea;
 import com.vortise.gestion.domain.model.Proyecto;
+import com.vortise.gestion.domain.model.TipoNodoRubro;
 import com.vortise.gestion.domain.repository.ObraTareaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.service.EstructuraRubros;
@@ -45,7 +46,6 @@ public class CreateObraTareaUseCase {
         applyActivity(tarea, dto);
         tarea.setNombre(dto.nombre());
         tarea.setSector(dto.sector());
-        tarea.setNivel(dto.nivel());
         tarea.setUnidad(dto.unidad());
         tarea.setRubro(dto.rubro());
         tarea.setPorcentajeCumplimiento(dto.porcentajeCumplimiento());
@@ -63,7 +63,7 @@ public class CreateObraTareaUseCase {
         var actividad = tarea.getProyecto().getRubros().stream().filter(r -> dto.rubroId().equals(r.getId())).findFirst().orElseThrow();
         tarea.setRubro(actividad.getRubro());
         tarea.setUnidad(actividad.getUnidad());
-        tarea.setNivel(actividad.getNivel());
+        tarea.setNivel(actividad.getTipoNodo() == TipoNodoRubro.NIVEL ? EstructuraRubros.nombreDe(actividad) : actividad.getNivel());
         var calculated = PrevistoRealCalculator.calculate(actividad.getCantidad(), actividad.getHorasOficialesPrevistas(),
             actividad.getHorasAyudantesPrevistas(), tarea.getCantidadReal(), tarea.getHorasOficiales(), tarea.getHorasAyudantes(), null, null, null);
         tarea.setCantidadPrevista(calculated.cantidadEquivalente());
@@ -87,7 +87,6 @@ public class CreateObraTareaUseCase {
         applyActivity(tarea, dto);
         tarea.setNombre(dto.nombre());
         tarea.setSector(dto.sector());
-        tarea.setNivel(dto.nivel());
         tarea.setUnidad(dto.unidad());
         tarea.setRubro(dto.rubro());
         tarea.setPorcentajeCumplimiento(dto.porcentajeCumplimiento());
@@ -105,7 +104,7 @@ public class CreateObraTareaUseCase {
         var actividad = tarea.getProyecto().getRubros().stream().filter(r -> dto.rubroId().equals(r.getId())).findFirst().orElseThrow();
         tarea.setRubro(actividad.getRubro());
         tarea.setUnidad(actividad.getUnidad());
-        tarea.setNivel(actividad.getNivel());
+        tarea.setNivel(actividad.getTipoNodo() == TipoNodoRubro.NIVEL ? EstructuraRubros.nombreDe(actividad) : actividad.getNivel());
         var calculated = PrevistoRealCalculator.calculate(actividad.getCantidad(), actividad.getHorasOficialesPrevistas(),
             actividad.getHorasAyudantesPrevistas(), tarea.getCantidadReal(), tarea.getHorasOficiales(), tarea.getHorasAyudantes(), null, null, null);
         tarea.setCantidadPrevista(calculated.cantidadEquivalente());
@@ -132,8 +131,8 @@ public class CreateObraTareaUseCase {
             .filter(item -> dto.rubroId().equals(item.getId())).findFirst()
             .orElseThrow(() -> new RecursoNoEncontradoException("La actividad no pertenece a la obra"));
         boolean sameActivity = tarea.getActividad() != null && rubro.getId() != null && rubro.getId().equals(tarea.getActividad().getId());
-        if (!sameActivity && !EstructuraRubros.esHoja(rubro, tarea.getProyecto().getRubros())) {
-            throw new SolicitudInvalidaException("Seleccioná una actividad (último nivel de la estructura), no un rubro o nivel agrupador");
+        if (!sameActivity && !EstructuraRubros.admiteCargaDeAvance(rubro, tarea.getProyecto().getRubros())) {
+            throw new SolicitudInvalidaException("Seleccioná un nivel o, si el rubro no tiene niveles, un subrubro");
         }
         // La cantidad ejecutada es opcional: sin ella la carga queda como actividad en proceso.
         if (dto.cantidadReal() != null && (!Double.isFinite(dto.cantidadReal()) || dto.cantidadReal() < 0)) {
