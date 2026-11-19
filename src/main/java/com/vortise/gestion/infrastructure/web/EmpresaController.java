@@ -39,11 +39,14 @@ public class EmpresaController {
     private final GetObrasByEmpresaUseCase getObrasByEmpresaUseCase;
     private final GetEmpresaResumenUseCase resumen;
     private final GetRestriccionesEmpresaUseCase restriccionesEmpresa;
+    private final com.vortise.gestion.application.usecase.GetEmpresaDashboardObrasUseCase dashboardObras;
 
     public EmpresaController(GetEmpresasUseCase getEmpresasUseCase, GetEmpresaByIdUseCase getEmpresaByIdUseCase,
             SaveEmpresaUseCase saveEmpresaUseCase, DeleteEmpresaUseCase deleteEmpresaUseCase,
             GetObrasByEmpresaUseCase getObrasByEmpresaUseCase, GetProyectoPaginaUseCase pagina,
-            GetEmpresaResumenUseCase resumen, GetRestriccionesEmpresaUseCase restriccionesEmpresa) {
+            GetEmpresaResumenUseCase resumen, GetRestriccionesEmpresaUseCase restriccionesEmpresa,
+            com.vortise.gestion.application.usecase.GetEmpresaDashboardObrasUseCase dashboardObras) {
+        this.dashboardObras = dashboardObras;
         this.pagina = pagina;
         this.resumen = resumen;
         this.restriccionesEmpresa = restriccionesEmpresa;
@@ -74,6 +77,11 @@ public class EmpresaController {
     @GetMapping("/{id}/resumen")
     public ResponseEntity<EmpresaResumenDto> getResumen(@PathVariable Long id) {
         return ResponseEntity.ok(resumen.execute(id));
+    }
+
+    @GetMapping("/{id}/dashboard-obras")
+    public ResponseEntity<com.vortise.gestion.application.dto.EmpresaDashboardObrasDto> getDashboardObras(@PathVariable Long id) {
+        return ResponseEntity.ok(dashboardObras.execute(id));
     }
 
     @GetMapping("/{id}/restricciones")
