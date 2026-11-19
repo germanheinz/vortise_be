@@ -48,9 +48,13 @@ public class ObraTarea {
     @Column(length = 2000)
     private String descripcion;
     private LocalDate fecha;
+    @Column(nullable = false)
+    private Integer dias = 1;
     private Long registradoPorUsuarioId;
     private LocalDateTime registradoEn;
 
+    public Integer getDias() { return dias; }
+    public void setDias(Integer value) { dias = value == null ? 1 : value; }
     public Long getRegistradoPorUsuarioId() { return registradoPorUsuarioId; }
     public void setRegistradoPorUsuarioId(Long value) { registradoPorUsuarioId = value; }
     public LocalDateTime getRegistradoEn() { return registradoEn; }

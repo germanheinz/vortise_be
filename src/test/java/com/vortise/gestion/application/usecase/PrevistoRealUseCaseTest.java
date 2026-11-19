@@ -62,6 +62,25 @@ class PrevistoRealUseCaseTest {
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(enProceso));
         assertNull(service.execute(1L).actividades().get(0).cantidadReal());
     }
+    private ObraTareaCreateDto conDias(Integer dias) {
+        return new ObraTareaCreateDto("Carga",null,null,"kg","wrong",null,null,null,null,100.,80.,null,6.,null,null,LocalDate.of(2026,10,14),10L,dias);
+    }
+    @Test void loadSpansTheRequestedDaysAndDefaultsToOneWhenOmitted() {
+        when(tasks.save(any())).thenAnswer(i -> i.getArgument(0));
+        var service = new CreateObraTareaUseCase(tasks,projects);
+        assertEquals(3,service.execute(1L,conDias(3)).dias());
+        assertEquals(1,service.execute(1L,dto(10L)).dias(),"a client that does not send days gets one day");
+    }
+    @Test void rejectsDaysOutOfRangeAndKeepsThemWhenAnEditOmitsThem() {
+        when(tasks.save(any())).thenAnswer(i -> i.getArgument(0));
+        var service = new CreateObraTareaUseCase(tasks,projects);
+        assertThrows(SolicitudInvalidaException.class,() -> service.execute(1L,conDias(0)));
+        assertThrows(SolicitudInvalidaException.class,() -> service.execute(1L,conDias(ObraTareaCreateDto.MAX_DIAS + 1)));
+        var existing = task(1,10L,6); existing.setDias(4);
+        when(tasks.findById(1L)).thenReturn(Optional.of(existing));
+        assertEquals(4,service.update(1L,1L,dto(10L)).dias(),"an edit without days does not reset them");
+        assertEquals(2,service.update(1L,1L,conDias(2)).dias());
+    }
     @Test void rejectsForeignActivityBeforeSaving() {
         assertThrows(IllegalArgumentException.class,() -> new CreateObraTareaUseCase(tasks,projects).execute(1L,dto(99L)));
         verify(tasks,never()).save(any());

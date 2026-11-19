@@ -25,6 +25,7 @@ public record ObraTareaDto(
     Double productividadReal,
     Double rendimiento,
     Double desvio,
-    Long rubroId
+    Long rubroId,
+    Integer dias
 ) {
 }

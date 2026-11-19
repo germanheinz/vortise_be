@@ -59,6 +59,7 @@ public class CreateObraTareaUseCase {
         tarea.setMedidaCorrectiva(dto.medidaCorrectiva());
         tarea.setDescripcion(dto.descripcion());
         tarea.setFecha(dto.fecha());
+        if (dto.dias() != null || tarea.getId() == null) tarea.setDias(dto.dias());
         var actividad = tarea.getProyecto().getRubros().stream().filter(r -> dto.rubroId().equals(r.getId())).findFirst().orElseThrow();
         tarea.setRubro(actividad.getRubro());
         tarea.setUnidad(actividad.getUnidad());
@@ -100,6 +101,7 @@ public class CreateObraTareaUseCase {
         tarea.setMedidaCorrectiva(dto.medidaCorrectiva());
         tarea.setDescripcion(dto.descripcion());
         tarea.setFecha(dto.fecha());
+        if (dto.dias() != null || tarea.getId() == null) tarea.setDias(dto.dias());
         var actividad = tarea.getProyecto().getRubros().stream().filter(r -> dto.rubroId().equals(r.getId())).findFirst().orElseThrow();
         tarea.setRubro(actividad.getRubro());
         tarea.setUnidad(actividad.getUnidad());
@@ -147,6 +149,9 @@ public class CreateObraTareaUseCase {
                 throw new SolicitudInvalidaException("Total de horas fuera de rango");
             }
         }
+        if (dto.dias() != null && (dto.dias() < 1 || dto.dias() > ObraTareaCreateDto.MAX_DIAS)) {
+            throw new SolicitudInvalidaException("Los días deben estar entre 1 y " + ObraTareaCreateDto.MAX_DIAS);
+        }
         if (dto.cantidadPrevista() != null && (!Double.isFinite(dto.cantidadPrevista()) || dto.cantidadPrevista() < 0)) {
             throw new SolicitudInvalidaException("Cantidad prevista inválida");
         }
@@ -193,7 +198,8 @@ public class CreateObraTareaUseCase {
             productividadReal,
             rendimiento,
             desvio,
-            tarea.getRubroId()
+            tarea.getRubroId(),
+            tarea.getDias()
         );
     }
 
