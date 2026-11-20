@@ -26,10 +26,11 @@ public class TelegramComandos {
     private final ConsultarRestriccionesObraUseCase consultar;
     private final CrearRestriccionChatUseCase crear;
     private final Validator validator;
+    private final TelegramConversacion conversacion;
 
     public TelegramComandos(JpaVinculoTelegramRepository vinculos, UsuarioEmpresaRepository usuarios,
             ProyectoRepository proyectos, CurrentTenantService identidad,
-            ConsultarRestriccionesObraUseCase consultar, CrearRestriccionChatUseCase crear, Validator validator) {
+            ConsultarRestriccionesObraUseCase consultar, CrearRestriccionChatUseCase crear, Validator validator, TelegramConversacion conversacion) {
         this.vinculos = vinculos;
         this.usuarios = usuarios;
         this.proyectos = proyectos;
@@ -37,13 +38,14 @@ public class TelegramComandos {
         this.consultar = consultar;
         this.crear = crear;
         this.validator = validator;
+        this.conversacion = conversacion;
     }
 
-    public String ejecutar(long chatId, long eventoId, String mensaje) {
+    public TelegramController.Respuesta ejecutar(long chatId, long eventoId, String mensaje) {
         var usuario = vinculos.findByChatConfirmado(chatId)
             .flatMap(vinculo -> usuarios.findById(vinculo.getUsuarioId()))
             .filter(cuenta -> cuenta.isActivo() && (cuenta.getRol() == RolEmpresa.ADMINISTRADOR || cuenta.isSuperAdmin()) && cuenta.getEmpresa() != null);
-        if (usuario.isEmpty()) return "Vinculá este chat desde tu sesión de Vórtise.";
+        if (usuario.isEmpty()) return new TelegramController.Respuesta("Vinculá este chat desde tu sesión de Vórtise.");
         var cuenta = usuario.get();
         var anterior = SecurityContextHolder.getContext();
         var delegada = SecurityContextHolder.createEmptyContext();
@@ -53,7 +55,12 @@ public class TelegramComandos {
         delegada.setAuthentication(auth);
         SecurityContextHolder.setContext(delegada);
         try {
-            return ejecutarAutorizado(chatId, eventoId, mensaje.strip());
+            String texto = mensaje.strip();
+            if (texto.startsWith("/restricciones ") || texto.startsWith("/nueva_restriccion ")) {
+                return new TelegramController.Respuesta(ejecutarAutorizado(chatId, eventoId, texto), TelegramConversacion.MENU);
+            }
+            return conversacion.responder(chatId, cuenta.getId(), eventoId, texto,
+                comando -> ejecutarAutorizado(chatId, eventoId, comando));
         } finally {
             SecurityContextHolder.setContext(anterior);
         }

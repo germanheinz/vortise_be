@@ -64,7 +64,7 @@ public class TelegramController {
         }
         String mensaje = evento.texto().strip();
         if (!mensaje.matches("/start [A-Za-z0-9_-]{32}")) {
-            return new Respuesta(comandos.ejecutar(evento.chatId(), evento.eventoId(), mensaje));
+            return comandos.ejecutar(evento.chatId(), evento.eventoId(), mensaje);
         }
         boolean recibidoPorVortise = vincular.recibir(mensaje.substring(7), evento.chatId());
         return new Respuesta(recibidoPorVortise
@@ -75,5 +75,7 @@ public class TelegramController {
     public record Confirmacion(@NotNull @Positive Long chatId) { }
     public record Evento(@NotNull @Positive Long chatId, @NotNull @Positive Long usuarioTelegramId,
             @NotNull String tipoChat, @NotNull @Positive Long eventoId, @NotBlank @Size(max = 4096) String texto) { }
-    public record Respuesta(String mensaje) { }
+    public record Respuesta(String mensaje, java.util.List<String> opciones) {
+        public Respuesta(String mensaje) { this(mensaje, java.util.List.of()); }
+    }
 }
