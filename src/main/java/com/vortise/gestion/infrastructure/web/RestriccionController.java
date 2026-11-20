@@ -76,7 +76,7 @@ public class RestriccionController {
     }
 
     @GetMapping("/proyectos/{proyectoId}/chat/restricciones")
-    @PreAuthorize(Guards.SOLO_ADMINISTRADOR)
+    @PreAuthorize(Guards.GERENCIA_CHAT)
     public Respuesta consultarParaGerencia(@PathVariable Long proyectoId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate corte,
             @RequestParam(defaultValue = "ABIERTAS") Filtro filtro,
@@ -85,7 +85,7 @@ public class RestriccionController {
     }
 
     @PostMapping("/proyectos/{proyectoId}/chat/restricciones")
-    @PreAuthorize(Guards.SOLO_ADMINISTRADOR)
+    @PreAuthorize(Guards.GERENCIA_CHAT)
     public ResponseEntity<CrearRestriccionChatUseCase.Resultado> crearParaGerencia(@PathVariable Long proyectoId,
             @RequestHeader(value = "Idempotency-Key", required = false) String clave,
             @Valid @RequestBody CrearRestriccionChatUseCase.Solicitud solicitud) {

@@ -50,7 +50,7 @@ class RestriccionDetalleHttpTest {
     @MockitoBean com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
     private Proyecto own, other;
     private Long restrictionId, foreignRestrictionId;
-    private String token, collaboratorToken;
+    private String token, collaboratorToken, superAdminToken;
 
     private static String signingKey() {
         byte[] bytes = new byte[64]; new SecureRandom().nextBytes(bytes);
@@ -77,6 +77,7 @@ class RestriccionDetalleHttpTest {
         em.flush();
         token = HttpIdentityFixtures.token(em, jwt, a.getId(), RolEmpresa.ADMINISTRADOR, false);
         collaboratorToken = HttpIdentityFixtures.token(em, jwt, a.getId(), RolEmpresa.COLABORADOR, false);
+        superAdminToken = HttpIdentityFixtures.token(em, jwt, a.getId(), RolEmpresa.CONSULTA, true);
         TestTransaction.flagForCommit();
         TestTransaction.end(); // No test transaction may hide lazy loading failures during HTTP requests.
     }
@@ -191,6 +192,21 @@ class RestriccionDetalleHttpTest {
         }
         mvc.perform(get(path).header("Authorization", "Bearer " + token))
             .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(2));
+    }
+
+    @Test void platformSuperAdminCanLinkTelegramAndManageRestrictionsInAnotherCompany() throws Exception {
+        String auth = "Bearer " + superAdminToken;
+        mvc.perform(post("/api/integraciones/telegram/vinculo").header("Authorization", auth))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.codigo").isString());
+        String path = "/api/proyectos/" + other.getId() + "/chat/restricciones";
+        mvc.perform(get(path).header("Authorization", auth))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.obra").value("B"));
+        mvc.perform(post(path).header("Authorization", auth)
+                .header("Idempotency-Key", "superadmin-evento")
+                .contentType(MediaType.APPLICATION_JSON).content("""
+                    {"descripcion":"Validar estructura","fechaMaximaEntrega":"2099-10-10"}
+                    """))
+            .andExpect(status().isCreated()).andExpect(jsonPath("$.obra").value("B"));
     }
 
     @Test void areaAndDeliveryDatesCanBeEditedOnlyWithinTheAuthorizedCompany() throws Exception {

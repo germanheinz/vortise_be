@@ -8,6 +8,7 @@ package com.vortise.gestion.infrastructure.security;
 public final class Guards {
     /** Gerencia/Coordinación only (Acceso 2 plus the owner). Strictly ADMINISTRADOR. */
     public static final String SOLO_ADMINISTRADOR = "hasRole('ADMINISTRADOR')";
+    public static final String GERENCIA_CHAT = "hasAnyRole('ADMINISTRADOR','SUPER_ADMIN')";
     /** Acceso 2 on endpoints that were already open to the invited team (COLABORADOR is unchanged). */
     public static final String GERENTE = "hasAnyRole('ADMINISTRADOR','COLABORADOR')";
     /** Acceso 2 and Acceso 3 (Jefatura, on assigned sites) on endpoints that were open to the invited team. */

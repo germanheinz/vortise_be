@@ -40,7 +40,7 @@ public class CrearRestriccionChatUseCase {
 
     @Transactional
     public Resultado execute(Long proyectoId, String clave, Solicitud solicitud) {
-        if (!identidad.isAdministrator()) throw new AccessDeniedException("El alta por chat requiere un administrador");
+        if (!identidad.isAdministrator() && !identidad.isSuperAdmin()) throw new AccessDeniedException("El alta por chat requiere un administrador");
         if (clave == null || clave.isBlank() || clave.length() > 128) {
             throw new SolicitudInvalidaException("Idempotency-Key debe contener entre 1 y 128 caracteres");
         }
