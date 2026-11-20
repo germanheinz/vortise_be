@@ -59,7 +59,7 @@ public class TelegramComandos {
             if (texto.startsWith("/restricciones ") || texto.startsWith("/nueva_restriccion ")) {
                 return new TelegramController.Respuesta(ejecutarAutorizado(chatId, eventoId, texto), TelegramConversacion.MENU);
             }
-            return conversacion.responder(chatId, cuenta.getId(), eventoId, texto,
+            return conversacion.responder(chatId, cuenta.getId(), cuenta.getNombre(), eventoId, texto,
                 comando -> ejecutarAutorizado(chatId, eventoId, comando));
         } finally {
             SecurityContextHolder.setContext(anterior);

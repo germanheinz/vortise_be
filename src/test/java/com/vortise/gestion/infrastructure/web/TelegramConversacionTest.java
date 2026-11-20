@@ -42,10 +42,14 @@ class TelegramConversacionTest {
 
     @Test
     void conduceElAltaYUnEventoRepetidoNoLaEjecutaDosVeces() {
-        assertThat(enviar(1, "Hola").opciones()).containsExactly(
+        var bienvenida = enviar(1, "Hola");
+        assertThat(bienvenida.mensaje()).contains(
+            "¡Hola, Ana! Soy VortiseBot. Me gustaría ayudarte.",
+            "1. Consultar restricciones", "2. Crear restricción en obra", "3. Consultar estado de obra");
+        assertThat(bienvenida.opciones()).containsExactly(
             "Consultar restricciones", "Crear restricción en obra", "Consultar estado de obra");
-        assertThat(enviar(2, "Crear restricción en obra").opciones()).containsExactly("Obra Norte · #5", "Volver al menú");
-        assertThat(enviar(3, "Obra Norte · #5").mensaje()).contains("Qué restricción");
+        assertThat(enviar(2, "op:1:1").opciones()).containsExactly("Obra Norte · #5", "Volver al menú");
+        assertThat(enviar(3, "op:2:0").mensaje()).contains("Qué restricción");
         assertThat(enviar(4, "Aprobar plano eléctrico").mensaje()).contains("fecha límite");
         assertThat(enviar(5, "31/02/2099").mensaje()).contains("no es válida");
 
@@ -58,14 +62,23 @@ class TelegramConversacionTest {
 
     @Test
     void vuelveAValidarLaObraElegidaAntesDeConsultar() {
-        enviar(1, "Consultar restricciones");
+        assertThat(enviar(1, "restricciones").mensaje()).contains("Obras disponibles", "1. Obra Norte · #5");
         when(identidad.canAccessEmpresa(2L)).thenReturn(false);
 
         assertThat(enviar(2, "Obra Norte · #5").mensaje()).contains("ya no está disponible");
         verifyNoInteractions(ejecutar);
     }
 
+    @Test
+    void permiteElegirAccionYObraPorNumeroCuandoElTecladoNoSeMuestra() {
+        enviar(1, "Hola");
+        assertThat(enviar(2, "1").mensaje()).contains("Obras disponibles", "1. Obra Norte · #5");
+        when(ejecutar.apply("/restricciones 5")).thenReturn("Obra Norte · 2 restricciones");
+        assertThat(enviar(3, "1").mensaje()).contains("Obra Norte · 2 restricciones");
+        verify(ejecutar).apply("/restricciones 5");
+    }
+
     private TelegramController.Respuesta enviar(long evento, String texto) {
-        return flujo.responder(10L, 8L, evento, texto, ejecutar);
+        return flujo.responder(10L, 8L, "Ana", evento, texto, ejecutar);
     }
 }

@@ -31,6 +31,7 @@ class TelegramConversacion {
     private static final String SIGUIENTE = "Más obras";
     private static final String ANTERIOR = "Obras anteriores";
     static final List<String> MENU = List.of(CONSULTAR, CREAR, ESTADO);
+    private static final java.util.regex.Pattern BOTON = java.util.regex.Pattern.compile("op:(\\d{1,12}):(\\d{1,2})");
     private static final int POR_PAGINA = 6;
     private static final ZoneId ZONA_OBRA = ZoneId.of("America/Argentina/Buenos_Aires");
     private static final Duration VIGENCIA = Duration.ofMinutes(15);
@@ -53,22 +54,54 @@ class TelegramConversacion {
         this.restricciones = restricciones;
     }
 
-    TelegramController.Respuesta responder(long chat, long usuario, long evento, String texto, UnaryOperator<String> ejecutar) {
+    TelegramController.Respuesta responder(long chat, long usuario, String nombre, long evento, String texto, UnaryOperator<String> ejecutar) {
         Instant ahora = Instant.now();
         sesiones.entrySet().removeIf(entry -> entry.getValue().vence().isBefore(ahora));
         return sesiones.compute(chat, (id, anterior) -> {
             if (anterior != null && anterior.usuario() == usuario && evento <= anterior.evento()) return anterior;
             Paso paso = anterior != null && anterior.usuario() == usuario ? anterior.paso() : null;
-            Transicion cambio = avanzar(paso, texto, ejecutar);
-            return new Sesion(usuario, evento, ahora.plus(VIGENCIA), cambio.paso(), cambio.respuesta());
+            String entrada = texto;
+            var boton = BOTON.matcher(texto);
+            if (boton.matches()) {
+                int indice = Integer.parseInt(boton.group(2));
+                if (anterior != null && anterior.usuario() == usuario) {
+                    if (Long.parseLong(boton.group(1)) != anterior.evento() || indice >= anterior.respuesta().opciones().size()) {
+                        return anterior;
+                    }
+                    entrada = anterior.respuesta().opciones().get(indice);
+                } else {
+                    entrada = "/menu";
+                }
+            }
+            if ((paso == null || paso.proyecto() == null) && entrada.matches("[1-9][0-9]?")) {
+                var opciones = anterior != null && anterior.usuario() == usuario ? anterior.respuesta().opciones() : MENU;
+                int indice = Integer.parseInt(entrada) - 1;
+                if (indice < opciones.size()) entrada = opciones.get(indice);
+            }
+            boolean menuMostrado = anterior != null && anterior.usuario() == usuario && paso == null;
+            Transicion cambio = avanzar(paso, nombre, entrada, menuMostrado, ejecutar);
+            var respuesta = cambio.respuesta();
+            return new Sesion(usuario, evento, ahora.plus(VIGENCIA), cambio.paso(),
+                new TelegramController.Respuesta(respuesta.mensaje(), respuesta.opciones(), evento));
         }).respuesta();
     }
 
-    private Transicion avanzar(Paso paso, String texto, UnaryOperator<String> ejecutar) {
-        if (List.of("/start", "/menu", "/cancelar", MENU_PRINCIPAL).contains(texto)) return menu("¿Qué querés hacer?");
+    private Transicion avanzar(Paso paso, String nombre, String texto, boolean menuMostrado, UnaryOperator<String> ejecutar) {
+        if (List.of("/start", "/menu", "/cancelar", MENU_PRINCIPAL).contains(texto)) return bienvenida(nombre);
         if (MENU.contains(texto)) return obras(texto, 0);
-        if (paso == null) return menu("¿Qué querés hacer?");
+        if (paso == null) {
+            return switch (texto.toLowerCase(Locale.ROOT)) {
+                case "restricciones", "/restricciones" -> obras(CONSULTAR, 0);
+                case "crear restriccion", "crear restricción", "/nueva_restriccion" -> obras(CREAR, 0);
+                case "estado", "estado de obra", "/estado" -> obras(ESTADO, 0);
+                default -> menuMostrado && !"hola".equalsIgnoreCase(texto)
+                    ? menu("Esa opción no es válida. Elegí una de estas acciones.")
+                    : bienvenida(nombre);
+            };
+        }
         if (paso.proyecto() == null) return seleccionarObra(paso, texto, ejecutar);
+        if ("/mensaje_no_admitido".equals(texto)) return pedir(paso,
+            paso.descripcion() == null ? "Escribí la descripción de la restricción en texto." : "Escribí la fecha límite como DD/MM/AAAA.");
         if (paso.descripcion() == null) {
             if (texto.isBlank() || texto.length() > 255) return pedir(paso, "Ingresá una descripción de hasta 255 caracteres.");
             return pedir(new Paso(CREAR, 0, List.of(), paso.proyecto(), texto.replaceAll("\\s+", " ")),
@@ -88,7 +121,12 @@ class TelegramConversacion {
         if (SIGUIENTE.equals(texto)) return obras(paso.accion(), paso.pagina() + 1);
         if (ANTERIOR.equals(texto)) return obras(paso.accion(), Math.max(0, paso.pagina() - 1));
         var elegida = paso.obras().stream().filter(obra -> obra.etiqueta().equals(texto)).findFirst();
-        if (elegida.isEmpty()) return obras(paso.accion(), paso.pagina());
+        if (elegida.isEmpty()) {
+            var opciones = obras(paso.accion(), paso.pagina());
+            if (opciones.paso() == null) return opciones;
+            return new Transicion(opciones.paso(), new TelegramController.Respuesta(
+                "Esa obra no está en la lista.\n\n" + opciones.respuesta().mensaje(), opciones.respuesta().opciones()));
+        }
         Long id = elegida.get().id();
         boolean autorizada = proyectos.findById(id).filter(obra -> obra.getEmpresaRelacionada() != null)
             .map(obra -> identidad.canAccessEmpresa(obra.getEmpresaRelacionada().getId())).orElse(false);
@@ -117,7 +155,7 @@ class TelegramConversacion {
         if (limite < opciones.size()) botones.add(SIGUIENTE);
         botones.add(MENU_PRINCIPAL);
         return new Transicion(new Paso(accion, pagina, visibles, null, null),
-            new TelegramController.Respuesta("¿A qué obra te referís?", List.copyOf(botones)));
+            respuestaConLista("Obras disponibles", List.copyOf(botones)));
     }
 
     private String estadoDeObra(Long id) {
@@ -158,8 +196,22 @@ class TelegramConversacion {
             + " · #" + obra.getId();
     }
 
+    private static Transicion bienvenida(String nombre) {
+        String saludo = nombre == null || nombre.isBlank() ? "¡Hola!" : "¡Hola, " + nombre.strip() + "!";
+        return menu(saludo + " Soy VortiseBot. Me gustaría ayudarte.");
+    }
+
     private static Transicion menu(String mensaje) {
-        return new Transicion(null, new TelegramController.Respuesta(mensaje, MENU));
+        return new Transicion(null, respuestaConLista(mensaje, MENU));
+    }
+
+    private static TelegramController.Respuesta respuestaConLista(String mensaje, List<String> opciones) {
+        var texto = new StringBuilder(mensaje).append("\n\n");
+        for (int i = 0; i < opciones.size(); i++) {
+            texto.append(i + 1).append(". ").append(opciones.get(i)).append('\n');
+        }
+        texto.append("\nElegí una opción o escribí su número.");
+        return new TelegramController.Respuesta(texto.toString(), opciones);
     }
 
     private static Transicion pedir(Paso paso, String mensaje) {

@@ -75,7 +75,8 @@ public class TelegramController {
     public record Confirmacion(@NotNull @Positive Long chatId) { }
     public record Evento(@NotNull @Positive Long chatId, @NotNull @Positive Long usuarioTelegramId,
             @NotNull String tipoChat, @NotNull @Positive Long eventoId, @NotBlank @Size(max = 4096) String texto) { }
-    public record Respuesta(String mensaje, java.util.List<String> opciones) {
-        public Respuesta(String mensaje) { this(mensaje, java.util.List.of()); }
+    public record Respuesta(String mensaje, java.util.List<String> opciones, Long menuEvento) {
+        public Respuesta(String mensaje) { this(mensaje, java.util.List.of(), null); }
+        public Respuesta(String mensaje, java.util.List<String> opciones) { this(mensaje, opciones, null); }
     }
 }
