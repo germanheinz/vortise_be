@@ -49,6 +49,15 @@ public class GetEmpresaDashboardObrasUseCase {
         return new EmpresaDashboardObrasDto(empresaId, obras);
     }
 
+    /** Live deviation snapshot of one obra, with the same rules as the company dashboard. */
+    public EmpresaDashboardObrasDto.Obra obra(Long proyectoId) {
+        var proyecto = proyectos.findById(proyectoId).orElseThrow(() -> new RecursoNoEncontradoException("Obra no encontrada"));
+        if (proyecto.getEmpresaRelacionada() == null) throw new RecursoNoEncontradoException("Obra no encontrada");
+        identity.requireEmpresa(proyecto.getEmpresaRelacionada().getId());
+        long activas = restricciones.findByProyectoId(proyectoId).stream().filter(GetEmpresaDashboardObrasUseCase::activa).count();
+        return obra(proyecto, activas);
+    }
+
     /** An empty or unknown state counts as active, like the restrictions board treats it as pending. */
     static boolean activa(RestriccionObra restriccion) {
         String estado = restriccion.getEstado();

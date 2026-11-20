@@ -24,6 +24,19 @@ class VinculoTelegramTest {
     }
 
     @Test
+    void elMismoChatPuedeReenviarElCodigoPeroOtroChatNoYLaConfirmacionLoConsume() {
+        var vinculo = new VinculoTelegram(7L);
+        vinculo.iniciar("hash", AHORA.plusSeconds(60));
+
+        assertTrue(vinculo.aceptar("hash", 123L, AHORA));
+        assertTrue(vinculo.aceptar("hash", 123L, AHORA), "un reintento de entrega no debe parecer un código vencido");
+        assertFalse(vinculo.aceptar("hash", 456L, AHORA), "otro chat no puede usar un código ya aceptado");
+        assertEquals(123L, vinculo.getChatPendiente());
+        assertTrue(vinculo.confirmar(123L, AHORA));
+        assertFalse(vinculo.aceptar("hash", 123L, AHORA), "una vez confirmado, el código ya no sirve");
+    }
+
+    @Test
     void rechazaElCodigoYLaConfirmacionAlVencer() {
         var vinculo = new VinculoTelegram(7L);
         var vencimiento = AHORA.plusSeconds(60);

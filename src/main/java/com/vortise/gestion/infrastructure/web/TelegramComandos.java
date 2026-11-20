@@ -10,7 +10,9 @@ import com.vortise.gestion.infrastructure.security.CurrentTenantService;
 import io.jsonwebtoken.Jwts;
 import jakarta.validation.Validator;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.util.List;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -27,6 +29,12 @@ public class TelegramComandos {
     private final CrearRestriccionChatUseCase crear;
     private final Validator validator;
     private final TelegramConversacion conversacion;
+    static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("d/M/uuuu").withResolverStyle(ResolverStyle.STRICT);
+
+    /** Accepts DD/MM/AAAA (as the guided flow asks) and AAAA-MM-DD. */
+    static LocalDate fechaDe(String texto) {
+        return texto.contains("/") ? LocalDate.parse(texto, FECHA) : LocalDate.parse(texto);
+    }
 
     public TelegramComandos(JpaVinculoTelegramRepository vinculos, UsuarioEmpresaRepository usuarios,
             ProyectoRepository proyectos, CurrentTenantService identidad,
@@ -70,7 +78,7 @@ public class TelegramComandos {
         String[] partes = mensaje.split("\\s+", 4);
         String comando = partes[0];
         if (!"/restricciones".equals(comando) && !"/nueva_restriccion".equals(comando)) {
-            return "Consultá con /restricciones ID_OBRA o creá con /nueva_restriccion ID_OBRA AAAA-MM-DD descripción.";
+            return "Consultá con /restricciones ID_OBRA o creá con /nueva_restriccion ID_OBRA DD/MM/AAAA descripción.";
         }
         Long proyectoId;
         try {
@@ -89,19 +97,19 @@ public class TelegramComandos {
             return datos.obra() + "\nAbiertas: " + datos.abiertas() + "\nVencidas: " + datos.vencidas()
                 + "\nPrioridad alta: " + datos.altaPrioridad();
         }
-        if (partes.length < 4) return "Indicá la fecha límite y la descripción: /nueva_restriccion ID_OBRA AAAA-MM-DD descripción.";
+        if (partes.length < 4) return "Indicá la fecha límite y la descripción: /nueva_restriccion ID_OBRA DD/MM/AAAA descripción.";
         LocalDate fecha;
         try {
-            fecha = LocalDate.parse(partes[2]);
+            fecha = fechaDe(partes[2]);
         } catch (DateTimeParseException ex) {
-            return "Ingresá la fecha límite en formato AAAA-MM-DD.";
+            return "Ingresá la fecha límite como DD/MM/AAAA.";
         }
         var solicitud = new CrearRestriccionChatUseCase.Solicitud(partes[3], fecha);
         if (!validator.validate(solicitud).isEmpty()) return "Ingresá una descripción de hasta 255 caracteres.";
         try {
             var resultado = crear.execute(proyectoId, "telegram:" + chatId + ":" + eventoId, solicitud);
             return "Restricción #" + resultado.id() + " guardada en " + resultado.obra()
-                + ". Fecha límite: " + resultado.fechaMaximaEntrega();
+                + ". Fecha límite: " + FECHA.format(resultado.fechaMaximaEntrega());
         } catch (com.vortise.gestion.application.exception.SolicitudInvalidaException ex) {
             return ex.getMessage();
         }

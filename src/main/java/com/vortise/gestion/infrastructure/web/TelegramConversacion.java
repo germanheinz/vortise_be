@@ -1,6 +1,8 @@
 package com.vortise.gestion.infrastructure.web;
 
+import com.vortise.gestion.application.dto.EmpresaDashboardObrasDto;
 import com.vortise.gestion.application.usecase.ConsultarRestriccionesObraUseCase;
+import com.vortise.gestion.application.usecase.GetEmpresaDashboardObrasUseCase;
 import com.vortise.gestion.application.usecase.ReporteObraUseCase;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
@@ -19,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.UnaryOperator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 
@@ -33,6 +36,8 @@ class TelegramConversacion {
     static final List<String> MENU = List.of(CONSULTAR, CREAR, ESTADO);
     private static final java.util.regex.Pattern BOTON = java.util.regex.Pattern.compile("op:(\\d{1,12}):(\\d{1,2})");
     private static final int POR_PAGINA = 6;
+    private static final String AYUDA = "Con este chat podés consultar las restricciones de una obra, crear una restricción y ver el estado de la obra.\n"
+        + "Atajos: /restricciones ID_OBRA y /nueva_restriccion ID_OBRA DD/MM/AAAA descripción. Con /menu volvés al inicio.";
     private static final ZoneId ZONA_OBRA = ZoneId.of("America/Argentina/Buenos_Aires");
     private static final Duration VIGENCIA = Duration.ofMinutes(15);
     private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("d/M/uuuu")
@@ -44,14 +49,19 @@ class TelegramConversacion {
     private final CurrentTenantService identidad;
     private final ReporteObraUseCase reportes;
     private final ConsultarRestriccionesObraUseCase restricciones;
+    private final GetEmpresaDashboardObrasUseCase dashboard;
+    private final String frontend;
 
     TelegramConversacion(ProyectoRepository proyectos, EmpresaRepository empresas, CurrentTenantService identidad,
-            ReporteObraUseCase reportes, ConsultarRestriccionesObraUseCase restricciones) {
+            ReporteObraUseCase reportes, ConsultarRestriccionesObraUseCase restricciones, GetEmpresaDashboardObrasUseCase dashboard,
+            @Value("${app.frontend-url:}") String frontend) {
         this.proyectos = proyectos;
         this.empresas = empresas;
         this.identidad = identidad;
         this.reportes = reportes;
         this.restricciones = restricciones;
+        this.dashboard = dashboard;
+        this.frontend = frontend == null ? "" : frontend.strip().replaceAll("/+$", "");
     }
 
     TelegramController.Respuesta responder(long chat, long usuario, String nombre, long evento, String texto, UnaryOperator<String> ejecutar) {
@@ -82,12 +92,13 @@ class TelegramConversacion {
             Transicion cambio = avanzar(paso, nombre, entrada, menuMostrado, ejecutar);
             var respuesta = cambio.respuesta();
             return new Sesion(usuario, evento, ahora.plus(VIGENCIA), cambio.paso(),
-                new TelegramController.Respuesta(respuesta.mensaje(), respuesta.opciones(), evento));
+                new TelegramController.Respuesta(respuesta.mensaje(), respuesta.opciones(), evento, respuesta.enlaces()));
         }).respuesta();
     }
 
     private Transicion avanzar(Paso paso, String nombre, String texto, boolean menuMostrado, UnaryOperator<String> ejecutar) {
         if (List.of("/start", "/menu", "/cancelar", MENU_PRINCIPAL).contains(texto)) return bienvenida(nombre);
+        if (List.of("/ayuda", "ayuda").contains(texto.toLowerCase(Locale.ROOT))) return menu(AYUDA);
         if (MENU.contains(texto)) return obras(texto, 0);
         if (paso == null) {
             return switch (texto.toLowerCase(Locale.ROOT)) {
@@ -132,8 +143,8 @@ class TelegramConversacion {
             .map(obra -> identidad.canAccessEmpresa(obra.getEmpresaRelacionada().getId())).orElse(false);
         if (!autorizada) return menu("Esa obra ya no está disponible.");
         return switch (paso.accion()) {
-            case CONSULTAR -> menu(ejecutar.apply("/restricciones " + id));
-            case ESTADO -> menu(estadoDeObra(id));
+            case CONSULTAR -> menu(ejecutar.apply("/restricciones " + id), enlaces(id, false));
+            case ESTADO -> menu(estadoDeObra(id), enlaces(id, true));
             default -> pedir(new Paso(CREAR, 0, List.of(), id, null), "¿Qué restricción querés registrar?");
         };
     }
@@ -158,32 +169,53 @@ class TelegramConversacion {
             respuestaConLista("Obras disponibles", List.copyOf(botones)));
     }
 
+    /** Estado en vivo (mismos cálculos que el dashboard web) y, aparte, el avance del último reporte emitido con su corte. */
     private String estadoDeObra(Long id) {
         var abiertas = restricciones.execute(id, null, ConsultarRestriccionesObraUseCase.Filtro.ABIERTAS, null);
-        String actual = "\nRestricciones actuales: " + abiertas.abiertas() + " abiertas · " + abiertas.vencidas() + " vencidas";
+        EmpresaDashboardObrasDto.Obra vivo = dashboard.obra(id);
+        StringBuilder texto = new StringBuilder(abiertas.obra())
+            .append("\nEn vivo · mano de obra propia")
+            .append("\nDesvío actual: ").append(desvio(vivo.desvioActual(), vivo.porcentajeActual()))
+            .append("\nDesvío proyectado: ").append(desvio(vivo.desvioProyectado(), vivo.porcentajeProyectado()));
+        if (vivo.actividadesPropias() > 0) {
+            texto.append("\nActividades con datos: ").append(vivo.actividadesConDatos()).append(" de ").append(vivo.actividadesPropias());
+        }
+        texto.append("\nRestricciones: ").append(abiertas.abiertas()).append(" abiertas · ").append(abiertas.vencidas()).append(" vencidas");
         var ultimo = reportes.listar(id).stream().findFirst();
-        if (ultimo.isEmpty()) return abiertas.obra() + "\nTodavía no hay un reporte de obra emitido." + actual;
+        if (ultimo.isEmpty()) return texto.append("\n\nTodavía no hay un reporte de obra emitido.").toString();
         var reporte = reportes.detalle(id, ultimo.get().id());
         var avance = reporte.snapshot().path("avance").path("obra");
         var horas = reporte.snapshot().path("horas").path("totales");
-        var real = avance.path("avance");
-        var previsto = avance.path("previsto");
-        var desvio = horas.path("desvio");
-        var costo = horas.path("costoPrevisto");
-        String porcentaje = desvio.isNumber() && costo.isNumber() && costo.asDouble() > 0
-            ? String.format(Locale.forLanguageTag("es-AR"), " (%.1f %%)", desvio.asDouble() / costo.asDouble() * 100) : "";
         String plazo = switch (avance.path("plazo").asString()) {
             case "atrasado" -> "Atrasada";
             case "adelantado" -> "Adelantada";
             case "enTermino" -> "En término";
             default -> "Sin datos";
         };
-        return abiertas.obra() + "\nÚltimo reporte · corte " + FECHA.format(reporte.fechaCorte())
-            + "\nCronograma: " + plazo
-            + "\nAvance real / previsto: " + formato(real, " %") + " / " + formato(previsto, " %")
-            + "\nHoras reales / previstas: " + formato(horas.path("horasReales"), " HH")
-            + " / " + formato(horas.path("horasPrevistas"), " HH")
-            + "\nDesvío de mano de obra propia: " + formato(desvio, " ARS") + porcentaje + actual;
+        return texto.append("\n\nÚltimo reporte · corte ").append(FECHA.format(reporte.fechaCorte()))
+            .append("\nCronograma: ").append(plazo)
+            .append("\nAvance real / previsto: ").append(formato(avance.path("avance"), " %")).append(" / ").append(formato(avance.path("previsto"), " %"))
+            .append("\nHoras reales / previstas: ").append(formato(horas.path("horasReales"), " HH"))
+            .append(" / ").append(formato(horas.path("horasPrevistas"), " HH")).toString();
+    }
+
+    private static final Locale AR = Locale.forLanguageTag("es-AR");
+
+    /** Mismo criterio de signo y miles que las pantallas: «+$ 152.198», «−$ 24.160»; sin moneda explícita porque el modelo no la define. */
+    static String desvio(Double monto, Double porcentaje) {
+        if (monto == null) return "Sin datos";
+        String texto = (monto > 0 ? "+" : monto < 0 ? "−" : "") + "$ " + String.format(AR, "%,.0f", Math.abs(monto));
+        if (porcentaje == null) return texto;
+        return texto + " (" + (porcentaje > 0 ? "+" : porcentaje < 0 ? "−" : "") + String.format(AR, "%,.1f", Math.abs(porcentaje)) + " %)";
+    }
+
+    /** Telegram solo acepta botones de enlace https; con una URL local de desarrollo no se envían. */
+    private List<TelegramController.Enlace> enlaces(Long obra, boolean conObra) {
+        if (!frontend.startsWith("https://")) return List.of();
+        var lista = new ArrayList<TelegramController.Enlace>();
+        if (conObra) lista.add(new TelegramController.Enlace("Abrir obra", frontend + "/proyectos/" + obra));
+        lista.add(new TelegramController.Enlace("Ver restricciones", frontend + "/proyectos/" + obra + "/restricciones"));
+        return List.copyOf(lista);
     }
 
     private static String formato(JsonNode valor, String unidad) {
@@ -203,6 +235,11 @@ class TelegramConversacion {
 
     private static Transicion menu(String mensaje) {
         return new Transicion(null, respuestaConLista(mensaje, MENU));
+    }
+
+    private static Transicion menu(String mensaje, List<TelegramController.Enlace> enlaces) {
+        var base = respuestaConLista(mensaje, MENU);
+        return new Transicion(null, new TelegramController.Respuesta(base.mensaje(), base.opciones(), null, enlaces));
     }
 
     private static TelegramController.Respuesta respuestaConLista(String mensaje, List<String> opciones) {

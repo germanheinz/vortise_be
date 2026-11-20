@@ -33,7 +33,8 @@ public class VinculoTelegram {
 
     public boolean aceptar(String hash, long chatId, Instant ahora) {
         if (!hash.equals(codigoHash) || expiraEn == null || !ahora.isBefore(expiraEn)) return false;
-        codigoHash = null;
+        // Single use for other chats; the chat that already sent it may repeat it (a retried delivery must not look like an expired code).
+        if (chatPendiente != null && !chatPendiente.equals(chatId)) return false;
         chatPendiente = chatId;
         return true;
     }
@@ -42,6 +43,7 @@ public class VinculoTelegram {
         if (!Long.valueOf(chatId).equals(chatPendiente) || expiraEn == null || !ahora.isBefore(expiraEn)) return false;
         chatConfirmado = chatId;
         chatPendiente = null;
+        codigoHash = null;
         expiraEn = null;
         return true;
     }
