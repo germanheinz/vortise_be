@@ -9,6 +9,9 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.security.SecureRandom;
 import java.util.*;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.*;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.test.context.transaction.TestTransaction;
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,7 +50,7 @@ class RestriccionDetalleHttpTest {
     @MockitoBean com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
     private Proyecto own, other;
     private Long restrictionId, foreignRestrictionId;
-    private String token;
+    private String token, collaboratorToken;
 
     private static String signingKey() {
         byte[] bytes = new byte[64]; new SecureRandom().nextBytes(bytes);
@@ -72,6 +76,7 @@ class RestriccionDetalleHttpTest {
         em.persist(new CalendarioLaboralEmpresa(a));
         em.flush();
         token = HttpIdentityFixtures.token(em, jwt, a.getId(), RolEmpresa.ADMINISTRADOR, false);
+        collaboratorToken = HttpIdentityFixtures.token(em, jwt, a.getId(), RolEmpresa.COLABORADOR, false);
         TestTransaction.flagForCommit();
         TestTransaction.end(); // No test transaction may hide lazy loading failures during HTTP requests.
     }
@@ -95,6 +100,97 @@ class RestriccionDetalleHttpTest {
         mvc.perform(get("/api/restricciones/"+foreignRestrictionId).header("Authorization","Bearer "+token))
             .andExpect(status().isForbidden());
         mvc.perform(get("/api/restricciones/"+restrictionId)).andExpect(status().isUnauthorized());
+    }
+
+    @Test void chatRestrictionsRequireAnAdministratorOfTheProjectCompany() throws Exception {
+        String path = "/api/proyectos/" + own.getId() + "/chat/restricciones";
+        mvc.perform(get(path).header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.obra").value("A"))
+            .andExpect(jsonPath("$.total").value(1))
+            .andExpect(jsonPath("$.detalle[0].descripcion").value("Acopio pendiente"));
+        mvc.perform(get(path).header("Authorization", "Bearer " + collaboratorToken))
+            .andExpect(status().isForbidden());
+        mvc.perform(get("/api/proyectos/" + other.getId() + "/chat/restricciones")
+                .header("Authorization", "Bearer " + token))
+            .andExpect(status().isForbidden());
+        mvc.perform(get(path)).andExpect(status().isUnauthorized());
+    }
+
+    @Test void chatCreationPersistsOnceAndRejectsReuseWithDifferentData() throws Exception {
+        String path = "/api/proyectos/" + own.getId() + "/chat/restricciones";
+        String body = """
+            {"descripcion":"Aprobar plano eléctrico","fechaMaximaEntrega":"2099-10-10"}
+            """;
+        var created = mvc.perform(post(path).header("Authorization", "Bearer " + token)
+                .header("Idempotency-Key", "evento-42").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isCreated()).andExpect(jsonPath("$.repetida").value(false)).andReturn();
+        long id = mapper.readTree(created.getResponse().getContentAsString()).get("id").asLong();
+        mvc.perform(post(path).header("Authorization", "Bearer " + token)
+                .header("Idempotency-Key", "evento-42").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(id)).andExpect(jsonPath("$.repetida").value(true));
+        mvc.perform(post(path).header("Authorization", "Bearer " + token)
+                .header("Idempotency-Key", "evento-42").contentType(MediaType.APPLICATION_JSON)
+                .content(body.replace("plano eléctrico", "plano sanitario")))
+            .andExpect(status().isConflict());
+        mvc.perform(get("/api/proyectos/" + own.getId() + "/chat/restricciones").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(2));
+        mvc.perform(get("/api/restricciones/" + id).header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.estado").value("PENDIENTE"))
+            .andExpect(jsonPath("$.restriccion").value("Aprobar plano eléctrico"));
+    }
+
+    @Test void chatCreationChecksPermissionsAndRequiredFields() throws Exception {
+        String path = "/api/proyectos/" + own.getId() + "/chat/restricciones";
+        String body = """
+            {"descripcion":"Aprobar plano","fechaMaximaEntrega":"2099-10-10"}
+            """;
+        mvc.perform(post(path).header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isBadRequest());
+        mvc.perform(post(path).header("Authorization", "Bearer " + collaboratorToken)
+                .header("Idempotency-Key", "evento-43").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/proyectos/" + other.getId() + "/chat/restricciones").header("Authorization", "Bearer " + token)
+                .header("Idempotency-Key", "evento-43").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isForbidden());
+        mvc.perform(post(path).header("Authorization", "Bearer " + token)
+                .header("Idempotency-Key", "evento-43").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"descripcion\":\"Aprobar plano\"}"))
+            .andExpect(status().isBadRequest());
+        mvc.perform(post(path).header("Authorization", "Bearer " + token)
+                .header("Idempotency-Key", "evento-43").contentType(MediaType.APPLICATION_JSON).content(body))
+            .andExpect(status().isCreated());
+    }
+
+    @Test void concurrentChatRetriesCreateOneRestriction() throws Exception {
+        String path = "/api/proyectos/" + own.getId() + "/chat/restricciones";
+        var start = new CyclicBarrier(2);
+        java.util.concurrent.Callable<MvcResult> request = () -> {
+            start.await(5, TimeUnit.SECONDS);
+            return mvc.perform(post(path).header("Authorization", "Bearer " + token)
+                    .header("Idempotency-Key", "evento-concurrente")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                        {"descripcion":"Coordinar hormigonado","fechaMaximaEntrega":"2099-10-10"}
+                        """))
+                .andReturn();
+        };
+
+        var pool = Executors.newFixedThreadPool(2);
+        try {
+            var first = pool.submit(request);
+            var second = pool.submit(request);
+            var a = first.get(10, TimeUnit.SECONDS).getResponse();
+            var b = second.get(10, TimeUnit.SECONDS).getResponse();
+            assertEquals(Set.of(200, 201), new HashSet<>(List.of(a.getStatus(), b.getStatus())));
+            assertEquals(mapper.readTree(a.getContentAsString()).get("id"),
+                mapper.readTree(b.getContentAsString()).get("id"));
+        } finally {
+            pool.shutdownNow();
+        }
+        mvc.perform(get(path).header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(2));
     }
 
     @Test void areaAndDeliveryDatesCanBeEditedOnlyWithinTheAuthorizedCompany() throws Exception {
