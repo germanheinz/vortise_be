@@ -78,6 +78,19 @@ class TelegramConversacionTest {
         verify(ejecutar).apply("/restricciones 5");
     }
 
+    @Test
+    void conservaElPasoCuandoRecibeUnaOpcionInvalidaOUnAdjunto() {
+        enviar(1, "Hola");
+        assertThat(enviar(2, "9").mensaje()).contains("Esa opción no es válida", "Consultar restricciones");
+        enviar(3, "2");
+        assertThat(enviar(4, "9").mensaje()).contains("Esa obra no está en la lista", "Obra Norte");
+        enviar(5, "1");
+        assertThat(enviar(6, "/mensaje_no_admitido").mensaje()).contains("descripción de la restricción en texto");
+        assertThat(enviar(7, "Revisar planos").mensaje()).contains("fecha límite");
+        assertThat(enviar(8, "mañana").mensaje()).contains("La fecha no es válida");
+        verifyNoInteractions(ejecutar);
+    }
+
     private TelegramController.Respuesta enviar(long evento, String texto) {
         return flujo.responder(10L, 8L, "Ana", evento, texto, ejecutar);
     }
