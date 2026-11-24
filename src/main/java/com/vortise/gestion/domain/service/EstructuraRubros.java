@@ -50,8 +50,13 @@ public final class EstructuraRubros {
 
     // ------------------------------------------------------------------ codes
 
-    /** Kind inferred from a legacy numeric code: multiples of 100 are root rubros, anything else is a subrubro. */
+    /** Kind inferred from a legacy numeric code: multiples of 100 are root rubros, anything else is a subrubro.
+     * For dotted codes: depth 1 (single segment) is a root rubro, depth > 1 is a subrubro. */
     public static TipoNodoRubro tipoLegado(String codigo) {
+        if (codigo == null) return TipoNodoRubro.SUBRUBRO;
+        // Dotted codes: depth 1 is RUBRO, depth > 1 is SUBRUBRO
+        if (codigo.indexOf('.') >= 0) return profundidad(codigo) == 1 ? TipoNodoRubro.RUBRO : TipoNodoRubro.SUBRUBRO;
+        // Numeric codes: multiples of 100 are RUBRO
         Long valor = numerico(codigo);
         return valor != null && valor % 100 == 0 ? TipoNodoRubro.RUBRO : TipoNodoRubro.SUBRUBRO;
     }
