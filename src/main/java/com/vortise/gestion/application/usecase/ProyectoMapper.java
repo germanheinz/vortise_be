@@ -1,5 +1,6 @@
 package com.vortise.gestion.application.usecase;
 
+import com.vortise.gestion.application.dto.CalendarioObraDto;
 import com.vortise.gestion.application.dto.PlantaDto;
 import com.vortise.gestion.application.dto.ContratoObraDto;
 import com.vortise.gestion.application.dto.ProyectoDto;
@@ -40,8 +41,14 @@ final class ProyectoMapper {
             proyecto.getSuperficieSemicubierta(),
             proyecto.getSuperficieDescubierta(),
             proyecto.getPedidosDeObraDias(),
-            null
+            null,
+            calendarioDe(proyecto)
         );
+    }
+
+    private static CalendarioObraDto calendarioDe(Proyecto proyecto) {
+        return new CalendarioObraDto(proyecto.isTrabajaSabado(), proyecto.isTrabajaDomingo(),
+            proyecto.isPagaDobleFeriado(), proyecto.isPagaDobleNoLaborable());
     }
 
     static ProyectoDto toDetailDto(Proyecto proyecto) {
@@ -71,7 +78,8 @@ final class ProyectoMapper {
             proyecto.getSuperficieSemicubierta(),
             proyecto.getSuperficieDescubierta(),
             proyecto.getPedidosDeObraDias(),
-            proyecto.getContratos() == null ? List.of() : proyecto.getContratos().stream().map(ProyectoMapper::toContratoDto).toList()
+            proyecto.getContratos() == null ? List.of() : proyecto.getContratos().stream().map(ProyectoMapper::toContratoDto).toList(),
+            calendarioDe(proyecto)
         );
     }
 

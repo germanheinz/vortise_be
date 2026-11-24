@@ -6,6 +6,7 @@
  */
 package com.vortise.gestion.application.usecase;
 
+import com.vortise.gestion.application.dto.CalendarioObraDto;
 import com.vortise.gestion.application.dto.PlantaCreateDto;
 import com.vortise.gestion.application.dto.ProyectoCreateDto;
 import com.vortise.gestion.application.dto.ProyectoDto;
@@ -13,17 +14,20 @@ import com.vortise.gestion.application.dto.RubroCreateDto;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.port.CurrentIdentity;
+import com.vortise.gestion.domain.model.CalendarioLaboralEmpresa;
 import com.vortise.gestion.domain.model.CatalogoEmpresa;
 import com.vortise.gestion.domain.model.ContratoObra;
 import com.vortise.gestion.domain.model.Planta;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RubroObra;
+import com.vortise.gestion.domain.repository.CalendarioLaboralEmpresaRepository;
 import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +38,7 @@ public class CreateProyectoUseCase {
     private final CatalogoEmpresaRepository catalogoRepository;
     private final CurrentIdentity currentTenant;
     private final AplicarCambiosEmpresaObraUseCase cambiosEmpresa;
+    private final CalendarioLaboralEmpresaRepository calendarios;
 
     @SuppressWarnings("null")
     @Transactional
@@ -61,6 +66,7 @@ public class CreateProyectoUseCase {
         }
         proyecto.setHorasPrevistas(dto.horasPrevistas());
         proyecto.setHorasReales(dto.horasReales());
+        aplicarCalendario(proyecto, dto.calendarioLaboral());
         proyecto.setPlantas(mapPlantas(dto.plantas(), proyecto));
         List<Long> selectedIds = new ArrayList<>(dto.subcontratistaIds() == null ? selectedContractorIds(dto) : dto.subcontratistaIds());
         addDistinct(selectedIds, cambiosEmpresa.execute(dto.empresaId(), dto.costosManoObraModificados(), dto.contratistasObra()));
@@ -171,11 +177,31 @@ public class CreateProyectoUseCase {
 
     public CreateProyectoUseCase(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository,
             CurrentIdentity currentTenant, AplicarCambiosEmpresaObraUseCase cambiosEmpresa) {
+        this(proyectoRepository, empresaRepository, catalogoRepository, currentTenant, cambiosEmpresa, null);
+    }
+
+    @Autowired
+    public CreateProyectoUseCase(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository,
+            CurrentIdentity currentTenant, AplicarCambiosEmpresaObraUseCase cambiosEmpresa, CalendarioLaboralEmpresaRepository calendarios) {
         this.proyectoRepository = proyectoRepository;
         this.empresaRepository = empresaRepository;
         this.catalogoRepository = catalogoRepository;
         this.currentTenant = currentTenant;
         this.cambiosEmpresa = cambiosEmpresa;
+        this.calendarios = calendarios;
+    }
+
+    /** Sin calendario en la solicitud, la obra parte del calendario de su empresa (o de los valores por defecto de la empresa). */
+    private void aplicarCalendario(Proyecto proyecto, CalendarioObraDto dto) {
+        if (dto != null) {
+            proyecto.setCalendarioLaboral(dto.trabajaSabado(), dto.trabajaDomingo(), dto.pagaDobleFeriado(), dto.pagaDobleNoLaborable());
+            return;
+        }
+        Long empresaId = proyecto.getEmpresaRelacionada() == null ? null : proyecto.getEmpresaRelacionada().getId();
+        var calendario = empresaId == null || calendarios == null ? java.util.Optional.<CalendarioLaboralEmpresa>empty()
+            : calendarios.findByEmpresaId(empresaId);
+        calendario.ifPresent(item -> proyecto.setCalendarioLaboral(item.getHorasSabado() != null && item.getHorasSabado() > 0,
+            item.isTrabajaDomingo(), item.isPagaDobleFeriado(), item.isPagaDobleNoLaborable()));
     }
 
     private void addDistinct(List<Long> selectedIds, List<Long> additionalIds) {

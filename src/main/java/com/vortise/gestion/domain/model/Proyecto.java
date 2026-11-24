@@ -34,6 +34,10 @@ public class Proyecto {
     private String categoriasManoObra;
     private Integer cantidadSectores;
     private Integer pedidosDeObraDias;
+    private boolean trabajaSabado = true;
+    private boolean trabajaDomingo;
+    private boolean pagaDobleFeriado;
+    private boolean pagaDobleNoLaborable;
     private Double superficieCubierta;
     private Double superficieSemicubierta;
     private Double superficieDescubierta;
@@ -133,6 +137,17 @@ public class Proyecto {
 
     public Integer getPedidosDeObraDias() { return this.pedidosDeObraDias; }
     public void setPedidosDeObraDias(Integer pedidosDeObraDias) { this.pedidosDeObraDias = pedidosDeObraDias; }
+
+    public boolean isTrabajaSabado() { return trabajaSabado; }
+    public boolean isTrabajaDomingo() { return trabajaDomingo; }
+    public boolean isPagaDobleFeriado() { return pagaDobleFeriado; }
+    public boolean isPagaDobleNoLaborable() { return pagaDobleNoLaborable; }
+    public void setCalendarioLaboral(boolean trabajaSabado, boolean trabajaDomingo, boolean pagaDobleFeriado, boolean pagaDobleNoLaborable) {
+        this.trabajaSabado = trabajaSabado;
+        this.trabajaDomingo = trabajaDomingo;
+        this.pagaDobleFeriado = pagaDobleFeriado;
+        this.pagaDobleNoLaborable = pagaDobleNoLaborable;
+    }
 
     public Double getSuperficieCubierta() { return superficieCubierta; }
     public Double getSuperficieSemicubierta() { return superficieSemicubierta; }

@@ -30,6 +30,7 @@ public record ProyectoDto(
 	Double superficieSemicubierta,
 	Double superficieDescubierta,
 	Integer pedidosDeObraDias,
-	List<ContratoObraDto> contratos
+	List<ContratoObraDto> contratos,
+	CalendarioObraDto calendarioLaboral
 ) {
 }

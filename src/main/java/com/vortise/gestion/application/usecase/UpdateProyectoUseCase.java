@@ -96,6 +96,11 @@ public class UpdateProyectoUseCase {
         proyecto.setCategoriasManoObra(dto.categoriasManoObra());
         proyecto.setCantidadSectores(dto.cantidadSectores());
         if (dto.actualizarPedidosDeObraDias()) proyecto.setPedidosDeObraDias(dto.pedidosDeObraDias());
+        if (dto.calendarioLaboral() != null) {
+            var calendario = dto.calendarioLaboral();
+            proyecto.setCalendarioLaboral(calendario.trabajaSabado(), calendario.trabajaDomingo(),
+                calendario.pagaDobleFeriado(), calendario.pagaDobleNoLaborable());
+        }
         if (dto.actualizarSuperficiesGenerales()) {
             proyecto.setSuperficieCubierta(dto.superficieCubierta());
             proyecto.setSuperficieSemicubierta(dto.superficieSemicubierta());

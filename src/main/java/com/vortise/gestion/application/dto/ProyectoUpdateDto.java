@@ -38,7 +38,8 @@ public record ProyectoUpdateDto(
 	@Valid List<SubcontratistaObraDto> contratistasObra,
 	@Min(0) Integer pedidosDeObraDias,
 	boolean actualizarPedidosDeObraDias,
-	@Valid List<ContratoObraDto> contratos
+	@Valid List<ContratoObraDto> contratos,
+	@Valid CalendarioObraDto calendarioLaboral
 ) {
 	public ProyectoUpdateDto(String nombre, String descripcion, Double presupuestoUsd, String direccion, String numeroProyecto,
 			LocalDate fechaInicio, LocalDate fechaFin, String responsablesObra, String categoriasManoObra, Integer cantidadSectores,
@@ -51,7 +52,7 @@ public record ProyectoUpdateDto(
 			categoriasManoObra, cantidadSectores, empresaId, empresa, horasPrevistas, horasReales, plantas, rubros,
 			subcontratistaIds, superficieCubierta, superficieSemicubierta, superficieDescubierta,
 			actualizarSuperficiesGenerales, costosManoObraModificados, contratistasObra, pedidosDeObraDias,
-			actualizarPedidosDeObraDias, null);
+			actualizarPedidosDeObraDias, null, null);
 	}
 
 	public ProyectoUpdateDto(String nombre, String descripcion, Double presupuestoUsd, String direccion, String numeroProyecto,
@@ -63,7 +64,7 @@ public record ProyectoUpdateDto(
 		this(nombre, descripcion, presupuestoUsd, direccion, numeroProyecto, fechaInicio, fechaFin, responsablesObra,
 			categoriasManoObra, cantidadSectores, empresaId, empresa, horasPrevistas, horasReales, plantas, rubros,
 			subcontratistaIds, superficieCubierta, superficieSemicubierta, superficieDescubierta,
-			actualizarSuperficiesGenerales, costosManoObraModificados, contratistasObra, null, false, null);
+			actualizarSuperficiesGenerales, costosManoObraModificados, contratistasObra, null, false, null, null);
 	}
 
 	public ProyectoUpdateDto(String nombre, String descripcion, Double presupuestoUsd, String direccion, String numeroProyecto,
@@ -72,6 +73,6 @@ public record ProyectoUpdateDto(
 			List<RubroCreateDto> rubros, List<Long> subcontratistaIds) {
 		this(nombre, descripcion, presupuestoUsd, direccion, numeroProyecto, fechaInicio, fechaFin, responsablesObra,
 			categoriasManoObra, cantidadSectores, empresaId, empresa, horasPrevistas, horasReales, plantas, rubros,
-			subcontratistaIds, null, null, null, false, null, null, null, false, null);
+			subcontratistaIds, null, null, null, false, null, null, null, false, null, null);
 	}
 }

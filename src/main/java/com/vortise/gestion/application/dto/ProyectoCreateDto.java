@@ -36,7 +36,8 @@ public record ProyectoCreateDto(
 	@Valid List<CategoriaManoObraCostoDto> costosManoObraModificados,
 	@Valid List<SubcontratistaObraDto> contratistasObra,
 	@Min(0) Integer pedidosDeObraDias,
-	@Valid List<ContratoObraDto> contratos
+	@Valid List<ContratoObraDto> contratos,
+	@Valid CalendarioObraDto calendarioLaboral
 ) {
 	public ProyectoCreateDto(String nombre, String descripcion, Double presupuestoUsd, String direccion, String numeroProyecto,
 			LocalDate fechaInicio, LocalDate fechaFin, String responsablesObra, String categoriasManoObra, Integer cantidadSectores,
@@ -48,7 +49,7 @@ public record ProyectoCreateDto(
 		this(nombre, descripcion, presupuestoUsd, direccion, numeroProyecto, fechaInicio, fechaFin, responsablesObra,
 			categoriasManoObra, cantidadSectores, empresaId, empresa, horasPrevistas, horasReales, plantas, rubros,
 			subcontratistaIds, superficieCubierta, superficieSemicubierta, superficieDescubierta,
-			costosManoObraModificados, contratistasObra, pedidosDeObraDias, null);
+			costosManoObraModificados, contratistasObra, pedidosDeObraDias, null, null);
 	}
 
 	public ProyectoCreateDto(String nombre, String descripcion, Double presupuestoUsd, String direccion, String numeroProyecto,
@@ -60,7 +61,7 @@ public record ProyectoCreateDto(
 		this(nombre, descripcion, presupuestoUsd, direccion, numeroProyecto, fechaInicio, fechaFin, responsablesObra,
 			categoriasManoObra, cantidadSectores, empresaId, empresa, horasPrevistas, horasReales, plantas, rubros,
 			subcontratistaIds, superficieCubierta, superficieSemicubierta, superficieDescubierta,
-			costosManoObraModificados, contratistasObra, null, null);
+			costosManoObraModificados, contratistasObra, null, null, null);
 	}
 
 	public ProyectoCreateDto(String nombre, String descripcion, Double presupuestoUsd, String direccion, String numeroProyecto,
@@ -69,6 +70,6 @@ public record ProyectoCreateDto(
 			List<RubroCreateDto> rubros, List<Long> subcontratistaIds) {
 		this(nombre, descripcion, presupuestoUsd, direccion, numeroProyecto, fechaInicio, fechaFin, responsablesObra,
 			categoriasManoObra, cantidadSectores, empresaId, empresa, horasPrevistas, horasReales, plantas, rubros,
-			subcontratistaIds, null, null, null, null, null, null, null);
+			subcontratistaIds, null, null, null, null, null, null, null, null);
 	}
 }
