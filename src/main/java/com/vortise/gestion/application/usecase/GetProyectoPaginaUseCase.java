@@ -24,7 +24,7 @@ public class GetProyectoPaginaUseCase {
         identity.requireEmpresa(companyId);
         if (companies.findById(companyId).isEmpty()) throw new RecursoNoEncontradoException("Empresa no encontrada");
         var result = projects.buscarPagina(companyId, q.trim(), page, size);
-        return new PaginaDto<>(result.content().stream().map(ProyectoMapper::toSummaryDto).toList(),
+        return new PaginaDto<>(result.content().stream().map(ProyectoMapper::toDetailDto).toList(),
             result.page(), result.size(), result.totalElements(), result.totalPages());
     }
 }

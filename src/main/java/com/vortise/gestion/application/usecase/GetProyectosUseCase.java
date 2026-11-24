@@ -18,7 +18,7 @@ public class GetProyectosUseCase {
     private final CurrentIdentity currentTenant;
 
     public List<ProyectoDto> execute() {
-        return this.proyectoRepository.findByEmpresaRelacionadaId(currentTenant.empresaId()).stream().map(ProyectoMapper::toSummaryDto).toList();
+        return this.proyectoRepository.findByEmpresaRelacionadaId(currentTenant.empresaId()).stream().map(ProyectoMapper::toDetailDto).toList();
     }
 
     public GetProyectosUseCase(ProyectoRepository proyectoRepository, CurrentIdentity currentTenant) {
