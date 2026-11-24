@@ -1,7 +1,7 @@
 # 016 — Calendario laboral por obra (sábados, domingos, recargos)
 
 ## Estado
-**BORRADOR PARA APROBACIÓN.** Nada implementado. Repos afectados: `gestion_be` (modelo, migración, API, costos) y `gestion_fe` (formulario de obra, cronograma, costos). Relacionada con [010](../010-cronograma-laboral/spec.md).
+**BORRADOR APROBADO.** Fase 1 implementada (configuración y cronograma); Fase 2 (costos) pendiente. Decisiones D-1 y D-2 aprobadas; D-3 aplica a la Fase 2. Repos afectados: `gestion_be` (modelo, migración, API, costos) y `gestion_fe` (formulario de obra, cronograma, costos). Relacionada con [010](../010-cronograma-laboral/spec.md).
 
 ## Problema
 - El calendario laboral es por empresa (`calendarios_laborales_empresa`). La obra no puede decidir si trabaja sábados o domingos.
@@ -24,7 +24,7 @@ Cuatro campos nuevos en la obra, con valores iniciales tomados del calendario de
 
 ### Cronograma
 - El cálculo de fin y días usa el calendario efectivo de la obra: sábado cuenta solo si `trabajaSabado` (con las horas de sábado de la empresa); domingo solo si `trabajaDomingo`; feriados nacionales nunca son hábiles.
-- Si `trabajaSabado` está marcado y las horas de sábado de la empresa son 0, se bloquea el guardado con un mensaje claro (no se asume un valor).
+- Si `trabajaSabado` está marcado y las horas de sábado de la empresa son 0, el sábado no suma horas; la pantalla muestra una advertencia que indica dónde configurarlas (no se bloquea el guardado ni se asume un valor).
 - Cambiar el calendario de la obra recalcula los fines automáticos al guardar (misma regla que cambiar personas o frentes). Los fines manuales no cambian.
 - Días laborables estimados: ya implementado: exacto para cálculo, redondeado hacia arriba al mostrar.
 
