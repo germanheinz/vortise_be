@@ -12,7 +12,7 @@ Spec: [spec.md](./spec.md) · Estado: **pendiente de aprobación**.
 **Frontend**
 5. `types/index.ts` y `lib/api/obras.ts`: campos nuevos.
 6. Componente compartido `CalendarioObraFields` (4 checks, textos en español) usado por `ObraCreateForm` (crear y editar) y por el cronograma.
-7. `app/proyectos/[id]/cronograma/page.tsx` y `CronogramaSection`: selector arriba, guardado en la obra, calendario efectivo = empresa + overrides de obra; `hoursForWorkday` recibe `trabajaSabado`/`trabajaDomingo`. Validación de horas de sábado = 0.
+7. `app/proyectos/[id]/cronograma/page.tsx`: calendario efectivo = empresa + sábado/domingo de la obra (sin selector en el cronograma). Aviso si las horas de sábado de la empresa son 0.
 8. Pruebas Node en `tests/cronograma.test.cjs` y `tests/cronograma-hours-groups.test.cjs`.
 
 ## Fase 2 — Costos con recargo

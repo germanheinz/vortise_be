@@ -10,7 +10,7 @@ Estado global: **Fase 1 implementada y verificada con pruebas sin contexto; migr
 | T-010 | F1 | Migración V28 y campos en `Proyecto` | T-002 | Escrita; **sin ejecutar, a revisar** | Valores derivados de la empresa |
 | T-011 | F1 | Crear/editar obra con los 4 campos (API) | T-010 | Hecho (`CalendarioLaboralObraTest`, 3 pruebas) | Pruebas de caso de uso |
 | T-012 | F1 | `CalendarioObraFields` en crear/editar obra | T-011 | Hecho; sin prueba de navegador | Valores iniciales y guardado |
-| T-013 | F1 | Selector en cronograma y calendario efectivo | T-011 | Hecho (2 pruebas Node nuevas) | Fin recalculado |
+| T-013 | F1 | Calendario efectivo en el cronograma (sin selector: se edita al crear/editar la obra) | T-011 | Hecho (prueba Node de `calendarioEfectivo`) | Fin calculado con el calendario de la obra |
 | T-020 | F2 | Feriados en Java y factor de día | T-002 | Pendiente | Pruebas gemelas con el frontend |
 | T-021 | F2 | Costo real y previsto con horas ponderadas (BE) | T-020, T-011 | Pendiente | HH e indicadores sin cambio |
 | T-022 | F2 | Costos con recargo en el frontend | T-021, T-013 | Pendiente | Pruebas Node |

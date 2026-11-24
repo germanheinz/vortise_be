@@ -19,13 +19,13 @@ Cuatro campos nuevos en la obra, con valores iniciales tomados del calendario de
 | `pagaDobleNoLaborable` | Hora cargada en un día que la obra declara no laborable (sábado/domingo sin check) se paga doble | `empresa.pagaDobleNoLaborable` |
 
 - Las horas por día (L-V y sábado) y los feriados nacionales siguen viniendo de la empresa/código actual. Domingo usa las horas de L-V (comportamiento actual).
-- Se muestran y editan: (1) al **crear** la obra, (2) al **editar** la obra, (3) arriba del **cronograma**. Los tres escriben el mismo dato de la obra.
+- Se muestran y editan solo al **crear** y al **editar** la obra. El cronograma no los muestra ni los edita: solo los usa para calcular.
 - La edición en la empresa (Configuración) solo cambia los valores iniciales de obras nuevas; no modifica obras existentes.
 
 ### Cronograma
 - El cálculo de fin y días usa el calendario efectivo de la obra: sábado cuenta solo si `trabajaSabado` (con las horas de sábado de la empresa); domingo solo si `trabajaDomingo`; feriados nacionales nunca son hábiles.
 - Si `trabajaSabado` está marcado y las horas de sábado de la empresa son 0, el sábado no suma horas; la pantalla muestra una advertencia que indica dónde configurarlas (no se bloquea el guardado ni se asume un valor).
-- Cambiar el calendario de la obra recalcula los fines automáticos al guardar (misma regla que cambiar personas o frentes). Los fines manuales no cambian.
+- Al cambiar el calendario en la edición de la obra, el cronograma calcula el fin automático con el calendario nuevo al mostrarlo; el fin guardado se actualiza la próxima vez que se guarda el cronograma. Los fines manuales no cambian.
 - Días laborables estimados: ya implementado: exacto para cálculo, redondeado hacia arriba al mostrar.
 
 ### Costos
@@ -60,7 +60,7 @@ Factor de cada día de trabajo (se aplica a horas oficiales y ayudantes):
 
 ## Aceptación
 1. Crear y editar obra muestran los 4 campos con los valores de la empresa; guardar y reabrir los conserva.
-2. El cronograma muestra los mismos campos arriba; al cambiarlos y guardar, el fin automático se recalcula con ese calendario. Mismo resultado si se cambia desde la edición de obra.
+2. Al cambiar los campos en la edición de la obra, el cronograma calcula el fin automático con ese calendario.
 3. Obra sin sábados: ningún día sábado cuenta en el cronograma. Con sábados: cuenta con las horas de sábado de la empresa.
 4. Una carga que cubre sábado y día hábil produce horas ponderadas = hábil×1 + sábado×2 (si D-1 se aprueba) y el costo real lo refleja.
 5. Costo previsto con la misma obra coincide con el reparto del cronograma.
