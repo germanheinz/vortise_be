@@ -50,9 +50,13 @@ public class ObraTarea {
     private LocalDate fecha;
     @Column(nullable = false)
     private Integer dias = 1;
+    @Column(nullable = false)
+    private boolean desencofrado;
     private Long registradoPorUsuarioId;
     private LocalDateTime registradoEn;
 
+    public boolean isDesencofrado() { return desencofrado; }
+    public void setDesencofrado(boolean value) { desencofrado = value; }
     public Integer getDias() { return dias; }
     public void setDias(Integer value) { dias = value == null ? 1 : value; }
     public Long getRegistradoPorUsuarioId() { return registradoPorUsuarioId; }

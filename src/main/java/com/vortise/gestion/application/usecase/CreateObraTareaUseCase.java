@@ -56,6 +56,7 @@ public class CreateObraTareaUseCase {
         tarea.setHorasAyudantes(controlaHoras(proyecto, dto) ? dto.horasAyudantes() : null);
         tarea.setCantidadPrevista(dto.cantidadPrevista());
         tarea.setCantidadReal(dto.cantidadReal());
+        tarea.setDesencofrado(Boolean.TRUE.equals(dto.desencofrado()));
         tarea.setMedidaCorrectiva(dto.medidaCorrectiva());
         tarea.setDescripcion(dto.descripcion());
         tarea.setFecha(dto.fecha());
@@ -97,6 +98,7 @@ public class CreateObraTareaUseCase {
         tarea.setHorasAyudantes(controlaHoras(tarea.getProyecto(), dto) ? dto.horasAyudantes() : null);
         tarea.setCantidadPrevista(dto.cantidadPrevista());
         tarea.setCantidadReal(dto.cantidadReal());
+        tarea.setDesencofrado(Boolean.TRUE.equals(dto.desencofrado()));
         tarea.setMedidaCorrectiva(dto.medidaCorrectiva());
         tarea.setDescripcion(dto.descripcion());
         tarea.setFecha(dto.fecha());
@@ -133,6 +135,9 @@ public class CreateObraTareaUseCase {
         boolean sameActivity = tarea.getActividad() != null && rubro.getId() != null && rubro.getId().equals(tarea.getActividad().getId());
         if (!sameActivity && !EstructuraRubros.admiteCargaDeAvance(rubro, tarea.getProyecto().getRubros())) {
             throw new SolicitudInvalidaException("Seleccioná un subrubro");
+        }
+        if (Boolean.TRUE.equals(dto.desencofrado()) && dto.cantidadReal() != null) {
+            throw new SolicitudInvalidaException("El desencofrado solo imputa horas: no admite cantidad ejecutada");
         }
         // La cantidad ejecutada es opcional: sin ella la carga queda como actividad en proceso.
         if (dto.cantidadReal() != null && (!Double.isFinite(dto.cantidadReal()) || dto.cantidadReal() < 0)) {
@@ -198,7 +203,8 @@ public class CreateObraTareaUseCase {
             rendimiento,
             desvio,
             tarea.getRubroId(),
-            tarea.getDias()
+            tarea.getDias(),
+            tarea.isDesencofrado()
         );
     }
 

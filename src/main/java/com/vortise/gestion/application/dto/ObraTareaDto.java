@@ -26,6 +26,7 @@ public record ObraTareaDto(
     Double rendimiento,
     Double desvio,
     Long rubroId,
-    Integer dias
+    Integer dias,
+    boolean desencofrado
 ) {
 }

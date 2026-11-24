@@ -23,8 +23,14 @@ public class GetPrevistoRealUseCase {
     }
 
     public record Load(Long tareaId, PrevistoRealCalculator.Metrics indicadores) { }
+    /** {@code conDesencofrado}: alguna carga de la actividad es de horas de desencofrado. */
     public record Activity(Long rubroId, String nombre, String unidad, Double cantidadReal,
-            Double horasOficiales, Double horasAyudantes, PrevistoRealCalculator.Metrics indicadores, List<Load> cargas) { }
+            Double horasOficiales, Double horasAyudantes, PrevistoRealCalculator.Metrics indicadores, List<Load> cargas, boolean conDesencofrado) {
+        public Activity(Long rubroId, String nombre, String unidad, Double cantidadReal,
+                Double horasOficiales, Double horasAyudantes, PrevistoRealCalculator.Metrics indicadores, List<Load> cargas) {
+            this(rubroId, nombre, unidad, cantidadReal, horasOficiales, horasAyudantes, indicadores, cargas, false);
+        }
+    }
     public record Summary(Double costoHoraOficial, Double costoHoraAyudante, Double horasJornada,
             long tareasSinVincular, List<Activity> actividades) { }
 
@@ -44,7 +50,8 @@ public class GetPrevistoRealUseCase {
             Double q = sumQuantity(matching), hOf = sum(matching, ObraTarea::getHorasOficiales), hAy = sum(matching, ObraTarea::getHorasAyudantes);
             return new Activity(r.getId(), r.getSubRubro() == null ? r.getRubro() : r.getSubRubro(), r.getUnidad(), q, hOf, hAy,
                 metrics(r, q, hOf, hAy, of, ay, day), matching.stream().map(t -> new Load(t.getId(),
-                    metrics(r, t.getCantidadReal(), t.getHorasOficiales(), t.getHorasAyudantes(), of, ay, day))).toList());
+                    metrics(r, t.getCantidadReal(), t.getHorasOficiales(), t.getHorasAyudantes(), of, ay, day))).toList(),
+                matching.stream().anyMatch(ObraTarea::isDesencofrado));
         }).toList();
         long unlinked = loads.stream().filter(t -> !knownIds.contains(t.getRubroId())).count();
         return new Summary(of, ay, day, unlinked, activities);

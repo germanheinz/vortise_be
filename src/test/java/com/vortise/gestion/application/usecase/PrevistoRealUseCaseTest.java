@@ -62,6 +62,24 @@ class PrevistoRealUseCaseTest {
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(enProceso));
         assertNull(service.execute(1L).actividades().get(0).cantidadReal());
     }
+    @Test void desencofradoLoadsOnlyImputeHoursAndAreFlaggedOnTheActivity() {
+        when(tasks.save(any())).thenAnswer(i -> i.getArgument(0));
+        var service = new CreateObraTareaUseCase(tasks,projects);
+        var soloHoras = new ObraTareaCreateDto("Desencofrado",null,null,"kg","x",null,null,null,null,40.,40.,null,null,null,null,LocalDate.of(2026,10,14),10L,1,true);
+        var saved = service.execute(1L,soloHoras);
+        assertTrue(saved.desencofrado()); assertNull(saved.cantidadReal());
+        var conCantidad = new ObraTareaCreateDto("Desencofrado",null,null,"kg","x",null,null,null,null,40.,40.,null,15.,null,null,LocalDate.of(2026,10,14),10L,1,true);
+        assertThrows(SolicitudInvalidaException.class,() -> service.execute(1L,conCantidad));
+        var normal = task(1,10L,6); var desencofrado = task(2,10L,0); desencofrado.setCantidadReal(null); desencofrado.setDesencofrado(true);
+        var summary = new GetPrevistoRealUseCase(projects,tasks,categories,calendars);
+        when(tasks.findByProyectoId(1L)).thenReturn(List.of(normal));
+        assertFalse(summary.execute(1L).actividades().get(0).conDesencofrado());
+        when(tasks.findByProyectoId(1L)).thenReturn(List.of(normal,desencofrado));
+        var activityResult = summary.execute(1L).actividades().get(0);
+        assertTrue(activityResult.conDesencofrado());
+        assertEquals(6.,activityResult.cantidadReal(),"the desencofrado hours add no quantity");
+        assertEquals(360.,activityResult.horasOficiales()+activityResult.horasAyudantes(),"but their hours do count: 180 HH per load, two loads");
+    }
     private ObraTareaCreateDto conDias(Integer dias) {
         return new ObraTareaCreateDto("Carga",null,null,"kg","wrong",null,null,null,null,100.,80.,null,6.,null,null,LocalDate.of(2026,10,14),10L,dias);
     }
