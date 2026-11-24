@@ -275,8 +275,8 @@ class EstructuraRubrosTest {
         var nodes = List.of(root, level, nested, flatRoot, flatSubrubro);
 
         assertFalse(EstructuraRubros.admiteCargaDeAvance(root, nodes));
-        assertTrue(EstructuraRubros.admiteCargaDeAvance(level, nodes));
-        assertFalse(EstructuraRubros.admiteCargaDeAvance(nested, nodes));
+        assertFalse(EstructuraRubros.admiteCargaDeAvance(level, nodes));
+        assertTrue(EstructuraRubros.admiteCargaDeAvance(nested, nodes));
         assertFalse(EstructuraRubros.admiteCargaDeAvance(flatRoot, nodes));
         assertTrue(EstructuraRubros.admiteCargaDeAvance(flatSubrubro, nodes));
     }

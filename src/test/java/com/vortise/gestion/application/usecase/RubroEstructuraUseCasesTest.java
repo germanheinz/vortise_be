@@ -418,23 +418,23 @@ class RubroEstructuraUseCasesTest {
         assertEquals("Subrubro 1", summary.actividades().get(0).nombre());
     }
 
-    @Test void tasksCanBeLinkedToTheLevelInsteadOfItsSubrubros() {
+    @Test void tasksCanOnlyBeLinkedToSubrubros() {
         Proyecto p = threeLayerProject();
         var projectsMock = mock(ProyectoRepository.class);
         var tasksMock = mock(ObraTareaRepository.class);
         when(projectsMock.findById(1L)).thenReturn(Optional.of(p));
         when(tasksMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var useCase = new CreateObraTareaUseCase(tasksMock, projectsMock);
-        for (long groupingId : new long[]{1L, 3L}) {
+        for (long groupingId : new long[]{1L, 2L}) {
             var dto = new ObraTareaCreateDto("Carga", null, null, "kg", "x", null, null, null, null, 100., 80., null, 6., null, null,
                 LocalDate.of(2026, 10, 14), groupingId);
             assertThrows(SolicitudInvalidaException.class, () -> useCase.execute(1L, dto));
         }
         verify(tasksMock, never()).save(any());
-        var nivelDto = new ObraTareaCreateDto("Carga", null, null, "kg", "x", null, null, null, null, 100., 80., null, 6., null, null,
-            LocalDate.of(2026, 10, 14), 2L);
-        var saved = useCase.execute(1L, nivelDto);
-        assertEquals(2L, saved.rubroId());
+        var subrubroDto = new ObraTareaCreateDto("Carga", null, null, "kg", "x", null, null, null, null, 100., 80., null, 6., null, null,
+            LocalDate.of(2026, 10, 14), 3L);
+        var saved = useCase.execute(1L, subrubroDto);
+        assertEquals(3L, saved.rubroId());
         assertEquals("General", saved.nivel());
     }
 

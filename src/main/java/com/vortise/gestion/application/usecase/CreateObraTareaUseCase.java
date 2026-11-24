@@ -132,7 +132,7 @@ public class CreateObraTareaUseCase {
             .orElseThrow(() -> new RecursoNoEncontradoException("La actividad no pertenece a la obra"));
         boolean sameActivity = tarea.getActividad() != null && rubro.getId() != null && rubro.getId().equals(tarea.getActividad().getId());
         if (!sameActivity && !EstructuraRubros.admiteCargaDeAvance(rubro, tarea.getProyecto().getRubros())) {
-            throw new SolicitudInvalidaException("Seleccioná un nivel o, si el rubro no tiene niveles, un subrubro");
+            throw new SolicitudInvalidaException("Seleccioná un subrubro");
         }
         // La cantidad ejecutada es opcional: sin ella la carga queda como actividad en proceso.
         if (dto.cantidadReal() != null && (!Double.isFinite(dto.cantidadReal()) || dto.cantidadReal() < 0)) {

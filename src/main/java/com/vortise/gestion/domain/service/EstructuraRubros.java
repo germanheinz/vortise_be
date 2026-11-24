@@ -110,12 +110,9 @@ public final class EstructuraRubros {
         return variante == null || capa(nodo) >= variante.profundidad();
     }
 
+    /** Solo los subrubros hoja admiten cargas de avance; los niveles y rubros se calculan a partir de ellos. */
     public static boolean admiteCargaDeAvance(RubroObra nodo, Collection<RubroObra> todos) {
-        if (nodo.getTipoNodo() == TipoNodoRubro.NIVEL) return true;
-        if (nodo.getTipoNodo() != TipoNodoRubro.SUBRUBRO || !esHoja(nodo, todos)) return false;
-        RubroObra raiz = raiz(nodo, todos);
-        return raiz == null || todos.stream().noneMatch(candidato ->
-            candidato.getTipoNodo() == TipoNodoRubro.NIVEL && mismo(raiz, raiz(candidato, todos)));
+        return nodo.getTipoNodo() == TipoNodoRubro.SUBRUBRO && esHoja(nodo, todos);
     }
 
     /** Leaves of the structure, in the given order. */
