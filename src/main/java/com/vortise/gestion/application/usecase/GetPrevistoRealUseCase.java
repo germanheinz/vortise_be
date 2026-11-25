@@ -71,7 +71,7 @@ public class GetPrevistoRealUseCase {
     }
 
     private static BaseAnexo baseAnexo(RubroObra rubro, ObraTarea tarea, Double jornada, Integer personas) {
-        if ("SUBCONTRATO".equals(rubro.getTipoContratista())) return null;
+        // No excluir SUBCONTRATOS: permitir que usen indicadores de anexo
         Integer dias = tarea.getDias();
         Double hf = personas != null && personas > 0 && dias != null && dias >= 0 && noNegativo(jornada) && jornada > 0
             ? finito(personas * jornada * dias) : null;
@@ -83,6 +83,12 @@ public class GetPrevistoRealUseCase {
             ? finito(cantidad * ((ofPrevistas + ayPrevistas) / cantidadPrevista)) : null;
         Double of = tarea.getHorasOficiales(), ay = tarea.getHorasAyudantes();
         Double hr = noNegativo(of) && noNegativo(ay) ? finito(of + ay) : null;
+        
+        // Si hf es null (sin personas/jornada), usar horas previstas del rubro como hf
+        if (hf == null && noNegativo(ofPrevistas) && noNegativo(ayPrevistas)) {
+            hf = finito(ofPrevistas + ayPrevistas);
+        }
+        
         return new BaseAnexo(dias, personas, hf, hg, hr);
     }
 
