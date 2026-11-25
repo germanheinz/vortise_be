@@ -46,7 +46,7 @@ public class GetPrevistoRealUseCase {
         var byRubro = new java.util.HashMap<Long, java.util.List<ObraTarea>>();
         for (var load : loads) byRubro.computeIfAbsent(load.getRubroId(), key -> new java.util.ArrayList<>()).add(load);
         var knownIds = rubros.stream().map(RubroObra::getId).collect(java.util.stream.Collectors.toSet());
-        var activities = rubros.stream().filter(r -> EstructuraRubros.esHoja(r, rubros)).map(r -> {
+        var activities = rubros.stream().filter(r -> (EstructuraRubros.esHoja(r, rubros) || !byRubro.getOrDefault(r.getId(), List.of()).isEmpty())).map(r -> {
             var matching = byRubro.getOrDefault(r.getId(), List.of());
             Integer personas = dotacionPrevista(r, rubros);
             Double q = sumQuantity(matching), hOf = sum(matching, ObraTarea::getHorasOficiales), hAy = sum(matching, ObraTarea::getHorasAyudantes);
