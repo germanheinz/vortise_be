@@ -43,6 +43,32 @@ class PrevistoRealUseCaseTest {
         assertEquals(6.,service.execute(1L).actividades().get(0).cantidadReal());
         verify(tasks,never()).save(any());
     }
+    @Test void annexBasesUseWorkedDaysAndRecomputeAfterEditsOrDeletion() {
+        var company = mock(Empresa.class); when(company.getId()).thenReturn(20L); project.setEmpresaRelacionada(company);
+        var calendario = mock(CalendarioLaboralEmpresa.class); when(calendario.getHorasLunesAViernes()).thenReturn(8.);
+        when(calendars.findByEmpresaId(20L)).thenReturn(Optional.of(calendario));
+        var root = new RubroObra(); root.setId(9L); root.setTipoNodo(TipoNodoRubro.RUBRO);
+        root.setCantidadPersonas(2);
+        activity.setParent(root); activity.setCantidad(20.);
+        activity.setHorasOficialesPrevistas(50.); activity.setHorasAyudantesPrevistas(50.);
+        project.setRubros(List.of(root, activity));
+        var primero = task(1, 10L, 6);
+        primero.setDias(2); primero.setHorasOficiales(25.); primero.setHorasAyudantes(25.);
+        var segundo = task(2, 10L, 4);
+        segundo.setDias(1); segundo.setHorasOficiales(15.); segundo.setHorasAyudantes(15.);
+        when(tasks.findByProyectoId(1L)).thenReturn(List.of(primero, segundo));
+        var service = new GetPrevistoRealUseCase(projects, tasks, categories, calendars);
+
+        var cargas = service.execute(1L).actividades().get(0).cargas();
+        assertEquals(new GetPrevistoRealUseCase.BaseAnexo(2, 2, 32., 30., 50.), cargas.get(0).baseAnexo());
+        assertEquals(new GetPrevistoRealUseCase.BaseAnexo(1, 2, 16., 20., 30.), cargas.get(1).baseAnexo());
+        segundo.setDias(0); segundo.setCantidadReal(0.);
+        assertEquals(new GetPrevistoRealUseCase.BaseAnexo(0, 2, 0., 0., 30.),
+            service.execute(1L).actividades().get(0).cargas().get(1).baseAnexo());
+        when(tasks.findByProyectoId(1L)).thenReturn(List.of(primero));
+        assertEquals(1, service.execute(1L).actividades().get(0).cargas().size());
+    }
+
     private ObraTareaCreateDto dto(Long rubroId) {
         return new ObraTareaCreateDto("Carga",null,null,"kg","wrong",null,null,null,null,100.,80.,null,6.,null,null,LocalDate.of(2026,10,14),rubroId);
     }

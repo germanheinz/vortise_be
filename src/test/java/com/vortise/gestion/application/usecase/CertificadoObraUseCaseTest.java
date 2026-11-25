@@ -16,6 +16,8 @@ import com.vortise.gestion.domain.model.CertificadoObra;
 import com.vortise.gestion.domain.model.ObraTarea;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RubroObra;
+import com.vortise.gestion.domain.model.TipoNodoRubro;
+import com.vortise.gestion.domain.model.VarianteEstructura;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.CertificadoItemCompletadoRepository;
 import com.vortise.gestion.domain.repository.CertificadoObraRepository;
@@ -83,6 +85,27 @@ class CertificadoObraUseCaseTest {
         assertEquals(List.of(FUNDACIONES, HIERRO), detail.filas().stream().map(CertificadoFilaDto::rubroId).toList());
         assertEquals("5000", row(detail, FUNDACIONES).grupoCodigo()); assertEquals("Hormigón", row(detail, FUNDACIONES).grupoNombre()); assertNull(row(detail, HIERRO).grupoCodigo());
         assertEquals("Fundaciones", row(detail, FUNDACIONES).nombre()); assertEquals("Hierro", row(detail, HIERRO).nombre());
+    }
+
+    @Test void certificateAttributesTheQuantityToTheLeafLevel() {
+        var mamposteria = rubro(10L, "1", "Mampostería", null, null, null, false);
+        mamposteria.setTipoNodo(TipoNodoRubro.RUBRO);
+        mamposteria.setVarianteEstructura(VarianteEstructura.RUBRO_SUBRUBRO_NIVEL);
+        var tabique = rubro(11L, "1.1", "Mampostería", "Tabique", null, null, false);
+        tabique.setTipoNodo(TipoNodoRubro.SUBRUBRO); tabique.setParent(mamposteria);
+        var ss1 = rubro(12L, "1.1.1", "Mampostería", "SS1", 25., "m2", false);
+        ss1.setTipoNodo(TipoNodoRubro.NIVEL); ss1.setParent(tabique);
+        var pb = rubro(13L, "1.1.2", "Mampostería", "PB", 20., "m2", false);
+        pb.setTipoNodo(TipoNodoRubro.NIVEL); pb.setParent(tabique);
+        project.setRubros(List.of(mamposteria, tabique, ss1, pb));
+
+        load(12L, "2026-03-10", 6);
+        load(13L, "2026-04-02", 4);
+        var marzo = useCase.crear(1L, monthly("2026-03-31", 1));
+        assertEquals(List.of(12L, 13L), marzo.filas().stream().map(CertificadoFilaDto::rubroId).toList());
+        assertEquals("SS1", row(marzo, 12L).nombre());
+        assertEquals(6., row(marzo, 12L).actualCant());
+        assertEquals(0., row(marzo, 13L).actualCant());
     }
 
     @Test void newCertificateStartsInZeroAndMonthlyNumberingContinuesAutomatically() {

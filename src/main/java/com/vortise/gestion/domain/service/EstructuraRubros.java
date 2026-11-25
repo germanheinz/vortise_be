@@ -115,9 +115,9 @@ public final class EstructuraRubros {
         return variante == null || capa(nodo) >= variante.profundidad();
     }
 
-    /** Solo los subrubros hoja admiten cargas de avance; los niveles y rubros se calculan a partir de ellos. */
+    /** El avance se carga en la actividad terminal, sea un subrubro o un nivel. */
     public static boolean admiteCargaDeAvance(RubroObra nodo, Collection<RubroObra> todos) {
-        return nodo.getTipoNodo() == TipoNodoRubro.SUBRUBRO && esHoja(nodo, todos);
+        return esHoja(nodo, todos);
     }
 
     /** Leaves of the structure, in the given order. */

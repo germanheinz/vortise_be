@@ -134,7 +134,7 @@ public class CreateObraTareaUseCase {
             .orElseThrow(() -> new RecursoNoEncontradoException("La actividad no pertenece a la obra"));
         boolean sameActivity = tarea.getActividad() != null && rubro.getId() != null && rubro.getId().equals(tarea.getActividad().getId());
         if (!sameActivity && !EstructuraRubros.admiteCargaDeAvance(rubro, tarea.getProyecto().getRubros())) {
-            throw new SolicitudInvalidaException("Seleccioná un subrubro");
+            throw new SolicitudInvalidaException("Seleccioná una actividad sin subdivisiones");
         }
         if (Boolean.TRUE.equals(dto.desencofrado()) && dto.cantidadReal() != null) {
             throw new SolicitudInvalidaException("El desencofrado solo imputa horas: no admite cantidad ejecutada");

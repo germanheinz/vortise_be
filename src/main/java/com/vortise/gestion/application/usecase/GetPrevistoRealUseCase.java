@@ -22,7 +22,8 @@ public class GetPrevistoRealUseCase {
         this.projects = projects; this.tasks = tasks; this.categories = categories; this.calendars = calendars;
     }
 
-    public record Load(Long tareaId, PrevistoRealCalculator.Metrics indicadores) { }
+    public record BaseAnexo(Integer dias, Integer personas, Double hhPrevistasFecha, Double hhPrevistasHecho, Double hhReales) { }
+    public record Load(Long tareaId, PrevistoRealCalculator.Metrics indicadores, BaseAnexo baseAnexo) { }
     /** {@code conDesencofrado}: alguna carga de la actividad es de horas de desencofrado. */
     public record Activity(Long rubroId, String nombre, String unidad, Double cantidadReal,
             Double horasOficiales, Double horasAyudantes, PrevistoRealCalculator.Metrics indicadores, List<Load> cargas, boolean conDesencofrado) {
@@ -47,14 +48,50 @@ public class GetPrevistoRealUseCase {
         var knownIds = rubros.stream().map(RubroObra::getId).collect(java.util.stream.Collectors.toSet());
         var activities = rubros.stream().filter(r -> EstructuraRubros.esHoja(r, rubros)).map(r -> {
             var matching = byRubro.getOrDefault(r.getId(), List.of());
+            Integer personas = dotacionPrevista(r, rubros);
             Double q = sumQuantity(matching), hOf = sum(matching, ObraTarea::getHorasOficiales), hAy = sum(matching, ObraTarea::getHorasAyudantes);
             return new Activity(r.getId(), r.getSubRubro() == null ? r.getRubro() : r.getSubRubro(), r.getUnidad(), q, hOf, hAy,
                 metrics(r, q, hOf, hAy, of, ay, day), matching.stream().map(t -> new Load(t.getId(),
-                    metrics(r, t.getCantidadReal(), t.getHorasOficiales(), t.getHorasAyudantes(), of, ay, day))).toList(),
+                    metrics(r, t.getCantidadReal(), t.getHorasOficiales(), t.getHorasAyudantes(), of, ay, day), baseAnexo(r, t, day, personas))).toList(),
                 matching.stream().anyMatch(ObraTarea::isDesencofrado));
         }).toList();
         long unlinked = loads.stream().filter(t -> !knownIds.contains(t.getRubroId())).count();
         return new Summary(of, ay, day, unlinked, activities);
+    }
+
+    private static Integer dotacionPrevista(RubroObra rubro, List<RubroObra> rubros) {
+        if (rubro.getCantidadPersonas() != null) return rubro.getCantidadPersonas();
+        var intermedios = EstructuraRubros.intermedios(rubro);
+        for (int i = intermedios.size() - 1; i >= 0; i--) {
+            Integer personas = intermedios.get(i).getCantidadPersonas();
+            if (personas != null) return personas;
+        }
+        var raiz = EstructuraRubros.raiz(rubro, rubros);
+        return raiz == null ? null : raiz.getCantidadPersonas();
+    }
+
+    private static BaseAnexo baseAnexo(RubroObra rubro, ObraTarea tarea, Double jornada, Integer personas) {
+        if ("SUBCONTRATO".equals(rubro.getTipoContratista())) return null;
+        Integer dias = tarea.getDias();
+        Double hf = personas != null && personas > 0 && dias != null && dias >= 0 && noNegativo(jornada) && jornada > 0
+            ? finito(personas * jornada * dias) : null;
+        Double cantidad = tarea.getCantidadReal();
+        Double cantidadPrevista = rubro.getCantidad();
+        Double ofPrevistas = rubro.getHorasOficialesPrevistas();
+        Double ayPrevistas = rubro.getHorasAyudantesPrevistas();
+        Double hg = noNegativo(cantidad) && noNegativo(cantidadPrevista) && cantidadPrevista > 0 && noNegativo(ofPrevistas) && noNegativo(ayPrevistas)
+            ? finito(cantidad * ((ofPrevistas + ayPrevistas) / cantidadPrevista)) : null;
+        Double of = tarea.getHorasOficiales(), ay = tarea.getHorasAyudantes();
+        Double hr = noNegativo(of) && noNegativo(ay) ? finito(of + ay) : null;
+        return new BaseAnexo(dias, personas, hf, hg, hr);
+    }
+
+    private static boolean noNegativo(Double valor) {
+        return valor != null && Double.isFinite(valor) && valor >= 0;
+    }
+
+    private static Double finito(double valor) {
+        return Double.isFinite(valor) ? valor : null;
     }
 
     private static Double cost(List<CategoriaManoObraEmpresa> categories, String name) {

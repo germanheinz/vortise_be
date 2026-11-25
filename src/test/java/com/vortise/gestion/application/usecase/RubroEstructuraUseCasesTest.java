@@ -418,14 +418,22 @@ class RubroEstructuraUseCasesTest {
         assertEquals("Subrubro 1", summary.actividades().get(0).nombre());
     }
 
-    @Test void tasksCanOnlyBeLinkedToSubrubros() {
+    @Test void tasksCanBeLinkedToLeafSubrubrosOrLeafLevels() {
         Proyecto p = threeLayerProject();
+        RubroObra mamposteria = stored(p, 4L, "2", TipoNodoRubro.RUBRO, null, "Mampostería");
+        mamposteria.setVarianteEstructura(VarianteEstructura.RUBRO_SUBRUBRO_NIVEL);
+        RubroObra tabique = stored(p, 5L, "2.1", TipoNodoRubro.SUBRUBRO, mamposteria, "Tabique");
+        RubroObra piso = stored(p, 6L, "2.1.1", TipoNodoRubro.NIVEL, tabique, "SS1");
+        piso.setRubro("Mampostería"); piso.setUnidad("m2"); piso.setCantidad(15.);
+        var rubros = new ArrayList<>(p.getRubros());
+        rubros.addAll(List.of(mamposteria, tabique, piso));
+        p.setRubros(rubros);
         var projectsMock = mock(ProyectoRepository.class);
         var tasksMock = mock(ObraTareaRepository.class);
         when(projectsMock.findById(1L)).thenReturn(Optional.of(p));
         when(tasksMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var useCase = new CreateObraTareaUseCase(tasksMock, projectsMock);
-        for (long groupingId : new long[]{1L, 2L}) {
+        for (long groupingId : new long[]{1L, 2L, 4L, 5L}) {
             var dto = new ObraTareaCreateDto("Carga", null, null, "kg", "x", null, null, null, null, 100., 80., null, 6., null, null,
                 LocalDate.of(2026, 10, 14), groupingId);
             assertThrows(SolicitudInvalidaException.class, () -> useCase.execute(1L, dto));
@@ -436,6 +444,13 @@ class RubroEstructuraUseCasesTest {
         var saved = useCase.execute(1L, subrubroDto);
         assertEquals(3L, saved.rubroId());
         assertEquals("General", saved.nivel());
+        var pisoDto = new ObraTareaCreateDto("Carga", null, null, "kg", "x", null, null, null, null, 100., 80., null, 6., null, null,
+            LocalDate.of(2026, 10, 14), 6L);
+        var avancePiso = useCase.execute(1L, pisoDto);
+        assertEquals(6L, avancePiso.rubroId());
+        assertEquals("SS1", avancePiso.nivel());
+        assertEquals("m2", avancePiso.unidad());
+        assertEquals(6., avancePiso.cantidadReal());
     }
 
     @Test void restrictionsCanBeLinkedToAnyNodeOfTheSameProject() {
