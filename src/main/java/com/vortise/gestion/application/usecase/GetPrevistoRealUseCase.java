@@ -4,6 +4,8 @@ import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.*;
 import com.vortise.gestion.domain.service.EstructuraRubros;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.Function;
 import org.springframework.stereotype.Service;
@@ -95,9 +97,16 @@ public class GetPrevistoRealUseCase {
 
     private static BaseAnexo baseAnexo(RubroObra rubro, ObraTarea tarea, Double jornada, Integer personas) {
         // No excluir SUBCONTRATOS: permitir que usen indicadores de anexo
-        Integer dias = tarea.getDias();
-        Double hf = personas != null && personas > 0 && dias != null && dias >= 0 && noNegativo(jornada) && jornada > 0
-            ? finito(personas * jornada * dias) : null;
+        // Calcular días transcurridos desde la fecha de inicio del rubro hasta hoy
+        Integer diasTranscurridos = null;
+        if (rubro.getFechaInicioPlanificada() != null) {
+            LocalDate hoy = LocalDate.now();
+            long dias = ChronoUnit.DAYS.between(rubro.getFechaInicioPlanificada(), hoy);
+            diasTranscurridos = dias > 0 ? (int) dias : null;
+        }
+        
+        Double hf = personas != null && personas > 0 && diasTranscurridos != null && diasTranscurridos >= 0 && noNegativo(jornada) && jornada > 0
+            ? finito(personas * jornada * diasTranscurridos) : null;
         Double cantidad = tarea.getCantidadReal();
         Double cantidadPrevista = rubro.getCantidad();
         Double ofPrevistas = rubro.getHorasOficialesPrevistas();
@@ -112,7 +121,7 @@ public class GetPrevistoRealUseCase {
             hf = finito(ofPrevistas + ayPrevistas);
         }
         
-        return new BaseAnexo(dias, personas, hf, hg, hr);
+        return new BaseAnexo(diasTranscurridos, personas, hf, hg, hr);
     }
 
     private static boolean noNegativo(Double valor) {

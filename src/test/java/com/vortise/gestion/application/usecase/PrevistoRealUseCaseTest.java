@@ -51,6 +51,8 @@ class PrevistoRealUseCaseTest {
         root.setCantidadPersonas(2);
         activity.setParent(root); activity.setCantidad(20.);
         activity.setHorasOficialesPrevistas(50.); activity.setHorasAyudantesPrevistas(50.);
+        // Configurar fecha de inicio planificada para que el cálculo de días transcurridos funcione
+        activity.setFechaInicioPlanificada(LocalDate.now().minusDays(2));
         project.setRubros(List.of(root, activity));
         var primero = task(1, 10L, 6);
         primero.setDias(2); primero.setHorasOficiales(25.); primero.setHorasAyudantes(25.);
