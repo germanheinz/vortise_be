@@ -26,10 +26,10 @@ public class GetPrevistoRealUseCase {
     public record Load(Long tareaId, PrevistoRealCalculator.Metrics indicadores, BaseAnexo baseAnexo) { }
     /** {@code conDesencofrado}: alguna carga de la actividad es de horas de desencofrado. */
     public record Activity(Long rubroId, String nombre, String unidad, Double cantidadReal,
-            Double horasOficiales, Double horasAyudantes, PrevistoRealCalculator.Metrics indicadores, List<Load> cargas, boolean conDesencofrado) {
+            Double horasOficiales, Double horasAyudantes, PrevistoRealCalculator.Metrics indicadores, BaseAnexo baseAnexoAgregado, List<Load> cargas, boolean conDesencofrado) {
         public Activity(Long rubroId, String nombre, String unidad, Double cantidadReal,
                 Double horasOficiales, Double horasAyudantes, PrevistoRealCalculator.Metrics indicadores, List<Load> cargas) {
-            this(rubroId, nombre, unidad, cantidadReal, horasOficiales, horasAyudantes, indicadores, cargas, false);
+            this(rubroId, nombre, unidad, cantidadReal, horasOficiales, horasAyudantes, indicadores, null, cargas, false);
         }
     }
     public record Summary(Double costoHoraOficial, Double costoHoraAyudante, Double horasJornada,
@@ -50,9 +50,11 @@ public class GetPrevistoRealUseCase {
             var matching = byRubro.getOrDefault(r.getId(), List.of());
             Integer personas = dotacionPrevista(r, rubros);
             Double q = sumQuantity(matching), hOf = sum(matching, ObraTarea::getHorasOficiales), hAy = sum(matching, ObraTarea::getHorasAyudantes);
+            var cargas = matching.stream().map(t -> new Load(t.getId(),
+                metrics(r, t.getCantidadReal(), t.getHorasOficiales(), t.getHorasAyudantes(), of, ay, day), baseAnexo(r, t, day, personas))).toList();
+            var baseAnexoAgr = agregadoBaseAnexo(cargas);
             return new Activity(r.getId(), r.getSubRubro() == null ? r.getRubro() : r.getSubRubro(), r.getUnidad(), q, hOf, hAy,
-                metrics(r, q, hOf, hAy, of, ay, day), matching.stream().map(t -> new Load(t.getId(),
-                    metrics(r, t.getCantidadReal(), t.getHorasOficiales(), t.getHorasAyudantes(), of, ay, day), baseAnexo(r, t, day, personas))).toList(),
+                metrics(r, q, hOf, hAy, of, ay, day), baseAnexoAgr, cargas,
                 matching.stream().anyMatch(ObraTarea::isDesencofrado));
         }).toList();
         long unlinked = loads.stream().filter(t -> !knownIds.contains(t.getRubroId())).count();
@@ -68,6 +70,27 @@ public class GetPrevistoRealUseCase {
         }
         var raiz = EstructuraRubros.raiz(rubro, rubros);
         return raiz == null ? null : raiz.getCantidadPersonas();
+    }
+
+    private static BaseAnexo agregadoBaseAnexo(List<Load> loads) {
+        var conAnexo = loads.stream().filter(l -> l.baseAnexo() != null).toList();
+        if (conAnexo.isEmpty()) return null;
+        Double hf = null, hg = null, hr = null;
+        Integer dias = null, personas = null;
+        for (var load : conAnexo) {
+            var ba = load.baseAnexo();
+            hf = sumar(hf, ba.hhPrevistasFecha());
+            hg = sumar(hg, ba.hhPrevistasHecho());
+            hr = sumar(hr, ba.hhReales());
+        }
+        return new BaseAnexo(dias, personas, hf, hg, hr);
+    }
+
+    private static Double sumar(Double a, Double b) {
+        if (a == null || !Double.isFinite(a)) return b;
+        if (b == null || !Double.isFinite(b)) return a;
+        double suma = a + b;
+        return Double.isFinite(suma) ? suma : null;
     }
 
     private static BaseAnexo baseAnexo(RubroObra rubro, ObraTarea tarea, Double jornada, Integer personas) {
