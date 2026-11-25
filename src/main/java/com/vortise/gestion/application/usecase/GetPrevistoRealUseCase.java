@@ -97,12 +97,15 @@ public class GetPrevistoRealUseCase {
 
     private static BaseAnexo baseAnexo(RubroObra rubro, ObraTarea tarea, Double jornada, Integer personas) {
         // No excluir SUBCONTRATOS: permitir que usen indicadores de anexo
-        // Calcular días transcurridos desde la fecha de inicio del rubro hasta hoy
-        Integer diasTranscurridos = null;
+        // Usar días de la tarea (cuántos días trabajo esa carga)
+        Integer diasTarea = tarea.getDias();
+        
+        // Para HF: usar días transcurridos desde la fecha de inicio del rubro hasta hoy
+        Integer diasTranscurridos = diasTarea; // default: usar días de la tarea
         if (rubro.getFechaInicioPlanificada() != null) {
             LocalDate hoy = LocalDate.now();
             long dias = ChronoUnit.DAYS.between(rubro.getFechaInicioPlanificada(), hoy);
-            diasTranscurridos = dias > 0 ? (int) dias : null;
+            if (dias > 0) diasTranscurridos = (int) dias;
         }
         
         Double hf = personas != null && personas > 0 && diasTranscurridos != null && diasTranscurridos >= 0 && noNegativo(jornada) && jornada > 0
@@ -121,7 +124,7 @@ public class GetPrevistoRealUseCase {
             hf = finito(ofPrevistas + ayPrevistas);
         }
         
-        return new BaseAnexo(diasTranscurridos, personas, hf, hg, hr);
+        return new BaseAnexo(diasTarea, personas, hf, hg, hr);
     }
 
     private static boolean noNegativo(Double valor) {
