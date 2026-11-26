@@ -48,7 +48,7 @@ public class CreateObraTareaUseCase {
         tarea.setRegistradoEn(LocalDateTime.now());
         if (identity != null) tarea.setRegistradoPorUsuarioId(identity.usuarioId());
 
-        return toDto(obraTareaRepository.save(tarea));
+        return ObraTareaMapper.toDto(obraTareaRepository.save(tarea));
     }
 
     public ObraTareaDto update(Long proyectoId, Long tareaId, ObraTareaCreateDto dto) {
@@ -63,7 +63,7 @@ public class CreateObraTareaUseCase {
         applyActivity(tarea, dto);
         aplicarDatosDeCarga(tarea, dto);
 
-        return toDto(obraTareaRepository.save(tarea));
+        return ObraTareaMapper.toDto(obraTareaRepository.save(tarea));
     }
 
     private static void aplicarDatosDeCarga(ObraTarea tarea, ObraTareaCreateDto dto) {
@@ -153,51 +153,6 @@ public class CreateObraTareaUseCase {
         }
         if (bloqueos != null) bloqueos.validarAvance(tarea.getProyecto().getId(), rubro, dto.fecha());
         tarea.setActividad(rubro);
-    }
-
-    static ObraTareaDto toDto(ObraTarea tarea) {
-        var rubroBase = tarea.getProyecto().getRubros() == null ? null : tarea.getProyecto().getRubros().stream()
-            .filter(item -> item.getId() != null && item.getId().equals(tarea.getRubroId()))
-            .findFirst().orElse(null);
-        double horasTotales = (tarea.getHorasOficiales() == null ? 0 : tarea.getHorasOficiales()) + (tarea.getHorasAyudantes() == null ? 0 : tarea.getHorasAyudantes());
-        Double productividadPresupuesto = rubroBase == null || rubroBase.getCantidad() == null || rubroBase.getCantidad() <= 0
-            || rubroBase.getHorasOficialesPrevistas() == null || rubroBase.getHorasAyudantesPrevistas() == null ? null
-            : (rubroBase.getHorasOficialesPrevistas() + rubroBase.getHorasAyudantesPrevistas()) / rubroBase.getCantidad();
-        Double cantidadPrevista = productividadPresupuesto != null && productividadPresupuesto > 0
-            && tarea.getHorasOficiales() != null && tarea.getHorasAyudantes() != null ? horasTotales / productividadPresupuesto : null;
-        Double cumplimiento = cantidadPrevista != null && cantidadPrevista > 0 && tarea.getCantidadReal() != null
-            ? round(tarea.getCantidadReal() / cantidadPrevista * 100) : null;
-        Double productividadReal = tarea.getCantidadReal() == null || tarea.getCantidadReal() == 0
-            || (tarea.getHorasOficiales() == null && tarea.getHorasAyudantes() == null) ? null : round(horasTotales / tarea.getCantidadReal());
-        Double rendimiento = productividadPresupuesto == null || productividadReal == null || productividadPresupuesto == 0 ? null : round(productividadReal / productividadPresupuesto);
-        Double desvio = rendimiento == null ? null : round((rendimiento - 1) * 100);
-        return new ObraTareaDto(
-            tarea.getId(),
-            tarea.getProyecto().getId(),
-            tarea.getNombre(),
-            tarea.getSector(),
-            tarea.getNivel(),
-            tarea.getUnidad(),
-            tarea.getRubro(),
-            rubroBase == null ? tarea.getPorcentajeCumplimiento() : cumplimiento,
-            tarea.getCumplimiento(),
-            tarea.getCausaNoCumplimiento(),
-            tarea.getComentario(),
-            tarea.getHorasOficiales(),
-            tarea.getHorasAyudantes(),
-            rubroBase == null ? tarea.getCantidadPrevista() : cantidadPrevista,
-            tarea.getCantidadReal(),
-            tarea.getMedidaCorrectiva(),
-            tarea.getDescripcion(),
-            tarea.getFecha(),
-            productividadPresupuesto,
-            productividadReal,
-            rendimiento,
-            desvio,
-            tarea.getRubroId(),
-            tarea.getDias(),
-            tarea.isDesencofrado()
-        );
     }
 
     private static double round(double value) { return Math.round(value * 100.0) / 100.0; }

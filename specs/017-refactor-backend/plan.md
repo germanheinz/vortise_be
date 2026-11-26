@@ -21,3 +21,9 @@ El dominio contiene modelos anotados con JPA y el proyecto ya tiene puertos. La 
 ## Segundo corte propuesto
 
 Extraer un método privado para aplicar los datos compartidos después de validar la actividad y otro para derivar las métricas de avance. Mantener explícitas en las entradas las validaciones específicas y la asignación de metadatos del alta. Conservar la secuencia de consultas y mutaciones del bloque común en este corte. Limitar los cambios a `CreateObraTareaUseCase.java` y las pruebas de caracterización que falten.
+
+## Consolidación de datos de avance
+
+1. Caracterizar las respuestas actuales de alta, edición, listado y resumen de empresa. Cubrir cargas vinculadas, cargas históricas sin rubro, subcontratos y cambios del presupuesto. Revisar por separado las fórmulas de Previsto vs. Real y de la respuesta de tareas.
+2. Dar una ubicación explícita a la proyección de métricas que ya usa la respuesta de tareas y el resumen de empresa. Conservar su fórmula y el respaldo histórico. Revisar importaciones, seeders y respaldos antes de decidir cuándo dejar de materializar los derivados en cargas nuevas.
+3. Evaluar el retiro del almacenamiento duplicado en una fase propia. Mantener las columnas durante la transición y definir la recuperación de datos históricos. Evaluar aparte la consolidación del total de horas de Proyecto, que actualmente admite entrada directa cuando no hay registros.

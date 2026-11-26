@@ -16,6 +16,6 @@ public class GetObraTareasUseCase {
     }
 
     public List<ObraTareaDto> execute(Long proyectoId) {
-        return obraTareaRepository.findByProyectoId(proyectoId).stream().map(CreateObraTareaUseCase::toDto).toList();
+        return obraTareaRepository.findByProyectoId(proyectoId).stream().map(ObraTareaMapper::toDto).toList();
     }
 }

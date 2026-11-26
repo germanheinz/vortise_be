@@ -76,7 +76,7 @@ class EmpresaResumenUseCasesTest {
         when(tareas.findConActividadByEmpresaRelacionadaId(1L)).thenReturn(List.of(task(1, 5., 100.), task(2, 10., 0.)));
         var result = resumen.execute(1L);
         assertEquals(1, result.cargasCumplidas(), "stored 100% with half the real quantity is not complete; stored 0% with full quantity is");
-        assertEquals(CreateObraTareaUseCase.toDto(task(2, 10., 0.)).porcentajeCumplimiento() >= 100.0, true);
+        assertEquals(ObraTareaMapper.toDto(task(2, 10., 0.)).porcentajeCumplimiento() >= 100.0, true);
     }
 
     @Test

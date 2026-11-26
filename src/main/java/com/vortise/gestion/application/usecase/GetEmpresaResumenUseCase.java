@@ -38,7 +38,7 @@ public class GetEmpresaResumenUseCase {
         Double totalHoras = horas.sumHorasPorEmpresaRelacionada(empresaId);
         var vinculadas = tareas.findConActividadByEmpresaRelacionadaId(empresaId);
         // Same rule the task list shows: the persisted percentage is ignored when the task has an activity.
-        long cumplidas = vinculadas.stream().map(CreateObraTareaUseCase::toDto)
+        long cumplidas = vinculadas.stream().map(ObraTareaMapper::toDto)
             .filter(dto -> dto.porcentajeCumplimiento() != null && dto.porcentajeCumplimiento() >= CUMPLIDA).count();
         return new EmpresaResumenDto(empresaId, count(proyectos.contarPorEmpresaRelacionada(ids), empresaId),
             count(restricciones.contarPorEmpresaRelacionada(ids), empresaId), totalHoras == null ? 0.0 : totalHoras,

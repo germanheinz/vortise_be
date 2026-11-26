@@ -217,6 +217,51 @@ class PrevistoRealUseCaseTest {
         assertThrows(IllegalArgumentException.class,() -> new CreateObraTareaUseCase(tasks,projects).update(1L,1L,dto(10L)));
         verify(tasks,never()).save(any());
     }
+    @Test
+    void listingRecalculatesLinkedProgressAfterBudgetChanges() {
+        activity.setCantidad(20.);
+        activity.setHorasOficialesPrevistas(100.);
+        activity.setHorasAyudantesPrevistas(100.);
+        var carga = task(1, 10L, 6);
+        carga.setCantidadPrevista(99.);
+        carga.setPorcentajeCumplimiento(42.);
+        when(tasks.findByProyectoId(1L)).thenReturn(List.of(carga));
+        var listado = new GetObraTareasUseCase(tasks);
+
+        var inicial = listado.execute(1L).get(0);
+        assertEquals(18., inicial.cantidadPrevista());
+        assertEquals(33.33, inicial.porcentajeCumplimiento());
+
+        activity.setCantidad(10.);
+        var actualizado = listado.execute(1L).get(0);
+        assertEquals(9., actualizado.cantidadPrevista());
+        assertEquals(66.67, actualizado.porcentajeCumplimiento());
+
+        carga.setHorasAyudantes(null);
+        var sinHorasCompletas = listado.execute(1L).get(0);
+        assertNull(sinHorasCompletas.cantidadPrevista());
+        assertNull(sinHorasCompletas.porcentajeCumplimiento());
+    }
+
+    @Test
+    void listingUsesStoredProgressWhenRubroCannotBeResolved() {
+        var sinVinculo = task(1, null, 6);
+        var rubroAusente = task(2, 99L, 6);
+        for (var carga : List.of(sinVinculo, rubroAusente)) {
+            carga.setCantidadPrevista(8.);
+            carga.setPorcentajeCumplimiento(75.);
+        }
+        when(tasks.findByProyectoId(1L)).thenReturn(List.of(sinVinculo, rubroAusente));
+
+        var respuestas = new GetObraTareasUseCase(tasks).execute(1L);
+        assertEquals(2, respuestas.size());
+        for (var respuesta : respuestas) {
+            assertEquals(8., respuesta.cantidadPrevista());
+            assertEquals(75., respuesta.porcentajeCumplimiento());
+            assertNull(respuesta.productividadPresupuesto());
+        }
+    }
+
     @Test void readsExistingCompanyRatesAndCalendarWithoutWriting() {
         var company = mock(Empresa.class); when(company.getId()).thenReturn(20L); project.setEmpresaRelacionada(company);
         when(categories.findByEmpresaId(20L)).thenReturn(List.of(new CategoriaManoObraEmpresa(company,"OFICIAL",2000.,true),

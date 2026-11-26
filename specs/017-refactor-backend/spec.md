@@ -17,3 +17,9 @@ La especificación funcional existente sigue en [Previsto vs. Real](../002-previ
 - Alta y edición comparten la asignación de campos y el cálculo de cantidad equivalente y porcentaje. Conservan los resultados, nulos, redondeo, errores, mensajes y orden de validación.
 - En edición se mantiene la comprobación de pertenencia a la obra, la autoría para Jefatura y el bloqueo del avance anterior antes de validar el nuevo. Alta conserva fecha y usuario de registro. Edición conserva esos metadatos y los días existentes cuando el DTO los omite.
 - Se preservan los datos derivados del rubro, los subcontratos sin horas, el desencofrado sin cantidad ejecutada y una sola llamada a guardar después de las validaciones.
+
+## Consolidación de datos de avance
+
+- Conservar petición y respuesta de alta, edición y listado de tareas, incluidos los campos que el asistente de carga envía como vista previa. Conservar errores de validación, redondeo, nulos y resultados después de editar el presupuesto de un rubro.
+- Las tareas vinculadas presentan las métricas derivadas del rubro y las horas de la carga. Las tareas antiguas sin rubro resoluble conservan el respaldo almacenado.
+- Conservar etiquetas registradas e historial de reportes. Mantener separados los totales de registro horario y de avance hasta confirmar su relación operativa.
