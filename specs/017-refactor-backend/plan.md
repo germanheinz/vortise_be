@@ -59,3 +59,7 @@ Usar una construcción común de `ProyectoDto` con las dos entradas actuales y r
 ### Consolidación de subcontratistas de proyecto
 
 Extraer las dos búsquedas comunes de catálogo a una clase de paquete que recibe el repositorio existente. Conservar el origen de IDs y las protecciones específicas dentro de cada caso de uso. Mantener las consultas, transacciones, autorizaciones y constructores existentes.
+
+### Cálculo común de horas reales
+
+Compartir la consulta de suma, la normalización del agregado nulo y el redondeo en `RegistroHorasRules`. Mantener en cada llamador la decisión de calcular, el bloqueo, la sincronización de JPA y el guardado. Conservar el esquema y el contrato HTTP.

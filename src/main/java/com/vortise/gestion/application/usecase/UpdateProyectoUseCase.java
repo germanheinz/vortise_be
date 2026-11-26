@@ -113,8 +113,7 @@ public class UpdateProyectoUseCase {
         if (horas == null) throw new IllegalStateException("No está configurado el repositorio de horas");
         Double totalHoras = dto.horasReales();
         if (horas.existsByProyectoId(proyectoId)) {
-            Double sumaHoras = horas.sumHorasByProyectoId(proyectoId);
-            totalHoras = RegistroHorasRules.roundHours(sumaHoras == null ? 0.0 : sumaHoras);
+            totalHoras = RegistroHorasRules.totalRegistrado(horas, proyectoId);
         }
         proyecto.setHorasReales(totalHoras);
         List<Long> selectedContractorIds = new ArrayList<>(dto.subcontratistaIds() == null

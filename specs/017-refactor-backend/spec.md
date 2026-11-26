@@ -42,3 +42,7 @@ Los dos formatos mantienen el contrato actual. El resumen omite la lectura de pl
 ### Subcontratistas de proyecto
 
 Alta y edición comparten la resolución de subcontratistas por empresa, tipo y selección. Se conservan el orden y mensaje de cada rechazo, la diferencia entre omitir y vaciar la selección, la selección implícita y el rechazo de quitar un subcontratista todavía asignado.
+
+### Total de horas reales
+
+La edición de proyecto conserva el valor manual cuando no hay registros. Si hay registros, usa la suma redondeada a dos decimales y un agregado nulo equivale a cero. Las mutaciones de registros mantienen el bloqueo del proyecto y sincronizan los cambios antes de calcular el total, incluido el cero al borrar el último registro.

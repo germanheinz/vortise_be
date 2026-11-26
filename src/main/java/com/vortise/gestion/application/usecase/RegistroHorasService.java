@@ -66,8 +66,7 @@ public class RegistroHorasService {
 
     private void updateTotal(Proyecto project) {
         records.flush();
-        Double sum = records.sumHorasByProyectoId(project.getId());
-        project.setHorasReales(RegistroHorasRules.roundHours(sum == null ? 0.0 : sum));
+        project.setHorasReales(RegistroHorasRules.totalRegistrado(records, project.getId()));
         projects.save(project);
     }
 

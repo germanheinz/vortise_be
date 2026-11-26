@@ -4,6 +4,7 @@ import com.vortise.gestion.application.dto.RegistroHorasDatos;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RegistroHoras;
+import com.vortise.gestion.domain.repository.RegistroHorasRepository;
 import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.time.Duration;
 
@@ -45,5 +46,10 @@ final class RegistroHorasRules {
             .orElse(null);
     }
 
-    static double roundHours(double hours) { return Math.round(hours * 100.0) / 100.0; }
+    static double totalRegistrado(RegistroHorasRepository registros, Long proyectoId) {
+        Double suma = registros.sumHorasByProyectoId(proyectoId);
+        return roundHours(suma == null ? 0.0 : suma);
+    }
+
+    private static double roundHours(double hours) { return Math.round(hours * 100.0) / 100.0; }
 }

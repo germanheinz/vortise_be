@@ -84,8 +84,9 @@ class Quality14RulesTest {
         when(restrictions.countByRubroVinculadoId(8L)).thenReturn(1L);
         var useCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class), tasks, restrictions, identity, hours);
         var input = new ProyectoUpdateDto("Name", null, null, "Address", "P1", null, null, null, null,
-            null, null, null, null, null, null, null, null);
-        assertDoesNotThrow(() -> useCase.execute(7L, input));
+            null, null, null, null, 12.345, null, null, null);
+        assertEquals(12.345, useCase.execute(7L, input).horasReales());
+        verify(hours, never()).sumHorasByProyectoId(7L);
         assertSame(activity, project.getRubros().get(0));
         assertSame(plant, project.getPlantas().get(0));
         assertEquals(100.0, project.getSuperficieCubierta());
@@ -137,4 +138,46 @@ class Quality14RulesTest {
 
         assertEquals(0.0, result.horasReales());
     }
+
+    @Test void hourMutationsFlushBeforeSummingAndDeletingLastRecordSetsZero() {
+        var proyectos = mock(ProyectoRepository.class);
+        var horas = mock(RegistroHorasRepository.class);
+        var identidad = mock(CurrentIdentity.class);
+        var empresa = mock(Empresa.class);
+        when(empresa.getId()).thenReturn(1L);
+        var proyecto = new Proyecto();
+        proyecto.setId(7L);
+        proyecto.setEmpresaRelacionada(empresa);
+        when(proyectos.bloquearPorId(7L)).thenReturn(Optional.of(proyecto));
+        when(horas.save(any(RegistroHoras.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(horas.sumHorasByProyectoId(7L)).thenReturn(1.236, (Double) null);
+        var servicio = new RegistroHorasService(proyectos, horas, identidad);
+        var inicio = OffsetDateTime.parse("2026-10-29T08:00:00Z");
+        var datos = new RegistroHorasCreateDto(null, null, null, null, null, inicio,
+                inicio.plusHours(1), null, null, null, null, null, null, null, null);
+
+        servicio.create(7L, datos);
+
+        assertEquals(1.24, proyecto.getHorasReales());
+        var orden = inOrder(horas, proyectos);
+        var guardado = org.mockito.ArgumentCaptor.forClass(RegistroHoras.class);
+        orden.verify(horas).save(guardado.capture());
+        orden.verify(horas).flush();
+        orden.verify(horas).sumHorasByProyectoId(7L);
+        orden.verify(proyectos).save(proyecto);
+
+        var registro = guardado.getValue();
+        registro.setId(9L);
+        when(horas.findProyectoIdById(9L)).thenReturn(Optional.of(7L));
+        when(horas.findById(9L)).thenReturn(Optional.of(registro));
+
+        servicio.delete(9L);
+
+        assertEquals(0.0, proyecto.getHorasReales());
+        orden.verify(horas).deleteById(9L);
+        orden.verify(horas).flush();
+        orden.verify(horas).sumHorasByProyectoId(7L);
+        orden.verify(proyectos).save(proyecto);
+    }
+
 }

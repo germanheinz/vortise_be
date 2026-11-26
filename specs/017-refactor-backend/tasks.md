@@ -48,3 +48,14 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] «HACELO» aprobó este punto del inventario. Se extrajo la resolución común en `SubcontratistasProyecto.java` y se conectó a los casos de uso de alta y edición con sus constructores existentes. Alcance local, sin cambios de datos, esquema o ejecución con Spring.
 - [x] `mvn -Dtest=CreateProyectoSubcontratistaTest,RubroEstructuraUseCasesTest,ProyectoMapperTest test` desde `gestion_be`. Pasaron 34 pruebas antes y después, sin fallos, errores ni omisiones. Un intento intermedio falló por una anotación duplicada y se corrigió. Las nuevas pruebas cubren duplicados antes de consultar el catálogo, selección implícita y protección contra retirar un subcontratista asignado. `git diff --check` pasó.
 - [ ] Verificación de integración y revisión independiente pendientes.
+
+## Revisión de la doble lectura de avances
+
+- [x] La primera consulta identifica rubros vinculados y la segunda alimenta la validación de certificados. Ambas preceden a la modificación de rubros. El bloqueo pesimista del proyecto no establece por sí solo que la consulta de tareas tenga el mismo resultado en ambos puntos. El alta y la edición de tareas no adquieren explícitamente ese bloqueo.
+- [ ] Conservar las dos lecturas hasta verificar la semántica concurrente en los perfiles de base utilizados. Se puede abordar por separado la repetición de búsquedas de rubros en el DTO y conservar el orden y los errores. La revisión fue estática.
+
+## Cálculo común de horas reales
+
+- [x] Aprobado mediante «IMPLEMENTEMOS» el 26 de noviembre de 2026. Alcance local en `RegistroHorasRules.java`, `RegistroHorasService.java`, `UpdateProyectoUseCase.java` y `Quality14RulesTest.java`. Se conservaron bloqueo, sincronización, guardado, esquema y contrato de API.
+- [x] Ejecutado `mvn -Dtest=Quality14RulesTest,RubroEstructuraUseCasesTest test` desde `gestion_be` con Java 21 y objetivo Java 17. Pasaron 38 pruebas antes y después, sin fallos, errores ni omisiones. Se comprobaron entrada manual, normalización de agregado nulo, redondeo, sincronización antes de sumar y baja del último registro. `git diff --check` pasó.
+- [ ] Verificación de integración y revisión independiente pendientes.
