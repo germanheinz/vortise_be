@@ -35,6 +35,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleAuthentication(org.springframework.security.core.AuthenticationException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDto(401, "Unauthorized", "Email o contraseña incorrectos"));
     }
+    @ExceptionHandler(com.vortise.gestion.infrastructure.security.clerk.ClerkVerificationException.class)
+    public ResponseEntity<ErrorResponseDto> handleClerkVerification(com.vortise.gestion.infrastructure.security.clerk.ClerkVerificationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDto(401, "Unauthorized", ex.getMessage()));
+    }
     @ExceptionHandler(com.vortise.gestion.application.exception.ReglaDeEstadoException.class)
     public ResponseEntity<java.util.Map<String, Object>> handleReglaDeEstado(com.vortise.gestion.application.exception.ReglaDeEstadoException ex, jakarta.servlet.http.HttpServletRequest request) {
         audit(com.vortise.gestion.application.exception.ReglaDeEstadoException.CODE, request);

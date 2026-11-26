@@ -7,7 +7,6 @@ import com.vortise.gestion.service.InvitacionUsuarioService;
 import com.vortise.gestion.service.InvitacionesService;
 import jakarta.validation.Valid;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,13 +17,17 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequiredArgsConstructor
 public class InvitacionAdministracionController {
     private static final String INVITACIONES_EQUIPO = "/api/equipo/invitaciones";
     private static final String INVITACIONES_USUARIO = "/api/empresas/{empresaId}/usuarios/invitaciones";
 
     private final InvitacionesService equipo;
     private final InvitacionUsuarioService usuario;
+
+    public InvitacionAdministracionController(InvitacionesService equipo, InvitacionUsuarioService usuario) {
+        this.equipo = equipo;
+        this.usuario = usuario;
+    }
 
     @GetMapping(INVITACIONES_EQUIPO)
     @PreAuthorize("hasRole('ADMINISTRADOR')")

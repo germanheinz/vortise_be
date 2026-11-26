@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.vortise.gestion.application.dto.InvitacionUsuarioDto.Aceptar;
+import com.vortise.gestion.application.dto.InvitacionUsuarioDto.AceptarClerk;
 import com.vortise.gestion.application.dto.InvitacionUsuarioDto.Crear;
 import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.application.exception.ConflictoEstadoException;
@@ -33,7 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import com.vortise.gestion.service.usuario.ClerkUserSyncService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -52,7 +52,7 @@ class InvitacionUsuarioServiceTest {
     private final List<InvitacionUsuario> stored = new ArrayList<>();
     private final InvitacionUsuarioRepository invitaciones = new FakeInvitaciones(stored);
     private final InvitacionUsuarioService useCase = new InvitacionUsuarioService(empresas, usuarios, invitaciones, proyectos,
-        identity, encoder, autenticacion, mock(ClerkUserSyncService.class), "https://app.example.invalid/");
+        identity, encoder, autenticacion, "https://app.example.invalid/");
     private Empresa empresa;
 
     @BeforeEach
@@ -77,13 +77,13 @@ class InvitacionUsuarioServiceTest {
         when(proyectos.findById(id)).thenReturn(Optional.of(project));
     }
 
-    private static String token(String link) { return link.substring(link.indexOf("#token=") + 7); }
+    private static String token(String link) { return link.substring(link.indexOf("#codigo=") + 8); }
 
     @Test
     void createsAOneTimeLinkAndStoresOnlyTheHashOfTheToken() {
         var created = useCase.crear(COMPANY, new Crear("  Ana@Example.INVALID ", RolEmpresa.CONSULTA, null));
 
-        assertTrue(created.enlace().startsWith("https://app.example.invalid/invitacion-usuario#token="));
+        assertTrue(created.enlace().startsWith("https://app.example.invalid/invitacion-usuario#codigo="));
         String token = token(created.enlace());
         assertEquals(43, token.length());
         assertEquals("ana@example.invalid", created.email());
@@ -221,6 +221,38 @@ class InvitacionUsuarioServiceTest {
         assertEquals("Constructora", consulta.empresaNombre());
         assertEquals("who@example.invalid", consulta.email());
         assertEquals(RolEmpresa.ADMINISTRADOR, consulta.rol());
+    }
+
+    @Test
+    void clerkAcceptanceUsesTheInvitationCompanyRoleAndFormNameWithTheVerifiedAccount() {
+        site(7L, COMPANY);
+        var created = useCase.crear(COMPANY, new Crear("jefe@example.invalid", RolEmpresa.JEFE_DE_OBRA, List.of(7L)));
+
+        useCase.aceptarClerk(new AceptarClerk(token(created.enlace()), "  Ana Pérez "), "user_abc", "JEFE@example.invalid");
+
+        var saved = org.mockito.ArgumentCaptor.forClass(UsuarioEmpresa.class);
+        verify(usuarios).save(saved.capture());
+        UsuarioEmpresa user = saved.getValue();
+        assertEquals(empresa, user.getEmpresa());
+        assertEquals(RolEmpresa.JEFE_DE_OBRA, user.getRol());
+        assertEquals("Ana Pérez", user.getNombre());
+        assertEquals("user_abc", user.getClerkUserId());
+        assertEquals(java.util.Set.of(7L), user.getObrasAsignadas());
+        assertFalse(stored.get(0).disponible(java.time.Instant.now()));
+    }
+
+    @Test
+    void clerkAcceptanceRejectsAnotherEmailOrAnAlreadyLinkedAccountWithoutConsumingTheInvitation() {
+        var created = useCase.crear(COMPANY, new Crear("ana@example.invalid", RolEmpresa.CONSULTA, null));
+        String code = token(created.enlace());
+        when(usuarios.findByClerkUserId("user_linked")).thenReturn(Optional.of(mock(UsuarioEmpresa.class)));
+
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.aceptarClerk(new AceptarClerk(code, "Ana"), "user_abc", "other@example.invalid"));
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.aceptarClerk(new AceptarClerk(code, "Ana"), "user_abc", null));
+        assertThrows(ConflictoEstadoException.class, () -> useCase.aceptarClerk(new AceptarClerk(code, "Ana"), "user_linked", "ana@example.invalid"));
+
+        verify(usuarios, never()).save(any());
+        assertTrue(stored.get(0).disponible(java.time.Instant.now()));
     }
 
     private static final class FakeInvitaciones implements InvitacionUsuarioRepository {

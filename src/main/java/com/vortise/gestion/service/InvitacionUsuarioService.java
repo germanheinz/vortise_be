@@ -28,7 +28,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.vortise.gestion.service.usuario.ClerkUserSyncService;
 
 /**
  * An administrator invites a person to the company with a fixed role. The person opens a one-time link,
@@ -46,14 +45,13 @@ public class InvitacionUsuarioService {
     private final CurrentIdentity identity;
     private final PasswordEncoder encoder;
     private final AutenticacionService autenticacion;
-    private final ClerkUserSyncService clerkSync;
     private final String frontend;
 
     public InvitacionUsuarioService(EmpresaRepository empresas, UsuarioEmpresaRepository usuarios, InvitacionUsuarioRepository invitaciones,
             ProyectoRepository proyectos, CurrentIdentity identity, PasswordEncoder encoder, AutenticacionService autenticacion,
-            ClerkUserSyncService clerkSync, @Value("${app.frontend-url}") String frontend) {
+            @Value("${app.frontend-url}") String frontend) {
         this.empresas = empresas; this.usuarios = usuarios; this.invitaciones = invitaciones; this.proyectos = proyectos;
-        this.identity = identity; this.encoder = encoder; this.autenticacion = autenticacion; this.clerkSync = clerkSync;
+        this.identity = identity; this.encoder = encoder; this.autenticacion = autenticacion;
         this.frontend = frontend.replaceAll("/+$", "");
     }
 
@@ -123,29 +121,35 @@ public class InvitacionUsuarioService {
         return autenticacion.sesion(usuario);
     }
 
+    /**
+     * Accepts an invitation for a Clerk account. The account id and email come from a verified Clerk session, never
+     * from the request body; the email must be the invited one, and the user lands in the invitation's company and role.
+     */
     @Transactional
-    public LoginResponseDto aceptarClerk(AceptarClerk dto) {
-        InvitacionUsuario invitacion = disponible(dto.codigo());
-        Long empresaId = invitacion.getEmpresaId();
+    public LoginResponseDto aceptarClerk(AceptarClerk dto, String clerkUserId, String emailVerificado) {
+        Long empresaId = disponible(dto.codigo()).getEmpresaId();
+        // Same lock order as creation: company first, then the invitation.
         Empresa empresa = empresas.bloquearPorId(empresaId).orElseThrow(this::noDisponible);
-        invitacion = invitaciones.bloquearPorId(invitacion.getId()).orElseThrow(this::noDisponible);
+        InvitacionUsuario invitacion = invitaciones.bloquearPorId(disponible(dto.codigo()).getId()).orElseThrow(this::noDisponible);
         Instant now = Instant.now();
         if (!invitacion.disponible(now)) throw noDisponible();
-        
+        if (emailVerificado == null || !normalizar(emailVerificado).equals(invitacion.getEmail())) {
+            throw new SolicitudInvalidaException("Tu cuenta debe usar el email al que llegó la invitación.");
+        }
+        if (usuarios.findByEmail(invitacion.getEmail()).isPresent() || usuarios.findByClerkUserId(clerkUserId).isPresent()) {
+            throw new ConflictoEstadoException("No se pudo crear la cuenta con ese email. Iniciá sesión con tu cuenta existente.");
+        }
         if (usuarios.countByEmpresaIdAndActivoTrue(empresaId) >= empresa.getLimiteUsuarios()) {
             throw new ConflictoEstadoException("La empresa alcanzó su límite de usuarios. Pedile al administrador que libere una plaza.");
         }
-        
-        UsuarioEmpresa usuario = clerkSync.sincronizarDesdeClerk(dto.clerkUserId(), invitacion.getEmail());
-        if (usuario == null) {
-            throw new SolicitudInvalidaException("No se pudo sincronizar el usuario con Clerk.");
-        }
-        
-        if (invitacion.getRol() == RolEmpresa.JEFE_DE_OBRA) {
-            usuario.asignarObras(obrasDeLaEmpresa(empresaId, invitacion.getObraIds()));
-            usuarios.save(usuario);
-        }
-        
+        // Clerk owns the credentials; the local hash is random so password login can never match.
+        UsuarioEmpresa usuario = new UsuarioEmpresa(empresa, invitacion.getEmail(), dto.nombre().trim(),
+            encoder.encode(java.util.UUID.randomUUID().toString()), invitacion.getRol());
+        usuario.setClerkUserId(clerkUserId);
+        usuario.setMigradoAClerk(true);
+        usuario.setTieneLogin(true);
+        if (invitacion.getRol() == RolEmpresa.JEFE_DE_OBRA) usuario.asignarObras(obrasDeLaEmpresa(empresaId, invitacion.getObraIds()));
+        usuario = usuarios.save(usuario);
         invitacion.consumir(now);
         AuditLog.userInvitationAccepted(usuario.getId(), invitacion.getId(), invitacion.getRol().name());
         return autenticacion.sesion(usuario);

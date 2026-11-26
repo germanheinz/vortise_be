@@ -81,3 +81,6 @@ app:
     price-basic: ${STRIPE_PRICE_BASIC:}
     price-pro: ${STRIPE_PRICE_PRO:}
   frontend-url: ${APP_FRONTEND_URL:http://localhost:3000}
+  clerk:
+    enabled: ${CLERK_ENABLED:false}
+    secret-key: ${CLERK_SECRET_KEY:}

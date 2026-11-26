@@ -4,9 +4,6 @@ import com.vortise.gestion.model.RolEmpresa;
 import com.vortise.gestion.model.UsuarioEmpresa;
 import com.vortise.gestion.service.authentication.JwtService;
 import com.vortise.gestion.service.usuario.ClerkUserSyncService;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,122 +11,73 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+/**
+ * Accepts a Clerk session token as a Bearer credential: once Clerk's signature is verified and the account maps to an
+ * existing active user, the request continues with an internal JWT so JwtAuthenticationFilter applies the usual rules.
+ * Anything else (internal JWTs, invalid tokens, unknown accounts) passes through untouched.
+ */
 @Component
 public class ClerkJwtInterceptor extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(ClerkJwtInterceptor.class);
-    
-    private final ClerkUserSyncService clerkSync;
-    private final JwtService jwtService;
-    
-    @Value("${app.clerk.enabled:false}")
-    private boolean clerkEnabled;
-    
-    @Value("${app.clerk.secret-key:}")
-    private String clerkSecretKey;
 
-    public ClerkJwtInterceptor(ClerkUserSyncService clerkSync, JwtService jwtService) {
+    private final ClerkUserSyncService clerkSync;
+    private final ClerkTokenVerifier verifier;
+    private final JwtService jwtService;
+
+    public ClerkJwtInterceptor(ClerkUserSyncService clerkSync, ClerkTokenVerifier verifier, JwtService jwtService) {
         this.clerkSync = clerkSync;
+        this.verifier = verifier;
         this.jwtService = jwtService;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        
-        if (!clerkEnabled || clerkSecretKey == null || clerkSecretKey.isBlank()) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-        
-        // Extract Bearer token from Authorization header
         String token = extractBearerToken(request);
-        
-        if (token == null) {
+        if (!verifier.isEnabled() || token == null) {
             filterChain.doFilter(request, response);
             return;
         }
-        
+
         try {
-            // Create secret key from Clerk secret
-            SecretKey key = new SecretKeySpec(clerkSecretKey.getBytes(StandardCharsets.UTF_8), 0, 
-                clerkSecretKey.getBytes(StandardCharsets.UTF_8).length, "HmacSHA256");
-            
-            // Validate JWT with Clerk secret key
-            Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-            
-            // Extract claims from Clerk JWT
-            String clerkUserId = claims.getSubject(); // "user_xxx"
-            String email = claims.get("email", String.class);
-            
-            if (clerkUserId == null || email == null) {
-                log.debug("Missing required claims in Clerk JWT");
-                filterChain.doFilter(request, response);
-                return;
-            }
-            
-            log.debug("Processing Clerk JWT for user: {} ({})", clerkUserId, email);
-            
-            // Synchronize user from Clerk
-            UsuarioEmpresa usuario = clerkSync.sincronizarDesdeClerk(clerkUserId, email);
-            
+            String clerkUserId = verifier.verifySession(token);
+            // Only look up the email (a Clerk API call) for accounts not linked yet.
+            UsuarioEmpresa usuario = clerkSync.buscarPorClerkUserId(clerkUserId)
+                .orElseGet(() -> verifier.verifiedPrimaryEmail(clerkUserId)
+                    .map(email -> clerkSync.sincronizarDesdeClerk(clerkUserId, email)).orElse(null));
+
             if (usuario != null && usuario.isActivo()) {
-                // Generate internal JWT for the system to work normally
                 List<Long> obras = usuario.getRol() == RolEmpresa.JEFE_DE_OBRA
                     ? usuario.getObrasAsignadas().stream().sorted().toList()
                     : List.of();
-                
-                String internalJwt = jwtService.generate(
-                    usuario.getId(),
-                    usuario.getEmpresa().getId(),
-                    usuario.getEmail(),
-                    usuario.getRol().name(),
-                    usuario.isSuperAdmin(),
-                    usuario.getSessionVersion(),
-                    obras
-                );
-                
-                log.debug("Generated internal JWT for Clerk user: {}", clerkUserId);
-                
-                // Wrap request to replace Authorization header with internal JWT
-                // so JwtAuthenticationFilter processes it normally
+                String internalJwt = jwtService.generate(usuario.getId(), usuario.getEmpresa().getId(), usuario.getEmail(),
+                    usuario.getRol().name(), usuario.isSuperAdmin(), usuario.getSessionVersion(), obras);
+
+                // Replace the Authorization header so JwtAuthenticationFilter processes the internal JWT normally.
                 HttpServletRequest wrappedRequest = new HttpServletRequestWrapper(request) {
                     @Override
                     public String getHeader(String name) {
-                        if ("Authorization".equalsIgnoreCase(name)) {
-                            return "Bearer " + internalJwt;
-                        }
+                        if ("Authorization".equalsIgnoreCase(name)) return "Bearer " + internalJwt;
                         return super.getHeader(name);
                     }
                 };
-                
                 filterChain.doFilter(wrappedRequest, response);
                 return;
-            } else {
-                log.warn("User not found after Clerk sync: {} ({})", clerkUserId, email);
             }
-            
-        } catch (JwtException e) {
-            // Invalid Clerk JWT - continue (may be traditional JWT or public endpoint)
-            log.debug("Invalid Clerk JWT: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("Error processing Clerk JWT", e);
+            log.debug("No active local user for Clerk account {}", clerkUserId);
+        } catch (ClerkVerificationException notClerk) {
+            // Not a valid Clerk token: may be an internal JWT or a public endpoint.
+            log.debug("Bearer token is not a valid Clerk session");
+        } catch (RuntimeException e) {
+            log.warn("Could not process Clerk session: {}", e.getClass().getSimpleName());
         }
-        
-        // Continue with original request (may be traditional JWT, may be public endpoint)
+
         filterChain.doFilter(request, response);
     }
 
@@ -141,4 +89,3 @@ public class ClerkJwtInterceptor extends OncePerRequestFilter {
         return null;
     }
 }
-
