@@ -33,6 +33,16 @@ public class UsuarioEmpresa {
     @jakarta.persistence.Version private long persistenceVersion;
 
     @Column(name = "invitante_id") private Long invitanteId;
+    @Column(name = "clerk_user_id", unique = true)
+    private String clerkUserId;
+    @Column(name = "tiene_login")
+    private boolean tieneLogin = false;
+    @Column(name = "codigo_invitacion", unique = true)
+    private String codigoInvitacion;
+    @Column(name = "invitacion_expira_en")
+    private Instant invitacionExpiraEn;
+    @Column(name = "migrado_a_clerk")
+    private boolean migradoAClerk = false;
     @jakarta.persistence.ElementCollection
     @jakarta.persistence.CollectionTable(name = "usuario_empresa_accesos", joinColumns = @JoinColumn(name = "usuario_id"),
         uniqueConstraints = @jakarta.persistence.UniqueConstraint(columnNames = {"usuario_id", "empresa_id"}))
@@ -70,6 +80,19 @@ public class UsuarioEmpresa {
     public boolean isSuperAdmin() { return superAdmin; }
     public Instant getUltimoLoginExitosoEn() { return ultimoLoginExitosoEn; }
     public long getSessionVersion() { return sessionVersion; }
+    public String getClerkUserId() { return clerkUserId; }
+    public boolean getTieneLogin() { return tieneLogin; }
+    public String getCodigoInvitacion() { return codigoInvitacion; }
+    public Instant getInvitacionExpiraEn() { return invitacionExpiraEn; }
+    public boolean isMigradoAClerk() { return migradoAClerk; }
+    public boolean esUsuarioConLogin() { return tieneLogin && clerkUserId != null; }
+    public boolean esInvitacionValida() {
+        return codigoInvitacion != null && invitacionExpiraEn != null && invitacionExpiraEn.isAfter(Instant.now());
+    }
+    public void generarCodigoInvitacion() {
+        this.codigoInvitacion = java.util.UUID.randomUUID().toString();
+        this.invitacionExpiraEn = Instant.now().plus(java.time.Duration.ofDays(7));
+    }
     /** New identity/restored identity must not reuse generations from previously signed JWTs. */
     public static long nuevaGeneracionSesion() { return SESSION_GENERATIONS.nextLong(1, Long.MAX_VALUE / 2); }
     public void setUltimoLoginExitosoEn(Instant value) { ultimoLoginExitosoEn = value; }
@@ -78,4 +101,11 @@ public class UsuarioEmpresa {
     public void setPasswordHash(String value) { sessionVersion++; passwordHash = value; }
     public void setRol(RolEmpresa value) { if (rol != value) sessionVersion++; rol = value; }
     public void setActivo(boolean value) { if (activo != value) sessionVersion++; activo = value; }
+    public void setEmpresa(Empresa value) { empresa = value; }
+    public void setEmail(String value) { email = value; }
+    public void setClerkUserId(String value) { clerkUserId = value; }
+    public void setTieneLogin(boolean value) { tieneLogin = value; }
+    public void setCodigoInvitacion(String value) { codigoInvitacion = value; }
+    public void setInvitacionExpiraEn(Instant value) { invitacionExpiraEn = value; }
+    public void setMigradoAClerk(boolean value) { migradoAClerk = value; }
 }

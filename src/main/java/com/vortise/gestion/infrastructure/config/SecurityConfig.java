@@ -35,6 +35,7 @@ public class SecurityConfig {
                 }))
             .authorizeHttpRequests(auth -> auth.requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/invitacion/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
                 .requestMatchers(EndpointRequest.to("metrics").withHttpMethod(org.springframework.http.HttpMethod.GET)).hasAuthority("ROLE_SUPER_ADMIN")
                 .requestMatchers(EndpointRequest.toAnyEndpoint()).denyAll()
