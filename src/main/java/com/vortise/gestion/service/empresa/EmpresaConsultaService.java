@@ -1,28 +1,25 @@
 package com.vortise.gestion.service.empresa;
 
-import com.vortise.gestion.service.proyecto.PrevistoRealService;
+import com.vortise.gestion.service.proyecto.IndicadoresObraService;
 import com.vortise.gestion.application.dto.EmpresaDashboardObrasDto;
 import com.vortise.gestion.application.dto.EmpresaResumenDto;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
-import com.vortise.gestion.domain.rule.PrevistoRealCalculator;
+import com.vortise.gestion.domain.rule.indicadores.CalculadoraIndicadores;
 import com.vortise.gestion.application.mapper.ObraTareaMapper;
 import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.model.Proyecto;
 import com.vortise.gestion.model.RestriccionObra;
-import com.vortise.gestion.model.RubroObra;
 import com.vortise.gestion.repository.EmpresaConteoProjection;
 import com.vortise.gestion.repository.EmpresaRepository;
 import com.vortise.gestion.repository.ObraTareaRepository;
 import com.vortise.gestion.repository.ProyectoRepository;
 import com.vortise.gestion.repository.RegistroHorasRepository;
 import com.vortise.gestion.repository.RestriccionObraRepository;
-import com.vortise.gestion.domain.rule.EstructuraRubros;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,20 +29,19 @@ import org.springframework.transaction.annotation.Transactional;
 public class EmpresaConsultaService {
     private static final double CUMPLIDA = 100.0;
     private static final Set<String> CERRADAS = Set.of("RESUELTO", "RESUELTA", "LIBERADO");
-    private static final String SUBCONTRATO = "SUBCONTRATO";
     private final EmpresaRepository empresas;
     private final ProyectoRepository proyectos;
     private final RestriccionObraRepository restricciones;
-    private final PrevistoRealService previstoReal;
+    private final IndicadoresObraService indicadores;
     private final CurrentIdentity identity;
     private final RegistroHorasRepository horas;
     private final ObraTareaRepository tareas;
 
     public EmpresaConsultaService(EmpresaRepository empresas, ProyectoRepository proyectos,
-            RestriccionObraRepository restricciones, PrevistoRealService previstoReal, CurrentIdentity identity,
+            RestriccionObraRepository restricciones, IndicadoresObraService indicadores, CurrentIdentity identity,
             RegistroHorasRepository horas, ObraTareaRepository tareas) {
         this.empresas = empresas; this.proyectos = proyectos; this.restricciones = restricciones;
-        this.previstoReal = previstoReal; this.identity = identity;
+        this.indicadores = indicadores; this.identity = identity;
         this.horas = horas;
         this.tareas = tareas;
     }
@@ -76,43 +72,19 @@ public class EmpresaConsultaService {
         return estado == null || !CERRADAS.contains(estado.trim().toUpperCase(Locale.ROOT));
     }
 
+    /** Same figures as the project indicators (spec 021, CI-07): own labour only, percentages ×100. */
     private EmpresaDashboardObrasDto.Obra obra(Proyecto obra, long restriccionesActivas) {
-        var rubros = obra.getRubros() == null ? List.<RubroObra>of() : obra.getRubros();
-        var propias = rubros.stream().filter(r -> EstructuraRubros.esHoja(r, rubros) && !SUBCONTRATO.equals(r.getTipoContratista()))
-            .map(RubroObra::getId).collect(Collectors.toSet());
-        var resumen = previstoReal.execute(obra.getId());
-        var actividades = resumen.actividades().stream().filter(a -> propias.contains(a.rubroId())).toList();
-        Double actual = sum(actividades, PrevistoRealCalculator.Metrics::desvio);
-        Double proyectado = sum(actividades, PrevistoRealCalculator.Metrics::proyeccion);
-        Double costo = costoPrevisto(rubros, propias, resumen.costoHoraOficial(), resumen.costoHoraAyudante());
-        int conDatos = (int) actividades.stream().filter(a -> a.indicadores().desvio() != null).count();
-        return new EmpresaDashboardObrasDto.Obra(obra.getId(), obra.getNombre(), obra.getNumeroProyecto(), actual, proyectado,
-            porcentaje(actual, costo), porcentaje(proyectado, costo), costo, propias.size(), conDatos, restriccionesActivas);
+        var indicadores = this.indicadores.calcular(obra.getId());
+        var total = indicadores.obra();
+        var subrubros = indicadores.rubros().stream().flatMap(r -> r.pisos().stream()).flatMap(p -> p.subrubros().stream()).toList();
+        int conDatos = (int) subrubros.stream().filter(CalculadoraIndicadores.ResultadoSubrubro::conAvance).count();
+        return new EmpresaDashboardObrasDto.Obra(obra.getId(), obra.getNombre(), obra.getNumeroProyecto(), total.desvio(),
+            total.proyeccionTotal(), porcentaje(total.desvioPorcentaje()), porcentaje(total.porcentajeTotal()),
+            total.presupuesto(), subrubros.size(), conDatos, restriccionesActivas);
     }
 
-    private static Double sum(List<PrevistoRealService.Activity> activities, Function<PrevistoRealCalculator.Metrics, Double> field) {
-        var values = activities.stream().map(a -> field.apply(a.indicadores())).filter(v -> v != null && Double.isFinite(v)).toList();
-        if (values.isEmpty()) return null;
-        double total = values.stream().mapToDouble(Double::doubleValue).sum();
-        return Double.isFinite(total) ? total : null;
-    }
-
-    private static Double costoPrevisto(List<RubroObra> rubros, Set<Long> propias, Double costoOficial, Double costoAyudante) {
-        if (costoOficial == null || costoAyudante == null) return null;
-        double total = 0;
-        for (var rubro : rubros) {
-            if (!propias.contains(rubro.getId())) continue;
-            Double oficiales = rubro.getHorasOficialesPrevistas(), ayudantes = rubro.getHorasAyudantesPrevistas();
-            if (oficiales == null || ayudantes == null || !Double.isFinite(oficiales) || !Double.isFinite(ayudantes)) continue;
-            total += oficiales * costoOficial + ayudantes * costoAyudante;
-        }
-        return total > 0 && Double.isFinite(total) ? total : null;
-    }
-
-    private static Double porcentaje(Double monto, Double costo) {
-        if (monto == null || costo == null || costo <= 0) return null;
-        double value = monto / costo * 100;
-        return Double.isFinite(value) ? value : null;
+    private static Double porcentaje(Double fraccion) {
+        return fraccion == null ? null : fraccion * 100;
     }
 
     public EmpresaResumenDto resumen(Long empresaId) {

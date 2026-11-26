@@ -1,8 +1,10 @@
 package com.vortise.gestion.service;
 
 import com.vortise.gestion.service.empresa.EmpresaConsultaService;
-import com.vortise.gestion.service.proyecto.PrevistoRealService;
-import com.vortise.gestion.domain.rule.PrevistoRealCalculator;
+import com.vortise.gestion.service.proyecto.IndicadoresObraService;
+import com.vortise.gestion.application.dto.IndicadoresObraDto;
+import com.vortise.gestion.domain.rule.indicadores.CalculadoraIndicadores;
+import com.vortise.gestion.domain.rule.indicadores.CalculadoraIndicadores.*;
 import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.model.*;
 import com.vortise.gestion.repository.*;
@@ -18,22 +20,20 @@ class EmpresaDashboardObrasUseCaseTest {
     private final EmpresaRepository empresas = mock(EmpresaRepository.class);
     private final ProyectoRepository proyectos = mock(ProyectoRepository.class);
     private final RestriccionObraRepository restricciones = mock(RestriccionObraRepository.class);
-    private final PrevistoRealService previstoReal = mock(PrevistoRealService.class);
+    private final IndicadoresObraService indicadores = mock(IndicadoresObraService.class);
     private final CurrentIdentity identity = mock(CurrentIdentity.class);
-    private final EmpresaConsultaService useCase = new EmpresaConsultaService(empresas, proyectos, restricciones, previstoReal, identity, null, null);
+    private final EmpresaConsultaService useCase = new EmpresaConsultaService(empresas, proyectos, restricciones, indicadores, identity, null, null);
 
     private final Proyecto obra = new Proyecto();
 
-    private RubroObra rubro(long id, double oficiales, double ayudantes, String contratista) {
-        var rubro = new RubroObra();
-        rubro.setId(id); rubro.setProyecto(obra); rubro.setTipoContratista(contratista);
-        rubro.setHorasOficialesPrevistas(oficiales); rubro.setHorasAyudantesPrevistas(ayudantes);
-        return rubro;
+    private static ResultadoSubrubro subrubro(boolean conAvance) {
+        return new ResultadoSubrubro(1L, "Platea", "m3", conAvance, null, 0, 0, null, null, null, null, null, null, null,
+            null, null, null, null, false, List.of());
     }
 
-    private static PrevistoRealService.Activity activity(long rubroId, Double desvio, Double proyeccion) {
-        var metrics = new PrevistoRealCalculator.Metrics(null, null, null, null, null, null, desvio, proyeccion, null, null, null);
-        return new PrevistoRealService.Activity(rubroId, "A" + rubroId, "m2", null, null, null, metrics, List.of());
+    private static Obra totales(Double desvio, Double desvioPorcentaje, Double proyeccionTotal, Double porcentajeTotal, Double presupuesto) {
+        return new Obra(null, null, null, null, null, presupuesto, desvio, desvioPorcentaje, null, null, null,
+            proyeccionTotal, porcentajeTotal, null, null);
     }
 
     private static RestriccionObra restriccion(Proyecto proyecto, String estado) {
@@ -41,31 +41,31 @@ class EmpresaDashboardObrasUseCaseTest {
         return item;
     }
 
-    private void givenObra(Double costoOficial, Double costoAyudante, PrevistoRealService.Activity... actividades) {
+    private void givenObra(Obra totales, ResultadoSubrubro... subrubros) {
         obra.setId(5L); obra.setNombre("Obra A");
         when(empresas.findById(1L)).thenReturn(Optional.of(new Empresa("Sintética", null)));
         when(proyectos.findByEmpresaRelacionadaId(1L)).thenReturn(List.of(obra));
-        when(previstoReal.execute(5L)).thenReturn(new PrevistoRealService.Summary(costoOficial, costoAyudante, 8., 0, List.of(actividades)));
+        var piso = new Piso(null, null, null, List.of(subrubros));
+        when(indicadores.calcular(5L)).thenReturn(new IndicadoresObraDto(new Parametros(10., 5., 8.), 0, totales,
+            List.of(new CalculadoraIndicadores.Rubro(1L, "Hormigón", null, List.of(piso)))));
     }
 
     @Test
-    void sumsOwnLaborDeviationsAndComputesPercentagesOverTheBudgetedLaborCost() {
-        obra.setRubros(List.of(rubro(10, 100, 50, "PROPIA"), rubro(11, 100, 0, null), rubro(12, 999, 999, "SUBCONTRATO")));
-        givenObra(10., 5., activity(10, -300., -100.), activity(11, 100., 50.), activity(12, 5000., 5000.));
+    void showsTheProjectIndicatorsWithPercentagesTimesOneHundred() {
+        givenObra(totales(-135_000., -0.6, -405_000., -540_000. / 2_493_000, 2_493_000.), subrubro(true), subrubro(false));
         var item = useCase.dashboardObras(1L).obras().get(0);
-        assertEquals(-200., item.desvioActual(), "the subcontracted activity is excluded");
-        assertEquals(-50., item.desvioProyectado());
-        assertEquals(2250., item.costoManoObraPrevisto(), "(100*10+50*5) + (100*10)");
-        assertEquals(-200. / 2250. * 100, item.porcentajeActual(), 1e-9);
-        assertEquals(-50. / 2250. * 100, item.porcentajeProyectado(), 1e-9);
+        assertEquals(-135_000., item.desvioActual());
+        assertEquals(-405_000., item.desvioProyectado());
+        assertEquals(2_493_000., item.costoManoObraPrevisto());
+        assertEquals(-60., item.porcentajeActual(), 1e-9);
+        assertEquals(-540_000. / 2_493_000 * 100, item.porcentajeProyectado(), 1e-9);
         assertEquals(2, item.actividadesPropias());
-        assertEquals(2, item.actividadesConDatos());
+        assertEquals(1, item.actividadesConDatos());
     }
 
     @Test
     void countsOnlyRestrictionsThatAreNotResolvedOrReleased() {
-        obra.setRubros(List.of());
-        givenObra(10., 5.);
+        givenObra(totales(null, null, null, null, null));
         var otra = new Proyecto(); otra.setId(6L);
         when(restricciones.findByProyectoEmpresaRelacionadaIdOrderByIdAsc(1L)).thenReturn(List.of(
             restriccion(obra, "PENDIENTE"), restriccion(obra, null), restriccion(obra, " resuelto "), restriccion(obra, "LIBERADO"), restriccion(otra, "PENDIENTE")));
@@ -74,11 +74,10 @@ class EmpresaDashboardObrasUseCaseTest {
 
     @Test
     void withoutDataOrRatesAmountsAndPercentagesAreNullInsteadOfZero() {
-        obra.setRubros(List.of(rubro(10, 100, 50, "PROPIA")));
-        givenObra(null, 5., activity(10, null, null));
+        givenObra(totales(null, null, null, null, null), subrubro(false));
         var item = useCase.dashboardObras(1L).obras().get(0);
         assertNull(item.desvioActual()); assertNull(item.desvioProyectado());
-        assertNull(item.costoManoObraPrevisto()); assertNull(item.porcentajeActual());
+        assertNull(item.costoManoObraPrevisto()); assertNull(item.porcentajeActual()); assertNull(item.porcentajeProyectado());
         assertEquals(0, item.actividadesConDatos());
     }
 
@@ -86,6 +85,6 @@ class EmpresaDashboardObrasUseCaseTest {
     void deniedCompanyReadsNothing() {
         doThrow(new AccessDeniedException("No tienes acceso a esta empresa")).when(identity).requireEmpresa(2L);
         assertThrows(AccessDeniedException.class, () -> useCase.dashboardObras(2L));
-        verifyNoInteractions(empresas, proyectos, restricciones, previstoReal);
+        verifyNoInteractions(empresas, proyectos, restricciones, indicadores);
     }
 }
