@@ -2,7 +2,7 @@ package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.UsuarioEmpresaDto;
 import com.vortise.gestion.application.dto.UsuarioEmpresaUpdateDto;
-import com.vortise.gestion.application.usecase.UsuarioEmpresaUseCase;
+import com.vortise.gestion.application.service.UsuarioEmpresaUseCase;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;

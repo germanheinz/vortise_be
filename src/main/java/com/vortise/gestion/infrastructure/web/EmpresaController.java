@@ -5,11 +5,11 @@ import com.vortise.gestion.application.dto.EmpresaDto;
 import com.vortise.gestion.application.dto.EmpresaResumenDto;
 import com.vortise.gestion.application.dto.RestriccionDto;
 import com.vortise.gestion.application.dto.PaginaDto;
-import com.vortise.gestion.application.usecase.DeleteEmpresaUseCase;
-import com.vortise.gestion.application.usecase.GetEmpresaResumenUseCase;
-import com.vortise.gestion.application.usecase.GetRestriccionesEmpresaUseCase;
-import com.vortise.gestion.application.usecase.ProyectoConsultaService;
-import com.vortise.gestion.application.usecase.EmpresaService;
+import com.vortise.gestion.application.service.DeleteEmpresaUseCase;
+import com.vortise.gestion.application.service.GetEmpresaResumenUseCase;
+import com.vortise.gestion.application.service.GetRestriccionesEmpresaUseCase;
+import com.vortise.gestion.application.service.ProyectoConsultaService;
+import com.vortise.gestion.application.service.EmpresaService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -33,12 +33,12 @@ public class EmpresaController {
     private final DeleteEmpresaUseCase deleteEmpresaUseCase;
     private final GetEmpresaResumenUseCase resumen;
     private final GetRestriccionesEmpresaUseCase restriccionesEmpresa;
-    private final com.vortise.gestion.application.usecase.GetEmpresaDashboardObrasUseCase dashboardObras;
+    private final com.vortise.gestion.application.service.GetEmpresaDashboardObrasUseCase dashboardObras;
 
     public EmpresaController(EmpresaService empresas, DeleteEmpresaUseCase deleteEmpresaUseCase,
             ProyectoConsultaService proyectos,
             GetEmpresaResumenUseCase resumen, GetRestriccionesEmpresaUseCase restriccionesEmpresa,
-            com.vortise.gestion.application.usecase.GetEmpresaDashboardObrasUseCase dashboardObras) {
+            com.vortise.gestion.application.service.GetEmpresaDashboardObrasUseCase dashboardObras) {
         this.dashboardObras = dashboardObras;
         this.proyectos = proyectos;
         this.resumen = resumen;

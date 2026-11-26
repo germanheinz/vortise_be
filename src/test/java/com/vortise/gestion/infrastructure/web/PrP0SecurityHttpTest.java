@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import tools.jackson.databind.ObjectMapper;
 import com.vortise.gestion.application.dto.GastoFijoDto;
-import com.vortise.gestion.application.usecase.JwtService;
+import com.vortise.gestion.application.service.JwtService;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.GastoFijo;
 import com.vortise.gestion.domain.model.PresupuestoLinea;

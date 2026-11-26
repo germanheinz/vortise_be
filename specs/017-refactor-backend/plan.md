@@ -78,3 +78,9 @@ Compartir la consulta de suma, la normalización del agregado nulo y el redondeo
 - `RestriccionService` reúne las operaciones sobre restricciones. `ComentarioRestriccionService` concentra las de comentarios. Las operaciones de chat conservan sus reglas y llaman al servicio de restricciones.
 - `GastoFijoService` comparte el mapeo entre listado y guardado. El controller verifica la disponibilidad de la funcionalidad antes de delegar.
 - `ProyectoConsultaService` agrupa cuatro consultas y lo comparten los controllers de proyecto y empresa. `EmpresaService` agrupa lectura y guardado de empresa. Los flujos de creación, edición y borrado de proyecto y la baja de empresa conservan sus servicios especializados por sus reglas y dependencias.
+
+### Paquetes de aplicación
+
+Mover `EmpresaMapper` a `application.mapper` y `EmpresaService` a `application.service`. El mapper expone su método estático para permitir el acceso desde el servicio y mantiene privado su constructor. El servicio conserva sus consumidores y el wiring de Spring con los paquetes nuevos.
+
+Aplicar la organización a todo el antiguo paquete `application.usecase`. Mantener nombres de clase y agrupar las pruebas por el tipo principal que prueban. Cambiar visibilidad solo en las entradas necesarias entre paquetes. Comparar los cuerpos con la revisión previa y compilar desde cero para comprobar las referencias.

@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import tools.jackson.databind.ObjectMapper;
 import com.vortise.gestion.application.dto.PlantaDto;
-import com.vortise.gestion.application.usecase.JwtService;
+import com.vortise.gestion.application.service.JwtService;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.Planta;
 import com.vortise.gestion.domain.model.Proyecto;

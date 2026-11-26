@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.vortise.gestion.application.dto.LoginResponseDto;
-import com.vortise.gestion.application.usecase.JwtService;
-import com.vortise.gestion.application.usecase.SesionUseCase;
+import com.vortise.gestion.application.service.JwtService;
+import com.vortise.gestion.application.service.SesionUseCase;
 import jakarta.servlet.http.Cookie;
 import java.util.List;
 import org.junit.jupiter.api.Test;

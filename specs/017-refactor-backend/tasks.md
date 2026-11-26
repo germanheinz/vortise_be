@@ -74,3 +74,15 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] Comparación estática contra `HEAD` de anotaciones HTTP y firmas `ResponseEntity` en RegistroHoras, ObraTarea, GastoFijo, Restriccion, Empresa y Proyecto. Se revisó la demarcación transaccional por método. `git diff --check` pasó.
 - [x] Ejecutado `mvn -Dtest=RegistroHorasControllerTest,Quality14RulesTest,RubroEstructuraUseCasesTest,PrevistoRealUseCaseTest,GastoFijoAvailabilityTest,RestriccionAltaTest,RestriccionEdicionTest,UpdateRestriccionJefeRulesTest,ConsultarRestriccionesObraUseCaseTest,EmpresaTenantScopeTest,ProyectoDemoResetAvailabilityTest,ProyectoMapperTest,CreateProyectoSubcontratistaTest,CertificadoObraUseCaseTest,EmpresaResumenUseCasesTest,EmpresaDashboardObrasUseCaseTest test` desde `gestion_be`. Pasaron 122 pruebas sin fallos, errores ni omisiones. Durante la migración se corrigieron referencias antiguas en pruebas tras dos fallos de compilación.
 - [ ] Integración con Spring y revisión independiente pendientes. Su ejecución y cierre siguen las aprobaciones del backend.
+
+### Paquetes de Empresa
+
+- [x] Movidos `EmpresaMapper` y `EmpresaService` a `application.mapper` y `application.service` por indicación del usuario. Actualizadas las referencias de código productivo y pruebas. El alcance preserva API, reglas, repositorios y transacciones.
+- [x] Ejecutado `mvn -Dtest=EmpresaTenantScopeTest,EmpresaResumenUseCasesTest,EmpresaDashboardObrasUseCaseTest test` desde `gestion_be`. `git diff --check` pasó. Queda pendiente la integración con Spring.
+
+### Organización completa de paquetes
+
+- [x] Aprobada mediante «hacé lo mismo para todos los demás clases». Las 60 clases del antiguo paquete quedaron distribuidas en 42 servicios, 5 mappers y 13 auxiliares. Se actualizaron los consumidores y se movieron 37 clases de prueba. Alcance local en `refactor`, sin arranque de Spring ni cambios remotos.
+- [x] Comparados los cuerpos de las 60 clases con `HEAD` ignorando paquetes, imports, visibilidad y formato. No quedaron referencias al paquete anterior en fuentes ni configuración Maven. `git diff --check` pasó.
+- [x] `mvn '-Dtest=com/vortise/gestion/application/**/*Test,RegistroHorasControllerTest,GastoFijoAvailabilityTest,ProyectoDemoResetAvailabilityTest,DemoOperationalSeedTest' clean test` desde `gestion_be`. Pasaron 319 pruebas sin fallos, errores ni omisiones. La compilación limpia confirmó las referencias entre paquetes y corrigió los fallos intermedios de la migración.
+- [ ] Integración con Spring y revisión independiente pendientes.

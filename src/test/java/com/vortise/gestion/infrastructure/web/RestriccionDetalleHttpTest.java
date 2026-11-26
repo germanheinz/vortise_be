@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
 import tools.jackson.databind.ObjectMapper;
-import com.vortise.gestion.application.usecase.JwtService;
+import com.vortise.gestion.application.service.JwtService;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.infrastructure.config.DataSeeder;
 import com.vortise.gestion.infrastructure.config.UsuarioDemoSeeder;

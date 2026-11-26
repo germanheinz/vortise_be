@@ -3,7 +3,7 @@ package com.vortise.gestion.infrastructure.web;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import com.vortise.gestion.application.port.StripeGateway;
-import com.vortise.gestion.application.usecase.StripeWebhookUseCase;
+import com.vortise.gestion.application.service.StripeWebhookUseCase;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.*;
 import com.vortise.gestion.infrastructure.config.*;

@@ -3,7 +3,7 @@ package com.vortise.gestion.infrastructure.web;
 import com.vortise.gestion.application.dto.RegistroHorasCreateDto;
 import com.vortise.gestion.application.dto.RegistroHorasDto;
 import com.vortise.gestion.application.dto.RegistroHorasUpdateDto;
-import com.vortise.gestion.application.usecase.RegistroHorasService;
+import com.vortise.gestion.application.service.RegistroHorasService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;

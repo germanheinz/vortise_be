@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 import com.vortise.gestion.application.dto.RegistroHorasCreateDto;
 import com.vortise.gestion.application.dto.RegistroHorasDto;
 import com.vortise.gestion.application.dto.RegistroHorasUpdateDto;
-import com.vortise.gestion.application.usecase.RegistroHorasService;
+import com.vortise.gestion.application.service.RegistroHorasService;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;

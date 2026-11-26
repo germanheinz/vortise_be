@@ -1,0 +1,45 @@
+package com.vortise.gestion.application.mapper;
+
+import com.vortise.gestion.application.dto.RestriccionComentarioDto;
+import com.vortise.gestion.application.dto.RestriccionDto;
+import com.vortise.gestion.domain.model.RestriccionComentario;
+import com.vortise.gestion.domain.model.RestriccionObra;
+
+public final class RestriccionMapper {
+    private RestriccionMapper() {
+    }
+
+    public static RestriccionDto toDto(RestriccionObra restriccion) {
+        return new RestriccionDto(
+            restriccion.getId(),
+            restriccion.getProyecto().getId(),
+            restriccion.getProyecto().getNombre(),
+            restriccion.getRestriccion(),
+            restriccion.getRubroVinculado() == null ? null : restriccion.getRubroVinculado().getId(),
+            restriccion.getTipo(),
+            restriccion.getSector(),
+            restriccion.getNivel(),
+            restriccion.getUnidad(),
+            restriccion.getRubro(),
+            restriccion.getResponsable(),
+            restriccion.getFechaSolicitud(),
+            restriccion.getFechaMaximaEntrega(),
+            restriccion.getFechaRealEntrega(),
+            restriccion.getCarga(),
+            restriccion.getPrioridad(),
+            restriccion.getEstado(),
+            restriccion.getOrden(),
+            restriccion.getArea()
+        );
+    }
+
+    public static RestriccionComentarioDto toComentarioDto(RestriccionComentario comentario) {
+        return new RestriccionComentarioDto(
+            comentario.getId(),
+            comentario.getRestriccion().getId(),
+            comentario.getAutor(),
+            comentario.getMensaje(),
+            comentario.getCreadoEn()
+        );
+    }
+}

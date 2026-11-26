@@ -6,7 +6,7 @@ import com.vortise.gestion.application.dto.SuperAdminDtos.PageDto;
 import com.vortise.gestion.application.dto.SuperAdminDtos.PagoDto;
 import com.vortise.gestion.application.dto.SuperAdminDtos.SuscripcionDto;
 import com.vortise.gestion.application.dto.SuperAdminDtos.UsuarioDto;
-import com.vortise.gestion.application.usecase.SuperAdminConsultaUseCase;
+import com.vortise.gestion.application.service.SuperAdminConsultaUseCase;
 import java.time.LocalDate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

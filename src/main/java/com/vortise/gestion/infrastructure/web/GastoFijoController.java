@@ -20,7 +20,7 @@ package com.vortise.gestion.infrastructure.web;
 import com.vortise.gestion.application.dto.GastoFijoDto;
 import com.vortise.gestion.application.exception.FeatureUnavailableException;
 import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
-import com.vortise.gestion.application.usecase.GastoFijoService;
+import com.vortise.gestion.application.service.GastoFijoService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;

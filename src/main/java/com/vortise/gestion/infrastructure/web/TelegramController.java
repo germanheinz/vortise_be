@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.usecase.VincularTelegramUseCase;
+import com.vortise.gestion.application.service.VincularTelegramUseCase;
 import com.vortise.gestion.infrastructure.security.Guards;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;

@@ -5,7 +5,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.vortise.gestion.application.exception.FeatureUnavailableException;
-import com.vortise.gestion.application.usecase.GastoFijoService;
+import com.vortise.gestion.application.service.GastoFijoService;
 import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.env.MockEnvironment;

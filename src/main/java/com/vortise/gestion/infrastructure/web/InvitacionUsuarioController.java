@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.InvitacionUsuarioDto.*;
-import com.vortise.gestion.application.usecase.InvitacionUsuarioUseCase;
+import com.vortise.gestion.application.service.InvitacionUsuarioUseCase;
 import com.vortise.gestion.infrastructure.security.Guards;
 import jakarta.validation.Valid;
 import java.util.List;

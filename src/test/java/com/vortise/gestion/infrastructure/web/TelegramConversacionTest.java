@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.vortise.gestion.application.dto.EmpresaDashboardObrasDto;
-import com.vortise.gestion.application.usecase.ConsultarRestriccionesObraUseCase;
-import com.vortise.gestion.application.usecase.GetEmpresaDashboardObrasUseCase;
-import com.vortise.gestion.application.usecase.ReporteObraUseCase;
+import com.vortise.gestion.application.service.ConsultarRestriccionesObraUseCase;
+import com.vortise.gestion.application.service.GetEmpresaDashboardObrasUseCase;
+import com.vortise.gestion.application.service.ReporteObraUseCase;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.repository.EmpresaRepository;

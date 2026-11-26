@@ -1,5 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
+import com.vortise.gestion.application.service.JwtService;
+import com.vortise.gestion.application.service.PasswordResetTransactions;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -8,7 +10,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import tools.jackson.databind.ObjectMapper;
 import com.vortise.gestion.application.port.PasswordMailGateway;
-import com.vortise.gestion.application.usecase.*;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import com.vortise.gestion.infrastructure.config.*;

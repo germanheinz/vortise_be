@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.usecase.PasswordResetUseCase;
+import com.vortise.gestion.application.service.PasswordResetUseCase;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;

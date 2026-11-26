@@ -52,3 +52,7 @@ La edición de proyecto conserva el valor manual cuando no hay registros. Si hay
 Organizar las operaciones relacionadas en servicios por módulo. Los controllers mantienen rutas, validación HTTP y permisos existentes. Los servicios coordinan reglas y transacciones y usan los repositorios actuales. Los auxiliares compartidos se mantienen junto al módulo que los usa y se reutilizan si tienen el mismo contrato.
 
 El primer corte cubre alta, edición y baja de registros horarios. Conserva rutas, DTO, códigos de respuesta, guardas, bloqueo de proyecto, orden de persistencia y cálculo de totales.
+
+### Organización de paquetes de aplicación
+
+Los servicios de aplicación quedan en `application.service`, los mappers en `application.mapper` y las reglas y cálculos auxiliares en `application.helper`. Se conservan los contratos, la lógica, las anotaciones Spring y los límites transaccionales.

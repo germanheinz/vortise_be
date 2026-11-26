@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.usecase.ConsultarRestriccionesObraUseCase;
-import com.vortise.gestion.application.usecase.CrearRestriccionChatUseCase;
+import com.vortise.gestion.application.service.ConsultarRestriccionesObraUseCase;
+import com.vortise.gestion.application.service.CrearRestriccionChatUseCase;
 import com.vortise.gestion.domain.model.RolEmpresa;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;

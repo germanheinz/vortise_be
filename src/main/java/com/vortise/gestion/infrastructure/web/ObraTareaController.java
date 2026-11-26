@@ -2,8 +2,8 @@ package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.ObraTareaCreateDto;
 import com.vortise.gestion.application.dto.ObraTareaDto;
-import com.vortise.gestion.application.usecase.ObraTareaService;
-import com.vortise.gestion.application.usecase.GetPrevistoRealUseCase;
+import com.vortise.gestion.application.service.ObraTareaService;
+import com.vortise.gestion.application.service.GetPrevistoRealUseCase;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;

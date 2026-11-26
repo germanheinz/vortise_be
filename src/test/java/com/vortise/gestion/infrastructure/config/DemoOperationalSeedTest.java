@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.config;
 
 import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.application.usecase.PrevistoRealCalculator;
+import com.vortise.gestion.application.helper.PrevistoRealCalculator;
 import java.time.*;
 import java.util.*;
 import org.junit.jupiter.api.Test;

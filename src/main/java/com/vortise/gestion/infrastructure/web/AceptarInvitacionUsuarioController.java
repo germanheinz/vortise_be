@@ -2,8 +2,8 @@ package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.InvitacionUsuarioDto.*;
 import com.vortise.gestion.application.dto.LoginResponseDto;
-import com.vortise.gestion.application.usecase.InvitacionUsuarioUseCase;
-import com.vortise.gestion.application.usecase.SesionUseCase;
+import com.vortise.gestion.application.service.InvitacionUsuarioUseCase;
+import com.vortise.gestion.application.service.SesionUseCase;
 import com.vortise.gestion.infrastructure.security.SessionCookies;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

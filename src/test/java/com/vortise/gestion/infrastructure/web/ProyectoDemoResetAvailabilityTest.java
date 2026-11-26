@@ -1,11 +1,11 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.usecase.ProyectoConsultaService;
+import com.vortise.gestion.application.service.ProyectoConsultaService;
 
 import com.vortise.gestion.application.exception.FeatureUnavailableException;
-import com.vortise.gestion.application.usecase.CreateProyectoUseCase;
-import com.vortise.gestion.application.usecase.DeleteProyectoUseCase;
-import com.vortise.gestion.application.usecase.UpdateProyectoUseCase;
+import com.vortise.gestion.application.service.CreateProyectoUseCase;
+import com.vortise.gestion.application.service.DeleteProyectoUseCase;
+import com.vortise.gestion.application.service.UpdateProyectoUseCase;
 import com.vortise.gestion.infrastructure.config.DataSeeder;
 import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
 import org.junit.jupiter.api.Test;

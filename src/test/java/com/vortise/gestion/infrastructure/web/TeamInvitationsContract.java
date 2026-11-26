@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.usecase.JwtService;
+import com.vortise.gestion.application.service.JwtService;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.infrastructure.config.*;
 import jakarta.persistence.EntityManager;
@@ -39,7 +39,7 @@ abstract class TeamInvitationsContract {
     protected Long ownerId, firstId, secondId, excludedId, subscriptionId, invitedId;
     protected String admin;
     protected static final String PASSWORD = "Synthetic-invitation-only-26!";
-    @Autowired com.vortise.gestion.application.usecase.InvitacionesUseCase invitations;
+    @Autowired com.vortise.gestion.application.service.InvitacionesUseCase invitations;
     @Autowired org.springframework.security.crypto.password.PasswordEncoder encoder;
     @Autowired tools.jackson.databind.ObjectMapper json;
 

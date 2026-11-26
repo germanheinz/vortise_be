@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.config;
 
-import com.vortise.gestion.application.usecase.PrevistoRealCalculator;
+import com.vortise.gestion.application.helper.PrevistoRealCalculator;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.time.*;

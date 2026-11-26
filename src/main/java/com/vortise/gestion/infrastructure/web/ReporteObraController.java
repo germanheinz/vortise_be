@@ -6,7 +6,7 @@ import com.vortise.gestion.application.dto.ReporteEmitirDto;
 import com.vortise.gestion.application.dto.ReporteImagenDto;
 import com.vortise.gestion.application.dto.ReporteImagenLeyendaDto;
 import com.vortise.gestion.application.dto.ReporteResumenDto;
-import com.vortise.gestion.application.usecase.ReporteObraUseCase;
+import com.vortise.gestion.application.service.ReporteObraUseCase;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.util.List;

@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.MeDto;
-import com.vortise.gestion.application.usecase.PerfilUseCase;
+import com.vortise.gestion.application.service.PerfilUseCase;
 import java.io.IOException;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
