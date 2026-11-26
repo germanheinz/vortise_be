@@ -1,8 +1,8 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.usecase.PasswordResetTransactions;
-import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.service.authentication.PasswordResetTransactions;
+import com.vortise.gestion.model.*;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import com.vortise.gestion.infrastructure.config.*;
 import jakarta.persistence.EntityManager;
 import java.nio.file.*;
@@ -45,13 +45,11 @@ class PasswordResetPostgresTest {
         p.add("spring.jpa.hibernate.ddl-auto", () -> "validate"); p.add("spring.flyway.enabled", () -> true);
         p.add("spring.sql.init.mode", () -> "never"); p.add("spring.h2.console.enabled", () -> false);
         p.add("app.security.jwt-secret", () -> key); p.add("app.password-mail.enabled", () -> false);
-        p.add("app.superadmin.email", () -> ""); p.add("app.superadmin.password", () -> ""); p.add("app.demo.reset-enabled", () -> false);
+        p.add("app.superadmin.email", () -> ""); p.add("app.superadmin.password", () -> "");
         p.add("APP_ALLOWED_ORIGINS", () -> "https://auth008.example.invalid"); p.add("APP_FRONTEND_URL", () -> "https://auth008.example.invalid");
         for (String name : List.of("secret-key", "webhook-secret", "price-basic", "price-pro")) p.add("app.stripe." + name, () -> "");
         p.add("logging.level.org.hibernate.SQL", () -> "OFF"); p.add("logging.level.org.hibernate.orm.jdbc.bind", () -> "OFF");
     }
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder demoSeeder;
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @MockitoBean SuperAdminSeeder adminSeeder;
     @Autowired DataSource source;

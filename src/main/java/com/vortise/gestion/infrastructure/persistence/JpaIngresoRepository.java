@@ -7,8 +7,8 @@
  */
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.Ingreso;
-import com.vortise.gestion.domain.repository.IngresoRepository;
+import com.vortise.gestion.model.Ingreso;
+import com.vortise.gestion.repository.IngresoRepository;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

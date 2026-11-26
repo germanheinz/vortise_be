@@ -1,10 +1,10 @@
 package com.vortise.gestion.infrastructure.security;
 
-import com.vortise.gestion.domain.repository.ProyectoRepository;
-import com.vortise.gestion.domain.repository.RestriccionObraRepository;
-import com.vortise.gestion.domain.repository.RegistroHorasRepository;
-import com.vortise.gestion.domain.repository.ObraTareaRepository;
-import com.vortise.gestion.domain.model.Proyecto;
+import com.vortise.gestion.repository.ProyectoRepository;
+import com.vortise.gestion.repository.RestriccionObraRepository;
+import com.vortise.gestion.repository.RegistroHorasRepository;
+import com.vortise.gestion.repository.ObraTareaRepository;
+import com.vortise.gestion.model.Proyecto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.regex.Matcher;

@@ -3,7 +3,7 @@ package com.vortise.gestion.infrastructure.storage;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.vortise.gestion.application.exception.FeatureUnavailableException;
-import com.vortise.gestion.application.port.FotoPerfilStorage.TipoImagen;
+import com.vortise.gestion.application.port.TipoImagen;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 

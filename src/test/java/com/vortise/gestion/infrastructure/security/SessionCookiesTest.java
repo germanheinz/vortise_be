@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.vortise.gestion.application.dto.LoginResponseDto;
-import com.vortise.gestion.application.usecase.JwtService;
-import com.vortise.gestion.application.usecase.SesionUseCase;
+import com.vortise.gestion.service.authentication.JwtService;
+import com.vortise.gestion.service.authentication.SesionService;
 import jakarta.servlet.http.Cookie;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -51,7 +51,7 @@ class SessionCookiesTest {
     void responseSetsBothCookiesAndNeverPutsATokenInTheBody() {
         var datos = new LoginResponseDto(null, 1L, 2L, "Empresa", "Nombre", "e@example.invalid", "ADMINISTRADOR", false, false, null, false, List.of());
 
-        var response = cookies.respond(HttpStatus.CREATED, new SesionUseCase.Sesion(datos, "access-jwt", "refresh-raw"));
+        var response = cookies.respond(HttpStatus.CREATED, new SesionService.Sesion(datos, "access-jwt", "refresh-raw"));
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         List<String> setCookie = response.getHeaders().get(HttpHeaders.SET_COOKIE);

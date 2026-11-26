@@ -2,7 +2,7 @@ package com.vortise.gestion.infrastructure.config;
 
 import static org.mockito.Mockito.*;
 
-import com.vortise.gestion.domain.repository.PagoSuscripcionRepository;
+import com.vortise.gestion.repository.PagoSuscripcionRepository;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageRequest;

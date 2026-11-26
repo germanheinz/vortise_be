@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.Empresa;
-import com.vortise.gestion.domain.repository.EmpresaRepository;
+import com.vortise.gestion.model.Empresa;
+import com.vortise.gestion.repository.EmpresaRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

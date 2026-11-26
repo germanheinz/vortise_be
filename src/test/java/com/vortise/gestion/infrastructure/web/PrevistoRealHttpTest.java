@@ -1,10 +1,8 @@
 package com.vortise.gestion.infrastructure.web;
 
 import tools.jackson.databind.ObjectMapper;
-import com.vortise.gestion.application.usecase.JwtService;
-import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.infrastructure.config.DataSeeder;
-import com.vortise.gestion.infrastructure.config.UsuarioDemoSeeder;
+import com.vortise.gestion.service.authentication.JwtService;
+import com.vortise.gestion.model.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.security.SecureRandom;
@@ -40,8 +38,6 @@ class PrevistoRealHttpTest {
     @Autowired JwtService jwt;
     @Autowired DataSource source;
     @PersistenceContext EntityManager em;
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder usuarioDemoSeeder;
     @MockitoBean com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
     private Proyecto own, other;
     private RubroObra activity, foreignActivity;
@@ -67,7 +63,7 @@ class PrevistoRealHttpTest {
         activity = activity(own); foreignActivity = activity(other);
         em.persist(new CategoriaManoObraEmpresa(a,"OFICIAL",2000.,true));
         em.persist(new CategoriaManoObraEmpresa(a,"AYUDANTE",1000.,true));
-        em.persist(new CalendarioLaboralEmpresa(a));
+        a.inicializarCalendarioLaboral();
         em.flush();
         token = HttpIdentityFixtures.token(em, jwt, a.getId(), RolEmpresa.ADMINISTRADOR, false);
     }

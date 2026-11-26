@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.vortise.gestion.domain.model.*;
+import com.vortise.gestion.model.*;
 import com.vortise.gestion.infrastructure.config.*;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.Cookie;
@@ -57,8 +57,6 @@ class CookieSessionHttpTest {
     @Autowired EntityManager em;
     @Autowired PlatformTransactionManager tm;
     @Autowired PasswordEncoder encoder;
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder demoSeeder;
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @MockitoBean SuperAdminSeeder adminSeeder;
     private Long userId;
@@ -110,11 +108,11 @@ class CookieSessionHttpTest {
     @Test void cookieWritesNeedAnAllowedOrigin() throws Exception {
         var access = new Cookie("gestion_at", value(cookie(login(), "gestion_at")));
 
-        mvc.perform(delete("/api/me/foto").cookie(access)).andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("ORIGEN_NO_PERMITIDO"));
+        mvc.perform(post("/api/empresas/" + companyId + "/usuarios/invitaciones").contentType("application/json").content("{}").cookie(access)).andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("ORIGEN_NO_PERMITIDO"));
         // A foreign Origin is already refused by the CORS layer (plain-text 403) before it reaches the origin guard.
-        mvc.perform(delete("/api/me/foto").cookie(access).header("Origin", "https://attacker.example.invalid"))
+        mvc.perform(post("/api/empresas/" + companyId + "/usuarios/invitaciones").contentType("application/json").content("{}").cookie(access).header("Origin", "https://attacker.example.invalid"))
             .andExpect(status().isForbidden());
-        mvc.perform(delete("/api/me/foto").cookie(access).header("Origin", ORIGIN)).andExpect(status().is2xxSuccessful());
+        mvc.perform(post("/api/empresas/" + companyId + "/usuarios/invitaciones").contentType("application/json").content("{}").cookie(access).header("Origin", ORIGIN)).andExpect(status().isBadRequest());
     }
 
     @Test void refreshRotatesTheTokenAndIssuesANewAccessCookie() throws Exception {
@@ -167,7 +165,7 @@ class CookieSessionHttpTest {
         mvc.perform(post("/api/auth/refresh").cookie(refresh).header("Origin", ORIGIN)).andExpect(status().isUnauthorized());
     }
 
-    private static String tokenOf(String link) { return link.substring(link.indexOf("#token=") + 7); }
+    private static String tokenOf(String link) { return link.substring(link.indexOf("#codigo=") + 8); }
 
     @Test void anAdministratorInvitesAJefeWhoJoinsWithTheRoleAndSitesAndTheLinkWorksOnce() throws Exception {
         var admin = new Cookie("gestion_at", value(cookie(login(), "gestion_at")));
@@ -228,6 +226,6 @@ class CookieSessionHttpTest {
         var jwt = value(cookie(login(), "gestion_at"));
 
         mvc.perform(get("/api/me").header("Authorization", "Bearer " + jwt)).andExpect(status().isOk());
-        mvc.perform(delete("/api/me/foto").header("Authorization", "Bearer " + jwt)).andExpect(status().is2xxSuccessful());
+        mvc.perform(post("/api/empresas/" + companyId + "/usuarios/invitaciones").contentType("application/json").content("{}").header("Authorization", "Bearer " + jwt)).andExpect(status().isBadRequest());
     }
 }

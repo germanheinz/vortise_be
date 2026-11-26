@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.usecase.JwtService;
-import com.vortise.gestion.domain.model.*;
+import com.vortise.gestion.service.authentication.JwtService;
+import com.vortise.gestion.model.*;
 import com.vortise.gestion.infrastructure.config.*;
 import jakarta.persistence.EntityManager;
 import java.security.SecureRandom;
@@ -39,11 +39,8 @@ class Quality14HttpTest {
         r.add("app.password-mail.enabled", () -> false); r.add("app.superadmin.email", () -> ""); r.add("app.superadmin.password", () -> "");
         for (String suffix : List.of("secret-key", "webhook-secret", "price-basic", "price-pro")) r.add("app.stripe." + suffix, () -> "");
     }
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder demoSeeder;
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @MockitoBean SuperAdminSeeder adminSeeder;
-    @MockitoBean com.vortise.gestion.application.port.FotoPerfilStorage photos;
     @Autowired DataSource source;
     @Autowired EntityManager em;
     @Autowired PlatformTransactionManager tm;

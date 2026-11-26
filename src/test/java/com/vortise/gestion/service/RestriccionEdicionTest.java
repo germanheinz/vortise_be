@@ -1,0 +1,106 @@
+package com.vortise.gestion.service;
+
+import com.vortise.gestion.service.restriccion.RestriccionService;
+import com.vortise.gestion.application.dto.RestriccionUpdateDto;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.model.RestriccionObra;
+import com.vortise.gestion.model.RubroObra;
+import com.vortise.gestion.repository.RestriccionObraRepository;
+import com.vortise.gestion.repository.RubroObraRepository;
+import java.time.LocalDate;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class RestriccionEdicionTest {
+    private RestriccionObraRepository repository;
+    private RubroObraRepository rubros;
+    private RestriccionService useCase;
+    private RestriccionObra restriction;
+    private Proyecto project;
+    private final LocalDate start = LocalDate.of(2026, 10, 1);
+    private final LocalDate due = LocalDate.of(2026, 10, 10);
+
+    @BeforeEach void setup() {
+        repository = mock(RestriccionObraRepository.class);
+        rubros = mock(RubroObraRepository.class);
+        useCase = new RestriccionService(repository, null, rubros, null, null, null);
+        project = new Proyecto(); project.setId(1L); project.setNombre("Obra");
+        restriction = new RestriccionObra(); restriction.setId(2L); restriction.setProyecto(project);
+        restriction.setArea("Compras"); restriction.setResponsable("Ana");
+        restriction.setFechaSolicitud(start); restriction.setFechaMaximaEntrega(due);
+        when(repository.findById(2L)).thenReturn(Optional.of(restriction));
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+    }
+
+    @Test void boardStatusUpdatePreservesAreaAndDates() {
+        var result = useCase.actualizar(2L, new RestriccionUpdateDto(null, "RESUELTO", 3));
+        assertEquals("Compras", result.area()); assertEquals("Ana", result.responsable());
+        assertEquals(start, result.fechaSolicitud()); assertEquals(due, result.fechaMaximaEntrega());
+        assertEquals("RESUELTO", result.estado());
+        var today = LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"));
+        assertEquals(start.isAfter(today) ? start : today, result.fechaRealEntrega());
+    }
+
+    @Test void resolvingKeepsExistingRealDateAndReopeningClearsIt() {
+        var real = start.plusDays(2);
+        restriction.setFechaRealEntrega(real);
+        assertEquals(real, useCase.actualizar(2L, new RestriccionUpdateDto(null, "RESUELTO", null)).fechaRealEntrega());
+        assertNull(useCase.actualizar(2L, new RestriccionUpdateDto(null, "PENDIENTE", null)).fechaRealEntrega());
+    }
+
+    @Test void linksPreviouslyUnassignedRestrictionToSubrubroFromSameProject() {
+        RubroObra activity = new RubroObra();
+        activity.setId(31L); activity.setProyecto(project); activity.setRubro("Instalaciones");
+        activity.setSubRubro("Tendido eléctrico"); activity.setNivel("Nivel 2"); activity.setUnidad("m");
+        when(rubros.findById(31L)).thenReturn(Optional.of(activity));
+
+        var result = useCase.actualizar(2L, new RestriccionUpdateDto(null, null, null,
+            null, null, null, null, null, false, 31L));
+
+        assertEquals(31L, result.rubroId());
+        assertEquals("Instalaciones · Tendido eléctrico", result.rubro());
+        assertSame(activity, restriction.getRubroVinculado());
+    }
+
+    @Test void rejectsLinkToSubrubroFromAnotherProject() {
+        Proyecto otherProject = new Proyecto(); otherProject.setId(3L);
+        RubroObra foreignActivity = new RubroObra();
+        foreignActivity.setId(31L); foreignActivity.setProyecto(otherProject); foreignActivity.setSubRubro("Tendido eléctrico");
+        when(rubros.findById(31L)).thenReturn(Optional.of(foreignActivity));
+
+        assertThrows(IllegalArgumentException.class, () -> useCase.actualizar(2L,
+            new RestriccionUpdateDto(null, null, null, null, null, null, null, null, false, 31L)));
+        assertNull(restriction.getRubroVinculado());
+        verify(repository, never()).save(any());
+    }
+
+    @Test void storesIndependentAreaAndDeliveryDatesAndSupportsExplicitClearing() {
+        var real = due.plusDays(2);
+        var result = useCase.actualizar(2L, new RestriccionUpdateDto(null, null, null,
+            " Ingeniería ", "Luis", start, due, real, true));
+        assertEquals("Ingeniería", result.area()); assertEquals("Luis", result.responsable());
+        assertEquals(real, result.fechaRealEntrega());
+        var cleared = useCase.actualizar(2L, new RestriccionUpdateDto(null, null, null,
+            "", "", start, due, null, true));
+        assertNull(cleared.area()); assertNull(cleared.responsable()); assertNull(cleared.fechaRealEntrega());
+        assertEquals(start, cleared.fechaSolicitud()); assertEquals(due, cleared.fechaMaximaEntrega());
+    }
+
+    @Test void rejectsInvalidDatesBeforeMutatingOrSaving() {
+        for (var dates : new LocalDate[][]{{start, start.minusDays(1), null}, {start, due, start.minusDays(1)}, {start, null, null}}) {
+            assertThrows(IllegalArgumentException.class, () -> useCase.actualizar(2L,
+                new RestriccionUpdateDto(null, null, null, "Nueva", null, dates[0], dates[1], dates[2], true)));
+        }
+        assertEquals("Compras", restriction.getArea()); assertEquals(due, restriction.getFechaMaximaEntrega());
+        verify(repository, never()).save(any());
+    }
+
+    @Test void areaLengthAndNormalizationAreValidated() {
+        assertThrows(IllegalArgumentException.class, () -> useCase.actualizar(2L,
+            new RestriccionUpdateDto(null, null, null, "x".repeat(121), null, null, null, null, false)));
+        assertEquals("Compras", restriction.getArea()); verify(repository, never()).save(any());
+    }
+}

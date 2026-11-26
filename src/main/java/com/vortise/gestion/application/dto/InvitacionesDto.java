@@ -11,6 +11,9 @@ public final class InvitacionesDto {
     public record Aceptar(@NotBlank @Size(max = 128) String token,
         @NotBlank @Size(max = 160) String nombre, @NotBlank @Email @Size(max = 254) String email,
         @NotBlank @Size(min = 8, max = 72) String password) { @Override public String toString() { return "InvitationAcceptance[redacted]"; } }
+    public record AceptarConIdentidad(@NotBlank @Size(max = 128) String token, @NotBlank @Size(max = 160) String nombre) {
+        @Override public String toString() { return "InvitationAcceptanceWithIdentity[redacted]"; }
+    }
     public record EmpresaAcceso(Long id, String nombre) { }
     public record Creada(Long id, String enlace, Instant venceEn, List<EmpresaAcceso> empresas) { @Override public String toString() { return "InvitationResult[redacted]"; } }
     public record Resumen(Long id, Instant venceEn, String estado, List<EmpresaAcceso> empresas) { }

@@ -2,11 +2,11 @@ package com.vortise.gestion.application.dto;
 
 import java.util.List;
 
-/** Per-obra deviation snapshot for the company dashboard. Amounts estimate own-labor cost only (subcontracts excluded). */
+/** Per-obra deviation snapshot for the company dashboard, taken from the project indicators (spec 021). Own labour only. */
 public record EmpresaDashboardObrasDto(Long empresaId, List<Obra> obras) {
     /**
-     * Amounts are null when no own-labor activity has data. Percentages are relative to the budgeted labor cost
-     * of the whole obra and are null when that cost cannot be computed (missing rates or planned hours).
+     * Current deviation is relative to the planned cost of the work done; the projected one is the deviation plus
+     * projection at completion over the labour budget. Percentages are ×100 and null without data.
      */
     public record Obra(
         Long id,

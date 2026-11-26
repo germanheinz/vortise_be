@@ -2,9 +2,9 @@ package com.vortise.gestion.infrastructure.security;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import com.vortise.gestion.application.usecase.JwtService;
-import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.service.authentication.JwtService;
+import com.vortise.gestion.model.*;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import java.util.*;
 import org.junit.jupiter.api.*;
 import org.springframework.mock.web.*;
@@ -14,7 +14,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 class JwtAuthenticationFilterTest {
     private final JwtService jwt = new JwtService("test-only-signing-key-with-enough-length-1234567890", 60_000);
     private final UsuarioEmpresaRepository users = mock(UsuarioEmpresaRepository.class);
-    private final JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwt, users, org.mockito.Mockito.mock(com.vortise.gestion.application.usecase.EquipoAccessPolicy.class));
+    private final JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwt, users, org.mockito.Mockito.mock(com.vortise.gestion.service.equipo.EquipoAccessPolicy.class));
     private UsuarioEmpresa user;
     @BeforeEach void setup() {
         var company = new Empresa("Test", null); ReflectionTestUtils.setField(company, "id", 2L);

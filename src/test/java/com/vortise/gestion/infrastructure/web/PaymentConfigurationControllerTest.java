@@ -1,5 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
+import com.vortise.gestion.controller.pagos.PaymentConfigurationController;
 import static org.junit.jupiter.api.Assertions.*;
 import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;

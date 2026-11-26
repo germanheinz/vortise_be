@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.usecase.JwtService;
-import com.vortise.gestion.domain.model.*;
+import com.vortise.gestion.service.authentication.JwtService;
+import com.vortise.gestion.model.*;
 import jakarta.persistence.EntityManager;
 
 /** Must be called in the test's reviewed ephemeral transaction. Real persisted identities. */

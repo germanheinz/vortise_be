@@ -3,9 +3,9 @@ package com.vortise.gestion.infrastructure.web;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import com.vortise.gestion.application.port.StripeGateway;
-import com.vortise.gestion.application.usecase.StripeWebhookUseCase;
-import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.domain.repository.*;
+import com.vortise.gestion.service.pagos.StripeWebhookService;
+import com.vortise.gestion.model.*;
+import com.vortise.gestion.repository.*;
 import com.vortise.gestion.infrastructure.config.*;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
@@ -25,8 +25,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 @org.springframework.test.context.ActiveProfiles("production")
 @org.springframework.test.annotation.DirtiesContext(classMode = org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_CLASS)
 class ProductionPaymentsPostgresTest {
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder usuarioDemoSeeder;
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @MockitoBean SuperAdminSeeder superSeeder;
     @Autowired EntityManager em;
@@ -35,7 +33,7 @@ class ProductionPaymentsPostgresTest {
     @Autowired SuscripcionRepository suscripciones;
     @Autowired UsuarioEmpresaRepository usuarios;
     @MockitoBean StripeGateway stripe;
-    @Autowired StripeWebhookUseCase webhook;
+    @Autowired StripeWebhookService webhook;
 
     @DynamicPropertySource
     static void isolated(DynamicPropertyRegistry r) throws Exception {

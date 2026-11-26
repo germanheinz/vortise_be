@@ -1,10 +1,14 @@
 package com.vortise.gestion.infrastructure.web;
 
+import com.vortise.gestion.service.empresa.EmpresaConfiguracionService;
+import com.vortise.gestion.service.empresa.EmpresaConfiguracionService;
+import com.vortise.gestion.service.proyecto.RegistroHorasService;
+import com.vortise.gestion.service.equipo.UsuarioEmpresaService;
+import com.vortise.gestion.service.empresa.EmpresaService;
 import com.vortise.gestion.application.dto.*;
 import com.vortise.gestion.application.exception.ConflictoEstadoException;
-import com.vortise.gestion.application.usecase.*;
-import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.domain.repository.*;
+import com.vortise.gestion.model.*;
+import com.vortise.gestion.repository.*;
 import com.vortise.gestion.infrastructure.config.*;
 import com.vortise.gestion.infrastructure.security.CurrentTenantService;
 import jakarta.persistence.EntityManager;
@@ -37,26 +41,23 @@ import static org.mockito.Mockito.doThrow;
 class Quality14PostgresTest {
     private static final String URL = "jdbc:postgresql://127.0.0.1:15438/quality14_test";
     private static final String USER = "quality14_test";
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder demoSeeder;
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @MockitoBean SuperAdminSeeder adminSeeder;
     @MockitoBean CurrentTenantService identity;
-    @MockitoBean com.vortise.gestion.application.port.FotoPerfilStorage photos;
     @Autowired DataSource source;
     @Autowired EntityManager em;
     @Autowired PlatformTransactionManager tm;
     @MockitoSpyBean ProyectoRepository projects;
     @Autowired RegistroHorasRepository records;
     @Autowired RegistroHorasService ledger;
-    @Autowired InicializarEmpresaUseCase initialize;
-    @Autowired EmpresaConfiguracionUseCase configuration;
-    @Autowired SaveEmpresaUseCase companyEditor;
-    @Autowired UsuarioEmpresaUseCase users;
+    @Autowired EmpresaConfiguracionService initialize;
+    @Autowired EmpresaConfiguracionService configuration;
+    @Autowired EmpresaService companyEditor;
+    @Autowired UsuarioEmpresaService users;
     @Autowired UsuarioEmpresaRepository userRepository;
     @Autowired UnidadMetricaEmpresaRepository units;
     @Autowired CategoriaManoObraEmpresaRepository categories;
-    @Autowired CalendarioLaboralEmpresaRepository calendars;
+    @Autowired EmpresaRepository companies;
 
     @DynamicPropertySource static void isolate(DynamicPropertyRegistry r) {
         String password = password();
@@ -72,7 +73,6 @@ class Quality14PostgresTest {
         r.add("spring.sql.init.mode", () -> "never"); r.add("spring.h2.console.enabled", () -> false);
         r.add("app.security.jwt-secret", () -> key); r.add("app.password-mail.enabled", () -> false);
         r.add("app.superadmin.email", () -> ""); r.add("app.superadmin.password", () -> "");
-        r.add("app.demo.reset-enabled", () -> false); r.add("app.features.gastos-fijos-enabled", () -> false);
         r.add("APP_ALLOWED_ORIGINS", () -> "https://quality14.example.invalid");
         r.add("APP_FRONTEND_URL", () -> "https://quality14.example.invalid");
         for (String suffix : List.of("secret-key", "webhook-secret", "price-basic", "price-pro")) r.add("app.stripe." + suffix, () -> "");
@@ -131,10 +131,10 @@ class Quality14PostgresTest {
     }
     @Test void concurrentInitializationIsUniqueAndIdempotent() throws Exception {
         Long id = company(5);
-        race(() -> { initialize.execute(id); return true; }, () -> { initialize.execute(id); return true; });
+        race(() -> { initialize.inicializar(id); return true; }, () -> { initialize.inicializar(id); return true; });
         assertEquals(5, units.findByEmpresaId(id).size());
         assertEquals(4, categories.findByEmpresaId(id).size());
-        assertTrue(calendars.findByEmpresaId(id).isPresent());
+        assertNotNull(companies.findById(id).orElseThrow().getCalendarioLaboral());
     }
     @Test void concurrentCreationReservesTheLastSeatOnlyOnce() throws Exception {
         Long id = company(1);
@@ -187,7 +187,7 @@ class Quality14PostgresTest {
             UsuarioEmpresa creator = new UsuarioEmpresa(company, UUID.randomUUID()+"@example.invalid", "Creator", "not-a-login-password", RolEmpresa.ADMINISTRADOR);
             em.persist(creator); em.flush();
             company.setCreadoPorUsuarioId(creator.getId());
-            initialize.execute(id);
+            initialize.inicializar(id);
             assertEquals(creator.getId(), company.getCreadoPorUsuarioId());
             return creator.getId();
         });
@@ -206,18 +206,18 @@ class Quality14PostgresTest {
                 try { assertTrue(prepared.await(20, TimeUnit.SECONDS)); }
                 catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw new IllegalStateException(interrupted); }
                 if (rename) companyEditor.update(id, new EmpresaCreateDto("Renamed " + UUID.randomUUID(), null));
-                else initialize.execute(id);
+                else initialize.inicializar(id);
             }));
             Future<?> preparer = pool.submit(() -> {
                 try { assertTrue(cached.await(5, TimeUnit.SECONDS)); }
                 catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw new IllegalStateException(interrupted); }
-                initialize.execute(id);
+                initialize.inicializar(id);
                 Long unit = units.findByEmpresaId(id).stream().filter(u -> "ML".equals(u.getCodigo())).findFirst().orElseThrow().getId();
                 configuration.deleteUnidad(id, unit);
                 prepared.countDown();
             });
             preparer.get(30, TimeUnit.SECONDS); staleReader.get(30, TimeUnit.SECONDS);
-            initialize.execute(id);
+            initialize.inicializar(id);
             assertEquals(4, units.findByEmpresaId(id).size());
         } finally { prepared.countDown(); pool.shutdownNow(); assertTrue(pool.awaitTermination(10, TimeUnit.SECONDS)); }
     }

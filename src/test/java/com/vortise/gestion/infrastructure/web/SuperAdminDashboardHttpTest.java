@@ -4,11 +4,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.vortise.gestion.application.usecase.JwtService;
-import com.vortise.gestion.infrastructure.config.DataSeeder;
+import com.vortise.gestion.service.authentication.JwtService;
 import com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder;
 import com.vortise.gestion.infrastructure.config.SuperAdminSeeder;
-import com.vortise.gestion.infrastructure.config.UsuarioDemoSeeder;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
@@ -37,8 +35,6 @@ class SuperAdminDashboardHttpTest {
     @Autowired private JwtService jwtService;
     @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager em;
     @Autowired private org.springframework.transaction.PlatformTransactionManager tm;
-    @MockitoBean private DataSeeder dataSeeder;
-    @MockitoBean private UsuarioDemoSeeder usuarioDemoSeeder;
     @MockitoBean private PlanSuscripcionSeeder planSuscripcionSeeder;
     @MockitoBean private SuperAdminSeeder superAdminSeeder;
 
@@ -112,10 +108,10 @@ class SuperAdminDashboardHttpTest {
 
     private String identity(String role, boolean admin) {
         return new org.springframework.transaction.support.TransactionTemplate(tm).execute(status -> {
-            var company = em.createQuery("select e from Empresa e order by e.id", com.vortise.gestion.domain.model.Empresa.class).setMaxResults(1).getResultStream().findFirst().orElseGet(() -> {
-                var e = new com.vortise.gestion.domain.model.Empresa("HTTP admin fixture", null); em.persist(e); em.flush(); return e;
+            var company = em.createQuery("select e from Empresa e order by e.id", com.vortise.gestion.model.Empresa.class).setMaxResults(1).getResultStream().findFirst().orElseGet(() -> {
+                var e = new com.vortise.gestion.model.Empresa("HTTP admin fixture", null); em.persist(e); em.flush(); return e;
             });
-            return HttpIdentityFixtures.token(em, jwtService, company.getId(), com.vortise.gestion.domain.model.RolEmpresa.valueOf(role), admin);
+            return HttpIdentityFixtures.token(em, jwtService, company.getId(), com.vortise.gestion.model.RolEmpresa.valueOf(role), admin);
         });
     }
 

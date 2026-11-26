@@ -1,6 +1,6 @@
 package com.vortise.gestion.application.port;
 
-import com.vortise.gestion.application.port.FotoPerfilStorage.TipoImagen;
+import com.vortise.gestion.application.port.TipoImagen;
 
 /** Hosting for the images attached to reports. */
 public interface ImagenReporteStorage {

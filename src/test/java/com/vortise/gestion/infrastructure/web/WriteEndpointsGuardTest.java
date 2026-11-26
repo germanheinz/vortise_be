@@ -23,10 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
  * deliberate exceptions below. Reads carry no role guard. Context-free: scans the classpath only.
  */
 class WriteEndpointsGuardTest {
-    // Authenticated by something other than a role: credentials, a signed link or a signature.
+    // Authenticated by something other than a role: credentials, a verified identity, a signed link or a signature.
     private static final Set<String> PUBLIC_OR_SELF = Set.of(
-        "AuthController", "PasswordResetController", "AceptarInvitacionController", "AceptarInvitacionUsuarioController", "StripeWebhookController",
-        "PerfilController");
+        "AuthController", "ClerkAuthController", "PasswordResetController", "InvitacionPublicaController", "StripeWebhookController");
 
     private static boolean isWrite(Method method) {
         return AnnotatedElementUtils.hasAnnotation(method, PostMapping.class)
@@ -41,7 +40,7 @@ class WriteEndpointsGuardTest {
         scanner.addIncludeFilter(new AnnotationTypeFilter(RestController.class));
         List<String> unguarded = new ArrayList<>();
         int controllers = 0;
-        for (BeanDefinition definition : scanner.findCandidateComponents("com.vortise.gestion.infrastructure.web")) {
+        for (BeanDefinition definition : scanner.findCandidateComponents("com.vortise.gestion.controller")) {
             Class<?> controller = Class.forName(definition.getBeanClassName());
             controllers++;
             if (PUBLIC_OR_SELF.contains(controller.getSimpleName())) continue;

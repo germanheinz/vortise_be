@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.usecase.JwtService;
-import com.vortise.gestion.domain.model.*;
+import com.vortise.gestion.service.authentication.JwtService;
+import com.vortise.gestion.model.*;
 import com.vortise.gestion.infrastructure.config.*;
 import jakarta.persistence.EntityManager;
 import java.security.SecureRandom;

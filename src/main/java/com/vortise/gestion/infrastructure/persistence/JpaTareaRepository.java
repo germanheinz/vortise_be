@@ -7,9 +7,8 @@
  */
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.Tarea;
-import com.vortise.gestion.domain.repository.TareaRepository;
-import java.util.List;
+import com.vortise.gestion.model.Tarea;
+import com.vortise.gestion.repository.TareaRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,9 +16,4 @@ import org.springframework.stereotype.Repository;
 public interface JpaTareaRepository
 extends JpaRepository<Tarea, Long>,
 TareaRepository {
-    @Override
-    public List<Tarea> findByEntregaId(Long var1);
-
-    @Override
-    public List<Tarea> findByEntregaProyectoId(Long var1);
 }

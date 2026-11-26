@@ -28,12 +28,7 @@ public class E2eLocalConfiguration {
             require("18081".equals(env.getRequiredProperty("server.port")));
             require("http://127.0.0.1:3001".equals(env.getRequiredProperty("APP_ALLOWED_ORIGINS")));
             require("http://127.0.0.1:3001".equals(env.getRequiredProperty("APP_FRONTEND_URL")));
-            String uploads = env.getRequiredProperty("APP_E2E_UPLOADS_DIR");
-            require(uploads.matches("/(?:private/)?tmp/e2e10-[A-Za-z0-9_-]+/uploads"));
-            require(uploads.equals(env.getRequiredProperty("app.uploads.dir")));
-            for (String key : List.of("app.password-mail.enabled", "app.demo.reset-enabled", "app.features.gastos-fijos-enabled")) {
-                require("false".equals(env.getRequiredProperty(key)));
-            }
+            require("false".equals(env.getRequiredProperty("app.password-mail.enabled")));
             for (String key : List.of("app.superadmin.email", "app.superadmin.password", "app.stripe.secret-key",
                     "app.stripe.webhook-secret", "app.stripe.price-basic", "app.stripe.price-pro")) {
                 require("".equals(env.getRequiredProperty(key)));

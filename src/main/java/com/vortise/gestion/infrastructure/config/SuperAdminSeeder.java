@@ -1,10 +1,10 @@
 package com.vortise.gestion.infrastructure.config;
 
-import com.vortise.gestion.domain.model.Empresa;
-import com.vortise.gestion.domain.model.RolEmpresa;
-import com.vortise.gestion.domain.model.UsuarioEmpresa;
-import com.vortise.gestion.domain.repository.EmpresaRepository;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.model.Empresa;
+import com.vortise.gestion.model.RolEmpresa;
+import com.vortise.gestion.model.UsuarioEmpresa;
+import com.vortise.gestion.repository.EmpresaRepository;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,24 +27,27 @@ public class SuperAdminSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final String email;
     private final String password;
-        private final SeedRunPolicy seedRunPolicy;
+    private final SeedRunPolicy seedRunPolicy;
+    private final boolean passwordLogin;
 
-        @Autowired
+    @Autowired
     public SuperAdminSeeder(EmpresaRepository empresaRepository, UsuarioEmpresaRepository usuarioRepository,
             PasswordEncoder passwordEncoder,
             @Value("${app.superadmin.email:}") String email,
-            @Value("${app.superadmin.password:}") String password, SeedRunPolicy seedRunPolicy) {
+            @Value("${app.superadmin.password:}") String password, SeedRunPolicy seedRunPolicy,
+            @Value("${app.auth.password-login.enabled:false}") boolean passwordLogin) {
         this.empresaRepository = empresaRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.email = email == null ? "" : email.trim().toLowerCase();
         this.password = password == null ? "" : password;
         this.seedRunPolicy = seedRunPolicy;
+        this.passwordLogin = passwordLogin;
     }
 
     public SuperAdminSeeder(EmpresaRepository empresaRepository, UsuarioEmpresaRepository usuarioRepository,
             PasswordEncoder passwordEncoder, String email, String password) {
-        this(empresaRepository, usuarioRepository, passwordEncoder, email, password, () -> true);
+        this(empresaRepository, usuarioRepository, passwordEncoder, email, password, () -> true, true);
     }
 
     @Override
@@ -53,7 +56,7 @@ public class SuperAdminSeeder implements CommandLineRunner {
             log.info("Database already initialized; checking only the explicitly configured super-admin account");
         }
         if (email.isEmpty()) return;
-        if (password.length() < MIN_PASSWORD_LENGTH) {
+        if (passwordLogin && password.length() < MIN_PASSWORD_LENGTH) {
             log.warn("Super admin not created: APP_SUPERADMIN_PASSWORD must have at least {} characters", MIN_PASSWORD_LENGTH);
             return;
         }
@@ -71,8 +74,9 @@ public class SuperAdminSeeder implements CommandLineRunner {
                 }
                 return empresaRepository.save(new Empresa(PLATFORM_NAME, PLATFORM_TAX_ID));
             });
-        UsuarioEmpresa superAdmin = new UsuarioEmpresa(plataforma, email, "Super administrador",
-            passwordEncoder.encode(password), RolEmpresa.ADMINISTRADOR);
+        // Without password login the account signs in through the identity provider and is linked by verified email.
+        String passwordHash = passwordLogin ? passwordEncoder.encode(password) : UsuarioEmpresa.SIN_CONTRASENA_LOCAL;
+        UsuarioEmpresa superAdmin = new UsuarioEmpresa(plataforma, email, "Super administrador", passwordHash, RolEmpresa.ADMINISTRADOR);
         superAdmin.setSuperAdmin(true);
         usuarioRepository.save(superAdmin);
     }

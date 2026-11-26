@@ -1,9 +1,9 @@
 package com.vortise.gestion.infrastructure.security;
 
 import com.vortise.gestion.application.dto.LoginResponseDto;
-import com.vortise.gestion.application.usecase.JwtService;
-import com.vortise.gestion.application.usecase.RefreshTokenService;
-import com.vortise.gestion.application.usecase.SesionUseCase;
+import com.vortise.gestion.service.authentication.JwtService;
+import com.vortise.gestion.service.authentication.RefreshTokenService;
+import com.vortise.gestion.service.authentication.SesionService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
@@ -42,7 +42,7 @@ public class SessionCookies {
     }
 
     /** Sets both cookies and returns only the non-sensitive session data in the body. */
-    public ResponseEntity<LoginResponseDto> respond(HttpStatus status, SesionUseCase.Sesion sesion) {
+    public ResponseEntity<LoginResponseDto> respond(HttpStatus status, SesionService.Sesion sesion) {
         return ResponseEntity.status(status)
             .header(HttpHeaders.SET_COOKIE, access(sesion.accessToken()).toString())
             .header(HttpHeaders.SET_COOKIE, refresh(sesion.refreshToken(), RefreshTokenService.TTL_SEGUNDOS).toString())

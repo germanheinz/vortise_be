@@ -1,0 +1,167 @@
+package com.vortise.gestion.service;
+
+import com.vortise.gestion.service.restriccion.RestriccionService;
+import com.vortise.gestion.application.dto.RestriccionCreateDto;
+import com.vortise.gestion.application.exception.SolicitudInvalidaException;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.model.RestriccionObra;
+import com.vortise.gestion.model.RubroObra;
+import com.vortise.gestion.repository.ProyectoRepository;
+import com.vortise.gestion.repository.RestriccionObraRepository;
+import com.vortise.gestion.repository.RubroObraRepository;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class RestriccionAltaTest {
+    private RestriccionObraRepository restricciones;
+    private ProyectoRepository proyectos;
+    private RubroObraRepository rubros;
+    private RestriccionService useCase;
+    private Proyecto proyecto;
+
+    @BeforeEach
+    void setUp() {
+        restricciones = mock(RestriccionObraRepository.class);
+        proyectos = mock(ProyectoRepository.class);
+        rubros = mock(RubroObraRepository.class);
+        useCase = new RestriccionService(restricciones, proyectos, rubros, null, null, null);
+        proyecto = new Proyecto();
+        proyecto.setId(10L);
+        proyecto.setNombre("Obra de prueba");
+        when(proyectos.findById(10L)).thenReturn(Optional.of(proyecto));
+    }
+
+    @Test
+    void acceptsSameProjectSubrubroAndDerivesActivityFields() {
+        RubroObra activity = new RubroObra();
+        activity.setId(31L);
+        activity.setProyecto(proyecto);
+        activity.setRubro("Instalaciones");
+        activity.setSubRubro("Tendido eléctrico");
+        activity.setNivel("Nivel 2");
+        activity.setUnidad("m");
+        when(rubros.findById(31L)).thenReturn(Optional.of(activity));
+        when(restricciones.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var start = java.time.LocalDate.of(2026, 10, 1);
+        var due = start.plusDays(3);
+        var result = useCase.crear(10L, new RestriccionCreateDto("Esperar inspección", 31L,
+            null, null, null, null, null, "Ana", start, due, due, null, null, "RESUELTO", " Compras "));
+
+        ArgumentCaptor<RestriccionObra> saved = ArgumentCaptor.forClass(RestriccionObra.class);
+        verify(restricciones).save(saved.capture());
+        assertSame(activity, saved.getValue().getRubroVinculado());
+        assertEquals(31L, result.rubroId());
+        assertEquals("Instalaciones · Tendido eléctrico", result.rubro());
+        assertEquals("Nivel 2", result.nivel());
+        assertEquals("m", result.unidad());
+        assertEquals("Compras", result.area()); assertEquals("Ana", result.responsable());
+        assertEquals(start, result.fechaSolicitud()); assertEquals(due, result.fechaRealEntrega());
+    }
+
+    @Test
+    void acceptsRestrictionWithoutSubrubro() {
+        when(restricciones.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var result = useCase.crear(10L, request(null));
+
+        ArgumentCaptor<RestriccionObra> saved = ArgumentCaptor.forClass(RestriccionObra.class);
+        verify(restricciones).save(saved.capture());
+        verifyNoInteractions(rubros);
+        assertNull(saved.getValue().getRubroVinculado());
+        assertNull(result.rubroId());
+        assertNull(result.rubro());
+    }
+
+    @Test
+    void rejectsNewRestrictionAfterProjectUploadDeadline() {
+        proyecto.setFechaInicio(java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")).minusDays(2));
+        proyecto.setPedidosDeObraDias(1);
+
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.crear(10L, request(null)));
+        verify(restricciones, never()).save(any());
+    }
+
+    @Test
+    void acceptsRestrictionOnTheLastDayOfTheUploadDeadline() {
+        when(restricciones.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        proyecto.setFechaInicio(java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")).minusDays(1));
+        proyecto.setPedidosDeObraDias(1);
+
+        useCase.crear(10L, request(null));
+
+        verify(restricciones).save(any());
+    }
+
+    @Test
+    void acceptsRestrictionWhenTheProjectHasNoDeadline() {
+        when(restricciones.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        proyecto.setFechaInicio(java.time.LocalDate.now().minusYears(1));
+        proyecto.setPedidosDeObraDias(null);
+
+        useCase.crear(10L, request(null));
+
+        verify(restricciones).save(any());
+    }
+
+    @Test
+    void acceptsRubroAndNivelAndLabelsThemWithTheirPath() {
+        RubroObra rubro = new RubroObra();
+        rubro.setId(32L); rubro.setProyecto(proyecto); rubro.setRubro("Estructura"); rubro.setNombre("Estructura");
+        RubroObra nivel = new RubroObra();
+        nivel.setId(33L); nivel.setProyecto(proyecto); nivel.setRubro("Estructura"); nivel.setNombre("Fundaciones"); nivel.setParent(rubro);
+        when(rubros.findById(32L)).thenReturn(Optional.of(rubro));
+        when(rubros.findById(33L)).thenReturn(Optional.of(nivel));
+        when(restricciones.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var onRubro = useCase.crear(10L, request(32L));
+        var onNivel = useCase.crear(10L, request(33L));
+
+        assertEquals(32L, onRubro.rubroId());
+        assertEquals("Estructura", onRubro.rubro());
+        assertEquals(33L, onNivel.rubroId());
+        assertEquals("Estructura › Fundaciones", onNivel.rubro());
+    }
+
+    @Test
+    void rejectsSubrubroFromAnotherProject() {
+        Proyecto otherProject = new Proyecto();
+        otherProject.setId(20L);
+        RubroObra foreignActivity = new RubroObra();
+        foreignActivity.setId(33L);
+        foreignActivity.setProyecto(otherProject);
+        foreignActivity.setSubRubro("Tendido eléctrico");
+        when(rubros.findById(33L)).thenReturn(Optional.of(foreignActivity));
+
+        assertThrows(IllegalArgumentException.class, () -> useCase.crear(10L, request(33L)));
+        verify(restricciones, never()).save(any());
+    }
+
+    private RestriccionCreateDto request(Long rubroId) {
+        return new RestriccionCreateDto("Esperar inspección", rubroId, null, null, null, null, null,
+            null, null, java.time.LocalDate.of(2026, 10, 10), null, null, null, null);
+    }
+
+    @Test void rejectsRestrictionWithoutDeadline() {
+        assertThrows(IllegalArgumentException.class, () -> useCase.crear(10L,
+            new RestriccionCreateDto("Esperar inspección", null, null, null, null, null, null,
+                null, null, null, null, null, null, null)));
+        verify(restricciones, never()).save(any());
+    }
+
+    @Test void legacyRequestsHaveNoInferredArea() {
+        assertNull(request(31L).area());
+    }
+
+    @Test void invalidChronologyIsRejectedBeforePersistence() {
+        var start = java.time.LocalDate.of(2026, 10, 1);
+        assertThrows(IllegalArgumentException.class, () -> useCase.crear(10L,
+            new RestriccionCreateDto("Inspección", 31L, null, null, null, null, null,
+                "Ana", start, start.minusDays(1), null, null, null, "PENDIENTE", "Compras")));
+        verify(restricciones, never()).save(any());
+    }
+}

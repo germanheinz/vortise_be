@@ -8,14 +8,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import tools.jackson.databind.ObjectMapper;
 import com.vortise.gestion.application.dto.PlantaDto;
-import com.vortise.gestion.application.usecase.JwtService;
-import com.vortise.gestion.domain.model.Empresa;
-import com.vortise.gestion.domain.model.Planta;
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.model.RolEmpresa;
-import com.vortise.gestion.domain.repository.PlantaRepository;
-import com.vortise.gestion.infrastructure.config.DataSeeder;
-import com.vortise.gestion.infrastructure.config.UsuarioDemoSeeder;
+import com.vortise.gestion.service.authentication.JwtService;
+import com.vortise.gestion.model.Empresa;
+import com.vortise.gestion.model.Planta;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.model.RolEmpresa;
+import com.vortise.gestion.repository.PlantaRepository;
 import com.vortise.gestion.infrastructure.security.TenantAccessInterceptor;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -98,13 +96,7 @@ class PlantaAuthorizationHttpTest {
 
     private Fixtures fixtures;
 
-    // Replace startup runners before the context executes them; no seed writes.
-    @MockitoBean
-    private DataSeeder dataSeeder;
-
-    @MockitoBean
-    private UsuarioDemoSeeder usuarioDemoSeeder;
-
+    // Suppress catalog and administrator startup routines in the fixture database.
     @MockitoBean
     private com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
 

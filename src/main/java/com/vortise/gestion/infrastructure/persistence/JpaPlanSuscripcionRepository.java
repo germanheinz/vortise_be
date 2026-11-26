@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.PlanSuscripcion;
-import com.vortise.gestion.domain.repository.PlanSuscripcionRepository;
+import com.vortise.gestion.model.PlanSuscripcion;
+import com.vortise.gestion.repository.PlanSuscripcionRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,9 +1,6 @@
 package com.vortise.gestion.infrastructure.config;
 
-import com.vortise.gestion.infrastructure.backup.H2LogicalBackupService;
-import com.vortise.gestion.infrastructure.web.AdminBackupController;
-import com.vortise.gestion.infrastructure.web.AdminBackupDisabledController;
-import com.vortise.gestion.infrastructure.web.GlobalExceptionHandler;
+import com.vortise.gestion.controller.advice.GlobalExceptionHandler;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Profile;
@@ -19,12 +16,8 @@ class ProductionConfigurationTest {
         for (String profile : List.of("staging", "prod", "production")) {
             var environment = new MockEnvironment();
             environment.setActiveProfiles(profile, "demo", "local");
-            for (Class<?> type : List.of(DatabaseInitializationPolicy.class, DataSeederRunner.class,
-                    UsuarioDemoSeeder.class, H2LogicalBackupService.class, AdminBackupController.class)) {
-                assertFalse(environment.acceptsProfiles(Profiles.of(type.getAnnotation(Profile.class).value())), type.getName());
-            }
-            for (Class<?> type : List.of(StagingSeedRunPolicy.class, StagingPostgresConfiguration.class,
-                    AdminBackupDisabledController.class)) {
+            assertFalse(environment.acceptsProfiles(Profiles.of(DatabaseInitializationPolicy.class.getAnnotation(Profile.class).value())));
+            for (Class<?> type : List.of(StagingSeedRunPolicy.class, StagingPostgresConfiguration.class)) {
                 assertTrue(environment.acceptsProfiles(Profiles.of(type.getAnnotation(Profile.class).value())), type.getName());
             }
         }

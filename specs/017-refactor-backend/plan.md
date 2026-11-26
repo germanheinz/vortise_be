@@ -63,3 +63,111 @@ Extraer las dos búsquedas comunes de catálogo a una clase de paquete que recib
 ### Cálculo común de horas reales
 
 Compartir la consulta de suma, la normalización del agregado nulo y el redondeo en `RegistroHorasRules`. Mantener en cada llamador la decisión de calcular, el bloqueo, la sincronización de JPA y el guardado. Conservar el esquema y el contrato HTTP.
+
+## Migración por módulos a Controller → Service → Repository
+
+1. En Registro de horas, conectar los tres endpoints de escritura de `RegistroHorasController` con `RegistroHorasService`. Retirar las tres clases que solo delegan, comprobando sus referencias en todo el backend. Mantener las dos consultas en sus entradas existentes durante este corte.
+2. Evaluar consolidar las consultas de Registro de horas y después los CRUD de tareas, restricciones y gastos fijos. Para cada módulo, revisar qué lectores y escritores comparten permisos, transacciones y respuestas. Mover mappers y reglas al paquete del módulo cuando ayude a seguir el flujo y no rompa consumidores.
+3. Revisar Proyectos y Empresa por separado. Mantener servicios con responsabilidades propias, como certificados, reportes y Previsto vs. Real. Conservar interfaces de repositorio, adaptadores y modelo de datos.
+4. Verificar cada corte con pruebas focalizadas y revisar HTTP al aprobarse el arranque de Spring. La revisión independiente y el cierre documentan resultados y limitaciones por módulo.
+
+### Servicios consolidados
+
+- `RegistroHorasService` reúne consultas y mutaciones, y conserva la transacción en los tres métodos de escritura.
+- `ObraTareaService` reúne el CRUD. Previsto vs. Real conserva su servicio de indicadores. El listado permanece en una transacción de solo lectura, el alta y la edición mantienen sus transacciones y la baja sigue usando la del repositorio.
+- `RestriccionService` reúne las operaciones sobre restricciones. `ComentarioRestriccionService` concentra las de comentarios. Las operaciones de chat conservan sus reglas y llaman al servicio de restricciones.
+- `GastoFijoService` comparte el mapeo entre listado y guardado. El controller verifica la disponibilidad de la funcionalidad antes de delegar.
+- `ProyectoConsultaService` agrupa cuatro consultas y lo comparten los controllers de proyecto y empresa. `EmpresaService` agrupa lectura y guardado de empresa. Los flujos de creación, edición y borrado de proyecto y la baja de empresa conservan sus servicios especializados por sus reglas y dependencias.
+
+### Paquetes de aplicación
+
+Mover `EmpresaMapper` a `application.mapper` y `EmpresaService` a `application.service`. El mapper expone su método estático para permitir el acceso desde el servicio y mantiene privado su constructor. El servicio conserva sus consumidores y el wiring de Spring con los paquetes nuevos.
+
+Aplicar la organización a todo el antiguo paquete `application.usecase`. Mantener nombres de clase y agrupar las pruebas por el tipo principal que prueban. Cambiar visibilidad solo en las entradas necesarias entre paquetes. Comparar los cuerpos con la revisión previa y compilar desde cero para comprobar las referencias.
+
+Normalizar el sufijo de los servicios y usar nombres específicos para altas, ediciones, bajas y consultas que tengan responsabilidades distintas. Mover `EstructuraRubros` y su prueba a `domain.rule`. Retirar `CostoCalculadorService` tras comprobar referencias, configuración y consumidores. Actualizar imports y ejecutar compilación limpia y pruebas sin contexto.
+
+### Retiro de seeders de negocio demo
+
+1. Retirar `DataSeeder`, `DataSeederRunner`, `DemoOperationalSeed`, `UsuarioDemoSeeder`, `SeedProfiles` y la entrada de reset demo. Eliminar pruebas exclusivas de esas funciones. En las pruebas de producción, retirar sus mocks y conservar la creación local de fixtures y las protecciones H2. Mantener `SeedRunPolicy` y sus implementaciones mientras los seeders operativos las consuman.
+2. Revisar `E2eTeamFixtures` junto con el lanzador E2E del frontend. Trasladar el aprovisionamiento a código de pruebas compatible con el lanzador antes de quitar su componente del backend. La configuración de aislamiento E2E se conserva durante esa transición.
+3. Retirar la API de gastos fijos globales y su pantalla y cliente del frontend en un corte coordinado. Evaluar entidad, adaptador y respaldo H2 por separado. El primer cambio de código conserva la tabla y la lectura de respaldos históricos. Mantener el resto de modelos y flujos de Excel.
+4. Comparar endpoints de producción y ejecutar por separado las comprobaciones de backend y frontend. La autorización de ejecución debe cubrir los contextos reales seleccionados. El alcance no incluye limpiar bases persistentes, ejecutar resets, migraciones destructivas ni publicar cambios.
+
+### Retiro de Telegram y del alta por chat
+
+- Backend: retirar el controller, comando, conversación y servicio de vinculación de Telegram y su excepción de autorización HTTP. Retirar el POST de restricciones por chat, el servicio idempotente y repositorios exclusivos. Conservar el GET y el servicio de consulta usados por el asistente web. Retirar el código de pruebas exclusivo y conservar las pruebas de restricciones normales.
+- Frontend: quitar el modo de alta del asistente, el POST y la invalidación de caché asociada. Conservar las acciones de lectura y las pantallas de restricciones normales. Retirar el workflow de Telegram versionado y sus pruebas exclusivas. Revisar los cambios de autenticación locales antes de editar archivos.
+- Mantener las migraciones aplicadas y los mappings históricos que necesita la huella de respaldos. No modificar filas existentes. No operar sobre workflows remotos de n8n ni Telegram; cualquier retiro remoto se coordina por separado.
+- Verificar contratos de lectura y alta regular, referencias obsoletas y resultados por repositorio. La ejecución de contextos Spring requiere autorización según las reglas del backend.
+
+### Ordenar controllers y pagos
+
+Mover las clases anotadas con RestController fuera de infrastructure.web. Mantener filtros y advice HTTP en ese paquete. Agrupar StripeWebhookController, SuscripcionController y PaymentConfigurationController en controller.pagos. Agrupar el servicio de webhook y los dos servicios de suscripción en service.pagos. Actualizar consumidores y ampliar el escaneo de guardas al paquete raíz de controllers. Documentar la ruta pública existente de aceptación de invitaciones al incorporarla a ese escaneo. Verificar con una compilación limpia, comparación estática de los controllers y pruebas sin contexto.
+
+### Unificar servicios y separar Clerk por responsabilidad
+
+Elevar `application.service` a `service` y mantener los servicios de pagos en su subpaquete. Mover `ClerkUserSyncService` a `service.usuario`, su configuración y filtros a `infrastructure.security.clerk`, el advice a `controller.advice` y el filtro de observación a `infrastructure.observability`. Actualizar las referencias, mover en paralelo las pruebas del paquete de servicios y verificar compilación, equivalencia estática y pruebas focalizadas sin contexto.
+
+### Consolidación de controllers de invitación
+
+Mover los handlers a `controller.invitacion`. Aplicar a cada método administrativo la guarda de su controller original. Mantener los servicios de equipo y usuario, y actualizar la excepción de la prueba de guardas para los handlers públicos. El frontend y el esquema de datos quedan fuera del alcance.
+
+### Retiro de entidades residuales de Telegram y alta por chat
+
+Eliminar `AltaRestriccionChat` y `VinculoTelegram` del código productivo. Conservar V26 y V27 y la estructura física creada por esas migraciones. Verificar referencias y ejecutar las pruebas de restricciones sin contexto Spring.
+
+El respaldo H2 descubre tablas por el metamodelo JPA. Incluir explícitamente ambas tablas históricas cuando existen en JDBC para conservar su cobertura y su huella.
+
+### Retiro de PerfilController y fotos de perfil
+
+- Mover la consulta `GET /api/me` a AuthController mediante un mapping que conserve la ruta pública de la API y su requisito de autenticación. Separar la consulta de cuenta de las operaciones de foto y reevaluar reutilización con el servicio de autenticación. Mantener `tieneFoto: false` como campo de compatibilidad en las respuestas.
+- Retirar rutas de foto, almacenamiento de avatar, configuración y excepciones específicas de autorización. Extraer TipoImagen de FotoPerfilStorage para los reportes. Conservar sus formatos y validación. No borrar los archivos de avatar existentes.
+- Quitar del frontend los controles de foto y sus peticiones e invalidaciones específicas. Conservar la consulta de cuenta y las iniciales. Revisar los consumidores de la configuración E2E en ambos repositorios antes de quitar la variable de subida.
+- Actualizar pruebas para usar escrituras vigentes al verificar seguridad. Ejecutar pruebas focalizadas de cada repositorio. Verificar HTTP con contexto Spring únicamente bajo aprobación de ejecución aislada.
+
+### Consolidación de restricciones
+
+Mover los comentarios y las lecturas requeridas por la consulta gerencial a RestriccionService. Extraer el cálculo gerencial a RestriccionResumenGerencial sin repositorios ni dependencias de Spring. Adaptar las pruebas de cálculo y de reglas existentes.
+
+La revisión de servicios deja estos candidatos para cambios separados:
+
+| Candidato | Consolidación | Qué preservar |
+| --- | --- | --- |
+| EmpresaRestriccionesService | Mover su lectura a RestriccionService y compartirlo entre ambos controllers. | Guarda de empresa, validación de existencia, orden por ID y transacción de solo lectura. |
+| ProyectoBajaService | Incorporar la baja a un servicio de proyecto existente. | Guarda del controller, mensaje de ausencia y límites transaccionales. Evaluar por separado la consolidación de alta y edición. |
+| EmpresaResumenService y EmpresaDashboardObrasService | Revisar una consulta común de empresa y obra. | Mantener separados sus cálculos y contratos actuales, y medir las lecturas por obra antes de compartir repositorios o resultados. |
+| ObraTareaService y PrevistoRealService | Considerar compartir consultas de cargas. | El cálculo también alimenta el dashboard de empresa. Mantener su transacción de lectura y la separación de validaciones de escritura. |
+| PasswordResetTransactions | Mantener el bean dedicado. | Los límites de emisión y confirmación dependen del proxy transaccional, y el envío de correo ocurre fuera de esa frontera. |
+| Servicios de facturación e invitaciones | Mantener los servicios actuales. | Preservar los consumidores compartidos de lectura, el tratamiento de webhooks y las reglas distintas por tipo de invitación. |
+
+### Consolidación de servicios de empresa
+
+Integrar la baja en EmpresaService y la inicialización idempotente en EmpresaConfiguracionService. Reunir los dos informes en EmpresaConsultaService con la validación de empresa compartida. Mover el listado de restricciones con su guarda y transacción de lectura. Mantener los DTO y el esquema.
+
+### Retiro de gastos fijos globales
+
+Eliminar clases, configuración, cliente y pruebas exclusivos de la funcionalidad. Mantener la migración histórica y conservar la tabla en el respaldo H2 si existe. El catálogo de suscripción queda fuera de este corte.
+
+### Consolidación de consultas y baja de proyectos
+
+Integrar ProyectoBajaService en ProyectoConsultaService y renombrar el resultado a ProyectoService. Actualizar ambos controllers consumidores y cubrir baja existente y ausencia del proyecto.
+
+- Alta y edición de obra comparten resolución de subcontratistas, actualización de configuración de empresa y asignación de datos básicos. Antes de extraer código, comparar valores por defecto y campos editables. Edición agrega validaciones de certificados y tratamiento de dependencias.
+- CertificadoBloqueos usa los mismos repositorios que CertificadoObraService. Evaluar si conviene compartir consultas del último corte. La regla de bloqueo se usa desde tareas y edición y tiene una transacción de lectura propia.
+- ConfiguracionEmpresaObraService comparte catálogos y categorías con EmpresaConfiguracionService. Su operación por lotes trabaja bajo un bloqueo de empresa y se invoca durante las escrituras de obra. Cualquier traslado debe mantener ese alcance.
+- Mantener las fronteras de sesión y recuperación de contraseña. SesionService coordina apertura, renovación y cierre. RefreshTokenService conserva la persistencia y revocación de familias. PasswordResetTransactions evita que el envío de correo quede dentro de la transacción.
+
+### Alta y datos comunes de proyecto
+
+Mover el alta a ProyectoService con su transacción y bloqueo de empresa. Compartir la asignación de superficies y calendario en DatosProyecto. Mantener la edición en su servicio porque coordina bloqueos de certificados y dependencias de rubros, tareas y horas.
+
+### Paquetes de autenticación
+
+Mover ocho servicios a service/authentication y dos controllers a controller/authentication. Actualizar los imports de consumidores y mover las pruebas unitarias del paquete. Mantener infraestructura de seguridad, integración Clerk, política de acceso a empresas y repositorios en sus paquetes.
+
+### Retiro de respaldos desde la aplicación
+
+- Backend: retirar AdminBackupController, AdminBackupDisabledController, H2LogicalBackupService, BackupValidationException, su manejador y las pruebas exclusivas. Ajustar las pruebas de perfiles compartidas.
+- Frontend: retirar la página de respaldo, backupApi, el enlace en el menú y el tratamiento especial de la ruta en SuperAdminShell. Conservar la verificación de acceso del resto de administración.
+- Las herramientas y guías operativas de PostgreSQL y la migración selectiva son flujos separados. La eliminación propuesta se limita al respaldo integrado de la aplicación. No ejecutar restauraciones ni borrar archivos o datos.

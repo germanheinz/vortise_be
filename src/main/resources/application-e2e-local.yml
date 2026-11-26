@@ -22,11 +22,13 @@ server:
   address: 127.0.0.1
   port: 18081
 app:
+  auth:
+    # Fixtures sign in with local passwords; production keeps this off.
+    password-login:
+      enabled: true
   security:
     cookie:
       secure: false
-  uploads:
-    dir: ${APP_E2E_UPLOADS_DIR}
   password-mail:
     enabled: false
   superadmin:
@@ -37,10 +39,6 @@ app:
     webhook-secret: ""
     price-basic: ""
     price-pro: ""
-  features:
-    gastos-fijos-enabled: false
-  demo:
-    reset-enabled: false
 logging:
   level:
     org.hibernate.SQL: OFF

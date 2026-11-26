@@ -1,6 +1,6 @@
 package com.vortise.gestion.application.dto;
 
-import com.vortise.gestion.domain.model.RolEmpresa;
+import com.vortise.gestion.model.RolEmpresa;
 import jakarta.validation.constraints.*;
 import java.time.Instant;
 import java.util.List;
@@ -20,5 +20,8 @@ public final class InvitacionUsuarioDto {
     public record Aceptar(@NotBlank @Size(max = 128) String token, @NotBlank @Size(max = 160) String nombre,
                           @NotBlank @Size(min = 8, max = 72) String password) {
         @Override public String toString() { return "UserInvitationAcceptance[redacted]"; }
+    }
+    public record AceptarConIdentidad(@NotBlank @Size(max = 128) String codigo, @NotBlank @Size(max = 160) String nombre) {
+        @Override public String toString() { return "UserInvitationAcceptanceWithIdentity[redacted]"; }
     }
 }

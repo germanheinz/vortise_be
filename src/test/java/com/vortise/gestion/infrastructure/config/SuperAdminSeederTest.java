@@ -9,11 +9,11 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.vortise.gestion.domain.model.Empresa;
-import com.vortise.gestion.domain.model.RolEmpresa;
-import com.vortise.gestion.domain.model.UsuarioEmpresa;
-import com.vortise.gestion.domain.repository.EmpresaRepository;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.model.Empresa;
+import com.vortise.gestion.model.RolEmpresa;
+import com.vortise.gestion.model.UsuarioEmpresa;
+import com.vortise.gestion.repository.EmpresaRepository;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -63,10 +63,24 @@ class SuperAdminSeederTest {
         when(empresas.save(any(Empresa.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(encoder.encode(PASSWORD)).thenReturn("hash");
 
-        new SuperAdminSeeder(empresas, usuarios, encoder, EMAIL, PASSWORD, () -> false).run();
+        new SuperAdminSeeder(empresas, usuarios, encoder, EMAIL, PASSWORD, () -> false, true).run();
 
         verify(usuarios).save(argThat(user -> user.isSuperAdmin() && EMAIL.equals(user.getEmail())
             && "hash".equals(user.getPasswordHash())));
+    }
+
+    @Test
+    void withoutPasswordLoginTheSuperAdminHasNoUsablePasswordAndNeedsNone() {
+        when(usuarios.findByEmail(EMAIL)).thenReturn(Optional.empty());
+        when(empresas.findByIdentificacionFiscal(SuperAdminSeeder.PLATFORM_TAX_ID)).thenReturn(Optional.empty());
+        when(empresas.findByNombreIgnoreCase(SuperAdminSeeder.PLATFORM_NAME)).thenReturn(Optional.empty());
+        when(empresas.save(any(Empresa.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        new SuperAdminSeeder(empresas, usuarios, encoder, EMAIL, "", () -> true, false).run();
+
+        verify(usuarios).save(argThat(user -> user.isSuperAdmin() && EMAIL.equals(user.getEmail())
+            && UsuarioEmpresa.SIN_CONTRASENA_LOCAL.equals(user.getPasswordHash())));
+        verifyNoInteractions(encoder);
     }
 
     @Test

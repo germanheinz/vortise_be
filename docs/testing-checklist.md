@@ -8,7 +8,7 @@ Use this checklist when planning and reviewing tests. It does not authorize exec
 - [ ] Record approval for commands and isolation configuration once; reuse it for retries within scope.
 - [ ] Install a generated, per-context in-memory H2 URL and test-only signing key before context startup; never inherit the production file URL or use `AUTO_SERVER`.
 - [ ] Disable SQL script initialization, H2 console and SQL logging; use schema creation/teardown only in the isolated database.
-- [ ] Suppress both startup seeders before their runners execute. Review newly added initialization hooks.
+- [ ] Review the remaining startup hooks before execution. Use test doubles for the plan catalog or super-administrator bootstrap when the suite needs to control those writes.
 - [ ] Check JDBC metadata against the exact generated database identity before fixture writes and cleanup. This is supplementary: a post-startup check cannot protect against startup DDL.
 - [ ] Commit fixtures before HTTP requests; avoid a test-wide rollback transaction. Observe post-request state through a fresh persistence context.
 - [ ] Clean up child-before-parent only in the verified ephemeral database and close the context. Do not enable parallel cases sharing bulk cleanup and fixtures without a separate isolation design.

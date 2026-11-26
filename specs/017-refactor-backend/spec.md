@@ -46,3 +46,73 @@ Alta y edición comparten la resolución de subcontratistas por empresa, tipo y 
 ### Total de horas reales
 
 La edición de proyecto conserva el valor manual cuando no hay registros. Si hay registros, usa la suma redondeada a dos decimales y un agregado nulo equivale a cero. Las mutaciones de registros mantienen el bloqueo del proyecto y sincronizan los cambios antes de calcular el total, incluido el cero al borrar el último registro.
+
+## Arquitectura Controller → Service → Repository
+
+Organizar las operaciones relacionadas en servicios por módulo. Los controllers mantienen rutas, validación HTTP y permisos existentes. Los servicios coordinan reglas y transacciones y usan los repositorios actuales. Los auxiliares compartidos se mantienen junto al módulo que los usa y se reutilizan si tienen el mismo contrato.
+
+El primer corte cubre alta, edición y baja de registros horarios. Conserva rutas, DTO, códigos de respuesta, guardas, bloqueo de proyecto, orden de persistencia y cálculo de totales.
+
+### Organización de paquetes de aplicación
+
+Los servicios de aplicación quedan en `application.service`, los mappers en `application.mapper` y las reglas y cálculos auxiliares en `application.helper`. Se conservan los contratos, la lógica, las anotaciones Spring y los límites transaccionales.
+
+### Nombres y reglas de dominio
+
+Los componentes de aplicación llevan nombres de servicio según su responsabilidad. La jerarquía de rubros reside en `domain.rule` y conserva su comportamiento. Los puertos mantienen los contratos con infraestructura. Se preservan las rutas, DTO, permisos y transacciones.
+
+### Retiro de funcionalidades demo
+
+El backend arranca sin generar empresas, usuarios, proyectos, avances ni gastos demo. Se retiran el reset demo y el módulo global de gastos fijos, junto con su pantalla y cliente API del frontend si se aprueba el corte coordinado. Las pruebas conservan la cobertura de funcionalidades desplegadas y preparan sus propios datos en contextos efímeros. Se preservan la configuración de planes, el alta administrativa autorizada, el importador Excel, la protección del entorno de pruebas y los datos históricos.
+
+### Retiro de Telegram y del alta por chat
+
+Se retiran la vinculación de Telegram, la recepción de eventos y el alta de restricciones desde el chat. El asistente web conserva las consultas de restricciones y estado de obra. El alta y la edición regulares de restricciones conservan sus rutas, permisos y validaciones. Se conservan las restricciones existentes y la compatibilidad con respaldos en el primer corte.
+
+### Controllers y pagos
+
+Los controllers HTTP quedan en `controller` y los tres de pagos y suscripciones en `controller.pagos`. Los servicios de pagos y suscripciones se agrupan en `service.pagos`. La integración con el SDK conserva su ubicación en infraestructura y el puerto conserva su contrato. Se preservan rutas, acceso, respuestas y verificación de firma sobre el cuerpo original del webhook.
+
+### Servicios, identidad y componentes web transversales
+
+Los servicios se concentran en el paquete raíz `service`. Clerk se divide entre la sincronización local de usuarios y la adaptación de autenticación externa. El advice HTTP y el filtro de observación tienen paquetes propios. Se preservan el orden de los filtros, las rutas, las respuestas, las transacciones y el contenido de las clases.
+
+### Consolidación de controllers de invitación
+
+Agrupar la administración y la aceptación pública de invitaciones de equipo y usuario en dos controllers. Conservar los once contratos HTTP, permisos, validaciones, DTO y cookies. El endpoint legado sigue disponible mientras se verifica su uso.
+
+### Retiro de entidades residuales de Telegram y alta por chat
+
+El modelo JPA deja de registrar las dos entidades de funciones retiradas. Los respaldos conservan las tablas históricas y el asistente web mantiene las consultas.
+
+### Retiro de PerfilController y fotos de perfil
+
+Eliminar la carga, consulta y eliminación de la foto de perfil propia. Mantener `GET /api/me` como contrato de datos de la cuenta autenticada para navegación, planes y administración. El frontend muestra las iniciales en el avatar. Los reportes de obra conservan la gestión de imágenes.
+
+### Consolidación de restricciones
+
+Unificar los servicios de restricciones, comentarios y consulta gerencial detrás de RestriccionService. Preservar las nueve rutas HTTP, sus guardas, datos, orden y transacciones. El resumen conserva el corte, la zona horaria y el límite de detalle vigente.
+
+### Consolidación de servicios de empresa
+
+Agrupar el ciclo de vida, la configuración y las consultas de empresa en tres servicios. La consulta de restricciones por empresa pertenece a RestriccionService. Mantener rutas, permisos, transacciones y respuestas existentes.
+
+### Retiro de gastos fijos globales
+
+Retirar la pantalla y la API global de gastos fijos. Los costos indirectos de cada obra, su modelo y sus datos mantienen su comportamiento.
+
+### Consolidación de consultas y baja de proyectos
+
+ProyectoService reúne las consultas y la baja. Se conservan las rutas, guardas, errores y límites transaccionales actuales.
+
+### Alta y datos comunes de proyecto
+
+ProyectoService incorpora el alta. Alta y edición comparten la asignación de superficies y calendario explícito, conservando las reglas de cuándo se asignan y los límites transaccionales.
+
+### Paquetes de autenticación
+
+Agrupar servicios y controllers de autenticación por responsabilidad. Preservar rutas, seguridad, sesiones, configuración y persistencia.
+
+### Retiro de respaldos desde la aplicación
+
+Retirar la exportación y restauración de H2 desde la administración y su acceso en el frontend. Conservar las bases actuales y los archivos de respaldo existentes.

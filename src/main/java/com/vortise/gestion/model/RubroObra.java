@@ -1,0 +1,278 @@
+package com.vortise.gestion.model;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import com.vortise.gestion.domain.rule.EstructuraRubros;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "rubros_obra")
+public class RubroObra {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "proyecto_id", nullable = false)
+    private Proyecto proyecto;
+
+    /** Parent node in the activity structure; null for root rubros (and for legacy rows without a resolvable parent). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private RubroObra parent;
+
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.VARCHAR)
+    @Enumerated(EnumType.STRING)
+    @Column(length = 16)
+    private TipoNodoRubro tipoNodo;
+
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.VARCHAR)
+    @Enumerated(EnumType.STRING)
+    @Column(length = 32)
+    private VarianteEstructura varianteEstructura;
+
+    private String nombre;
+    /** Contract of the project this rubro belongs to; only the root rubro carries it. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contrato_id")
+    @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.SET_NULL)
+    private ContratoObra contrato;
+    private String nRubro;
+    private String rubro;
+    private String nivel;
+    private Integer subNumeroRubro;
+    private String subRubro;
+    private Double cantidad;
+    private String unidad;
+    private Double productividad;
+    private String empresa;
+    private String tipoContratista = "PROPIA";
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subcontratista_id")
+    private CatalogoEmpresa subcontratista;
+    private Double horasOficialesPrevistas;
+    private Double horasAyudantesPrevistas;
+    private Double rendimientoOficial;
+    private Double rendimientoAyudante;
+    private Integer cantidadPersonas;
+    @Column(nullable = false)
+    private Integer frentes = 1;
+    private LocalDate fechaInicioPlanificada;
+    private LocalDate fechaFinPlanificada;
+    private boolean cronogramaManual;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Proyecto getProyecto() {
+        return proyecto;
+    }
+
+    public void setProyecto(Proyecto proyecto) {
+        this.proyecto = proyecto;
+    }
+
+    public RubroObra getParent() {
+        return parent;
+    }
+
+    public void setParent(RubroObra parent) {
+        this.parent = parent;
+    }
+
+    /** Node kind; rows persisted before the 3-layer structure infer it from the legacy numeric code. */
+    public TipoNodoRubro getTipoNodo() {
+        return tipoNodo != null ? tipoNodo : EstructuraRubros.tipoLegado(nRubro);
+    }
+
+    public void setTipoNodo(TipoNodoRubro tipoNodo) {
+        this.tipoNodo = tipoNodo;
+    }
+
+    /** Structure variant; only meaningful on root nodes (legacy roots are RUBRO_SUBRUBRO). */
+    public VarianteEstructura getVarianteEstructura() {
+        if (varianteEstructura != null) return varianteEstructura;
+        return getTipoNodo() == TipoNodoRubro.RUBRO ? VarianteEstructura.RUBRO_SUBRUBRO : null;
+    }
+
+    public void setVarianteEstructura(VarianteEstructura varianteEstructura) {
+        this.varianteEstructura = varianteEstructura;
+    }
+
+    public ContratoObra getContrato() {
+        return contrato;
+    }
+
+    public void setContrato(ContratoObra contrato) {
+        this.contrato = contrato;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    @PrePersist
+    @PreUpdate
+    void normalizarEstructura() {
+        tipoNodo = getTipoNodo();
+        varianteEstructura = getVarianteEstructura();
+    }
+
+    public String getnRubro() {
+        return nRubro;
+    }
+
+    public void setnRubro(String nRubro) {
+        this.nRubro = nRubro;
+    }
+
+    public String getRubro() {
+        return rubro;
+    }
+
+    public String getNivel() {
+        return nivel;
+    }
+
+    public void setRubro(String rubro) {
+        this.rubro = rubro;
+    }
+
+    public void setNivel(String nivel) {
+        this.nivel = nivel;
+    }
+
+    public Integer getSubNumeroRubro() {
+        return subNumeroRubro;
+    }
+
+    public void setSubNumeroRubro(Integer subNumeroRubro) {
+        this.subNumeroRubro = subNumeroRubro;
+    }
+
+    public String getSubRubro() {
+        return subRubro;
+    }
+
+    public void setSubRubro(String subRubro) {
+        this.subRubro = subRubro;
+    }
+
+    public Double getCantidad() {
+        return cantidad;
+    }
+
+    public void setCantidad(Double cantidad) {
+        this.cantidad = cantidad;
+    }
+
+    public String getUnidad() {
+        return unidad;
+    }
+
+    public void setUnidad(String unidad) {
+        this.unidad = unidad;
+    }
+
+    public Double getProductividad() {
+        return productividad;
+    }
+
+    public void setProductividad(Double productividad) {
+        this.productividad = productividad;
+    }
+
+    public String getEmpresa() {
+        return empresa;
+    }
+
+    public void setEmpresa(String empresa) {
+        this.empresa = empresa;
+    }
+
+    public String getTipoContratista() {
+        return tipoContratista;
+    }
+
+    public void setTipoContratista(String tipoContratista) {
+        this.tipoContratista = tipoContratista;
+    }
+
+    public CatalogoEmpresa getSubcontratista() {
+        return subcontratista;
+    }
+
+    public void setSubcontratista(CatalogoEmpresa subcontratista) {
+        this.subcontratista = subcontratista;
+    }
+
+    public Double getHorasOficialesPrevistas() {
+        return horasOficialesPrevistas;
+    }
+
+    public void setHorasOficialesPrevistas(Double horasOficialesPrevistas) {
+        this.horasOficialesPrevistas = horasOficialesPrevistas;
+    }
+
+    public Double getHorasAyudantesPrevistas() {
+        return horasAyudantesPrevistas;
+    }
+
+    public void setHorasAyudantesPrevistas(Double horasAyudantesPrevistas) {
+        this.horasAyudantesPrevistas = horasAyudantesPrevistas;
+    }
+
+    public Double getRendimientoOficial() {
+        return rendimientoOficial;
+    }
+
+    public void setRendimientoOficial(Double rendimientoOficial) {
+        this.rendimientoOficial = rendimientoOficial;
+    }
+
+    public Double getRendimientoAyudante() {
+        return rendimientoAyudante;
+    }
+
+    public void setRendimientoAyudante(Double rendimientoAyudante) {
+        this.rendimientoAyudante = rendimientoAyudante;
+    }
+
+    public Integer getCantidadPersonas() {
+        return cantidadPersonas;
+    }
+
+    public void setCantidadPersonas(Integer cantidadPersonas) {
+        this.cantidadPersonas = cantidadPersonas;
+    }
+
+    public Integer getFrentes() { return frentes == null ? 1 : frentes; }
+    public void setFrentes(Integer frentes) { this.frentes = frentes; }
+
+    public LocalDate getFechaInicioPlanificada() { return fechaInicioPlanificada; }
+    public void setFechaInicioPlanificada(LocalDate fechaInicioPlanificada) { this.fechaInicioPlanificada = fechaInicioPlanificada; }
+    public LocalDate getFechaFinPlanificada() { return fechaFinPlanificada; }
+    public void setFechaFinPlanificada(LocalDate fechaFinPlanificada) { this.fechaFinPlanificada = fechaFinPlanificada; }
+    public boolean isCronogramaManual() { return cronogramaManual; }
+    public void setCronogramaManual(boolean cronogramaManual) { this.cronogramaManual = cronogramaManual; }
+}

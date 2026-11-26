@@ -1,0 +1,28 @@
+# 020 — Estado y evidencia
+
+- [x] Revisión de descubrimiento del backend (auth, dominio, persistencia y configuración) con evidencia en archivo y línea. Ver [plan](plan.md#hallazgos-verificados).
+- [x] Spec y plan aprobados el 2026-11-26.
+  - D1: el login con contraseña se elimina en un corte posterior (020-b), no en este.
+  - D2: la migración de las columnas de invitación se pospone.
+- [x] Ejecución autorizada: `mvn verify` (línea base y final) y `mvn -Dtest=... test` por corte, desde `gestion_be`. Sin operaciones sobre la base persistente `./data`, sin commits ni push y sin tocar el frontend.
+- [x] C0 Línea base con `mvn verify`: 707 tests, 4 fallos previos.
+  - 3 casos de input malformado devolvían 500 porque `handleMalformedInput` se había borrado en `9b2b639`. Se restauró con aprobación.
+  - `CookieSessionHttpTest` seguía buscando `#token=` tras el cambio a `#codigo=` de 019. Se corrigió el helper.
+- [x] C4 Excepciones: `OperacionNoPermitidaException` (403) reemplaza a `AccessDeniedException` en los servicios, y `ReglaDeEstadoException` la extiende.
+- [x] C1 Invitaciones: un único `aceptarConCuenta`, la invitación se busca una sola vez y se comparten `InvitacionToken.{CUENTA_EXISTENTE, enlace, noDisponible}` y `Emails.normalizar`.
+  - Desvío del plan: no se creó el componente `FrontendUrl`. Solo quedaban 3 usos y uno se elimina en 020-b.
+- [x] C2 `ContextoSesion` compartido entre `sesion` y `me`.
+- [x] C3 `RecursoDeEmpresa` y `RecursosDeEmpresa.propio`, aplicados en `EmpresaConfiguracionService` y `ConfiguracionEmpresaObraService`.
+  - Desvío del plan: no se agregó un helper genérico `encontrado(...)`, porque no reducía código frente a `orElseThrow`. Las demás comprobaciones de "no pertenece" (obras, actividades, contratos) tienen reglas distintas y se mantienen.
+- [x] C6 Los literales `hasRole('ADMINISTRADOR')` se reemplazaron por `Guards.SOLO_ADMINISTRADOR` (mismo valor). No se puede subir a nivel de clase porque las lecturas están abiertas a otros roles.
+- [x] C7 Se quitaron los campos `codigoInvitacion` e `invitacionExpiraEn` de `UsuarioEmpresa` (las columnas siguen en la base, D2) y 6 métodos de repositorio sin uso.
+  - `PlantaTestIsolation*` queda en `src/main` a propósito: bloquea el perfil de test aunque la app arranque sin recursos de test.
+- [x] C5 Servicios y controllers agrupados por funcionalidad.
+  - Pendiente: DTO por funcionalidad, después de 020-b, porque varios DTO se comparten o se eliminan con el login legacy. Tests espejo de los nuevos paquetes, opcional.
+- [x] `mvn verify` final: 707 tests, 0 fallos, 0 errores, 29 omitidos (los mismos que en la línea base). `git diff --check` OK.
+- [x] Revisión independiente (Senior Security Engineer): **aprobado con correcciones**, sin hallazgos altos ni medios y sin regresiones de autorización ni de aislamiento entre empresas.
+  - Los dos puntos marcados para verificar contra la base (orden de validación en C1 y barra final en `enlace`) se comprobaron en el código anterior: el comportamiento es el mismo.
+  - Hallazgos bajos que no vienen de 020 y quedan pendientes:
+    - `SuperAdminSeeder:42` (y `AutenticacionService.login`, que se elimina en 020-b) normalizan el email sin `Locale.ROOT`.
+    - `NoResourceFound`, `HttpRequestMethodNotSupported`, `HttpMediaTypeNotSupported` y `MissingServletRequestPart` siguen cayendo en 500.
+  - Pruebas HTTP manuales sugeridas: `/api/auth/me` para un invitado sin Pro (403), JSON malformado (400) y aceptación de ambas invitaciones.

@@ -7,8 +7,8 @@
  */
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.CostoIndirecto;
-import com.vortise.gestion.domain.repository.CostoIndirectoRepository;
+import com.vortise.gestion.model.CostoIndirecto;
+import com.vortise.gestion.repository.CostoIndirectoRepository;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

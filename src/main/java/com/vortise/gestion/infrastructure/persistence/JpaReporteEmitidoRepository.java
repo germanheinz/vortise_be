@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.ReporteEmitido;
-import com.vortise.gestion.domain.repository.ReporteEmitidoRepository;
+import com.vortise.gestion.model.ReporteEmitido;
+import com.vortise.gestion.repository.ReporteEmitidoRepository;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

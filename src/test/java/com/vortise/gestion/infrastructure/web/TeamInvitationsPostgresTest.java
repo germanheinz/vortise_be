@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.usecase.JwtService;
-import com.vortise.gestion.domain.model.*;
+import com.vortise.gestion.service.authentication.JwtService;
+import com.vortise.gestion.model.*;
 import com.vortise.gestion.infrastructure.config.*;
 import jakarta.persistence.EntityManager;
 import java.security.SecureRandom;
@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, properties = "app.auth.password-login.enabled=true")
 @AutoConfigureMockMvc(print = MockMvcPrint.NONE)
 @ActiveProfiles("production")
 @org.junit.jupiter.api.condition.EnabledIfSystemProperty(named = "team15.pg.enabled", matches = "true")
@@ -47,7 +47,6 @@ class TeamInvitationsPostgresTest extends TeamInvitationsContract {
         r.add("spring.sql.init.mode", () -> "never"); r.add("spring.h2.console.enabled", () -> false);
         r.add("app.security.jwt-secret", () -> key); r.add("app.password-mail.enabled", () -> false);
         r.add("app.superadmin.email", () -> ""); r.add("app.superadmin.password", () -> "");
-        r.add("app.demo.reset-enabled", () -> false); r.add("app.features.gastos-fijos-enabled", () -> false);
         r.add("APP_ALLOWED_ORIGINS", () -> "https://team15.example.invalid");
         r.add("APP_FRONTEND_URL", () -> "https://team15.example.invalid");
         for (String suffix : List.of("secret-key", "webhook-secret", "price-basic", "price-pro")) r.add("app.stripe." + suffix, () -> "");

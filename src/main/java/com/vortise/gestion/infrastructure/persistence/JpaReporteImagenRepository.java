@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.ReporteImagen;
-import com.vortise.gestion.domain.repository.ReporteImagenRepository;
+import com.vortise.gestion.model.ReporteImagen;
+import com.vortise.gestion.repository.ReporteImagenRepository;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;

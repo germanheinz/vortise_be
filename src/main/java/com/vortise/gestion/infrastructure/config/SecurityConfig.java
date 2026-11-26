@@ -1,6 +1,9 @@
 package com.vortise.gestion.infrastructure.config;
 
 import com.vortise.gestion.infrastructure.security.JwtAuthenticationFilter;
+import com.vortise.gestion.service.authentication.JwtService;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.service.equipo.EquipoAccessPolicy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
@@ -19,7 +22,13 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter, WebEnvironmentConfiguration webEnvironment,
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService, UsuarioEmpresaRepository usuarios, EquipoAccessPolicy equipo) {
+        return new JwtAuthenticationFilter(jwtService, usuarios, equipo);
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter, 
+            WebEnvironmentConfiguration webEnvironment,
             @org.springframework.beans.factory.annotation.Value("${app.security.read-only-write-guard.enabled:true}") boolean readOnlyWriteGuardEnabled) throws Exception {
         return http.csrf(csrf -> csrf.disable())
             .cors(cors -> { })
@@ -41,7 +50,6 @@ public class SecurityConfig {
                 .requestMatchers("/actuator", "/actuator/**").denyAll()
                 // Authenticated by the Stripe-Signature header instead of a JWT.
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/stripe/webhook").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/integraciones/telegram/evento").permitAll()
                 .anyRequest().authenticated())
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(new com.vortise.gestion.infrastructure.security.CookieOriginGuard(webEnvironment.allowedOrigins()), JwtAuthenticationFilter.class)

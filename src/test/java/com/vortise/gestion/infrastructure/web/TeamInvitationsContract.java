@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.usecase.JwtService;
-import com.vortise.gestion.domain.model.*;
+import com.vortise.gestion.service.authentication.JwtService;
+import com.vortise.gestion.model.*;
 import com.vortise.gestion.infrastructure.config.*;
 import jakarta.persistence.EntityManager;
 import java.security.SecureRandom;
@@ -26,11 +26,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 abstract class TeamInvitationsContract {
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder demoSeeder;
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @MockitoBean SuperAdminSeeder adminSeeder;
-    @MockitoBean com.vortise.gestion.application.port.FotoPerfilStorage photos;
     @Autowired DataSource source;
     @Autowired EntityManager em;
     @Autowired PlatformTransactionManager tm;
@@ -39,7 +36,7 @@ abstract class TeamInvitationsContract {
     protected Long ownerId, firstId, secondId, excludedId, subscriptionId, invitedId;
     protected String admin;
     protected static final String PASSWORD = "Synthetic-invitation-only-26!";
-    @Autowired com.vortise.gestion.application.usecase.InvitacionesUseCase invitations;
+    @Autowired com.vortise.gestion.service.invitacion.InvitacionesService invitations;
     @Autowired org.springframework.security.crypto.password.PasswordEncoder encoder;
     @Autowired tools.jackson.databind.ObjectMapper json;
 
