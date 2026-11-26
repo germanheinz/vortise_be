@@ -112,3 +112,9 @@ Elevar `application.service` a `service` y mantener los servicios de pagos en su
 ### Consolidación de controllers de invitación
 
 Mover los handlers a `controller.invitacion`. Aplicar a cada método administrativo la guarda de su controller original. Mantener los servicios de equipo y usuario, y actualizar la excepción de la prueba de guardas para los handlers públicos. El frontend y el esquema de datos quedan fuera del alcance.
+
+### Retiro de entidades residuales de Telegram y alta por chat
+
+Eliminar `AltaRestriccionChat` y `VinculoTelegram` del código productivo. Conservar V26 y V27 y la estructura física creada por esas migraciones. Verificar referencias y ejecutar las pruebas de restricciones sin contexto Spring.
+
+El respaldo H2 descubre tablas por el metamodelo JPA. Incluir explícitamente ambas tablas históricas cuando existen en JDBC para conservar su cobertura y su huella.

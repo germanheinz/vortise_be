@@ -63,7 +63,7 @@ class PrevistoRealHttpTest {
         activity = activity(own); foreignActivity = activity(other);
         em.persist(new CategoriaManoObraEmpresa(a,"OFICIAL",2000.,true));
         em.persist(new CategoriaManoObraEmpresa(a,"AYUDANTE",1000.,true));
-        em.persist(new CalendarioLaboralEmpresa(a));
+        a.inicializarCalendarioLaboral();
         em.flush();
         token = HttpIdentityFixtures.token(em, jwt, a.getId(), RolEmpresa.ADMINISTRADOR, false);
     }

@@ -128,3 +128,10 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] Creado un controller administrativo y uno público. Actualizada la prueba de guardas para reconocer el controller público.
 - [x] La comparación estática con HEAD confirmó los once contratos de verbo, ruta y guarda. Pasaron `mvn -Dtest=WriteEndpointsGuardTest clean test` y `git diff --check`.
 - [ ] Integración con contexto de Spring, revisión independiente y verificación de tráfico legado pendientes.
+
+### Retiro de entidades residuales de Telegram y alta por chat
+
+- [x] «elimina todo lo relacionado» autoriza retirar las entidades residuales del código. Las migraciones y los datos históricos se conservan.
+- [x] Eliminadas las dos entidades y revisadas las referencias. El respaldo H2 incluye ambas tablas históricas cuando existen.
+- [x] Pasaron `mvn -Dtest=RestriccionAltaTest,RestriccionEdicionTest,RestriccionObraConsultaServiceTest,WriteEndpointsGuardTest clean test` y `git diff --check`.
+- [ ] Pendientes la prueba de exportación y restauración con Spring y la revisión independiente.

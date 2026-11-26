@@ -17,7 +17,6 @@ class CompanyInitializationTest {
     private final EmpresaRepository companies = mock(EmpresaRepository.class);
     private final UnidadMetricaEmpresaRepository units = mock(UnidadMetricaEmpresaRepository.class);
     private final CategoriaManoObraEmpresaRepository categories = mock(CategoriaManoObraEmpresaRepository.class);
-    private final CalendarioLaboralEmpresaRepository calendars = mock(CalendarioLaboralEmpresaRepository.class);
     private Empresa company() {
         Empresa e = new Empresa("Test", null); ReflectionTestUtils.setField(e, "id", 1L);
         when(companies.findById(1L)).thenReturn(Optional.of(e));
@@ -26,27 +25,42 @@ class CompanyInitializationTest {
     @Test void readsNeverWriteAndMissingCalendarIsExplicit() {
         company();
         var service = new EmpresaConfiguracionService(companies, mock(ResponsableEmpresaRepository.class), units,
-            mock(CatalogoEmpresaRepository.class), calendars, categories);
+            mock(CatalogoEmpresaRepository.class), categories);
         assertEquals(List.of(), service.getUnidades(1L));
         assertEquals(List.of(), service.getCategoriasManoObra(1L));
         assertThrows(RecursoNoEncontradoException.class, () -> service.getCalendario(1L));
-        verify(units, never()).save(any()); verify(categories, never()).save(any()); verify(calendars, never()).save(any());
+        verify(units, never()).save(any()); verify(categories, never()).save(any()); verify(companies, never()).save(any());
     }
     @Test void fillsMissingDefaultsOnceWithoutOverwritingCustomizationsOrRestoringDeletions() {
         Empresa company = company();
         UnidadMetricaEmpresa custom = new UnidadMetricaEmpresa(company, "ML", "Custom name");
         when(units.findByEmpresaId(1L)).thenReturn(List.of(custom));
-        var useCase = new EmpresaInicializacionService(companies, units, categories, calendars);
+        var useCase = new EmpresaInicializacionService(companies, units, categories);
         useCase.execute(1L);
         assertTrue(company.isConfiguracionInicializada());
         assertEquals("Custom name", custom.getNombre());
-        verify(units, times(4)).save(any()); verify(categories, times(4)).save(any()); verify(calendars).save(any());
-        clearInvocations(units, categories, calendars);
+        verify(units, times(4)).save(any()); verify(categories, times(4)).save(any()); assertNotNull(company.getCalendarioLaboral());
+        clearInvocations(units, categories);
         // An intentional deletion after preparation must not be silently undone.
         when(units.findByEmpresaId(1L)).thenReturn(List.of());
         useCase.execute(1L);
-        verifyNoInteractions(units, categories, calendars);
+        verifyNoInteractions(units, categories);
     }
+    @Test void editingCalendarKeepsItsIdAndUpdatesOnlyTheOwningCompany() {
+        Empresa company = company();
+        var service = new EmpresaConfiguracionService(companies, mock(ResponsableEmpresaRepository.class), units,
+            mock(CatalogoEmpresaRepository.class), categories);
+
+        var first = service.saveCalendario(1L, new CalendarioLaboralEmpresaDto(null, 7.5, 0., false, true, false, true));
+        var edited = service.saveCalendario(1L, new CalendarioLaboralEmpresaDto(99L, 8., 4., true, false, true, false));
+
+        assertNotNull(company.getCalendarioLaboral());
+        assertNotNull(first.id());
+        assertEquals(first.id(), edited.id());
+        assertEquals(new CalendarioLaboralEmpresaDto(first.id(), 8., 4., true, false, true, false),
+            service.getCalendario(1L));
+    }
+
     @Test void administrativePasswordUpdateUsesTheSamePolicyAndMissingPasswordKeepsHash() {
         Empresa company = company();
         var users = mock(UsuarioEmpresaRepository.class);

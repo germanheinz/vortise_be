@@ -14,7 +14,6 @@ class PrevistoRealUseCaseTest {
     private final ProyectoRepository projects = mock(ProyectoRepository.class);
     private final ObraTareaRepository tasks = mock(ObraTareaRepository.class);
     private final CategoriaManoObraEmpresaRepository categories = mock(CategoriaManoObraEmpresaRepository.class);
-    private final CalendarioLaboralEmpresaRepository calendars = mock(CalendarioLaboralEmpresaRepository.class);
     private final Proyecto project = new Proyecto();
     private final RubroObra activity = new RubroObra();
     PrevistoRealUseCaseTest() {
@@ -32,7 +31,7 @@ class PrevistoRealUseCaseTest {
     @Test void aggregateUsesOnlyLinkedActivityAndRecomputesAfterEditAndDelete() {
         var a = task(1,10L,6); var b = task(2,10L,5);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(a,b,task(3,null,100),task(4,99L,100)));
-        var service = new PrevistoRealService(projects,tasks,categories,calendars);
+        var service = new PrevistoRealService(projects,tasks,categories);
         var result = service.execute(1L);
         assertEquals(2,result.tareasSinVincular());
         assertEquals(11.,result.actividades().get(0).cantidadReal());
@@ -46,7 +45,7 @@ class PrevistoRealUseCaseTest {
     @Test void annexBasesUseWorkedDaysAndRecomputeAfterEditsOrDeletion() {
         var company = mock(Empresa.class); when(company.getId()).thenReturn(20L); project.setEmpresaRelacionada(company);
         var calendario = mock(CalendarioLaboralEmpresa.class); when(calendario.getHorasLunesAViernes()).thenReturn(8.);
-        when(calendars.findByEmpresaId(20L)).thenReturn(Optional.of(calendario));
+        when(company.getCalendarioLaboral()).thenReturn(calendario);
         var root = new RubroObra(); root.setId(9L); root.setTipoNodo(TipoNodoRubro.RUBRO);
         root.setCantidadPersonas(2);
         activity.setParent(root); activity.setCantidad(20.);
@@ -57,7 +56,7 @@ class PrevistoRealUseCaseTest {
         var segundo = task(2, 10L, 4);
         segundo.setDias(1); segundo.setHorasOficiales(15.); segundo.setHorasAyudantes(15.);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(primero, segundo));
-        var service = new PrevistoRealService(projects, tasks, categories, calendars);
+        var service = new PrevistoRealService(projects, tasks, categories);
 
         var cargas = service.execute(1L).actividades().get(0).cargas();
         assertEquals(new PrevistoRealService.BaseAnexo(2, 2, 32., 30., 50.), cargas.get(0).baseAnexo());
@@ -76,13 +75,13 @@ class PrevistoRealUseCaseTest {
         project.setEmpresaRelacionada(company);
         var calendario = mock(CalendarioLaboralEmpresa.class);
         when(calendario.getHorasLunesAViernes()).thenReturn(8.);
-        when(calendars.findByEmpresaId(20L)).thenReturn(Optional.of(calendario));
+        when(company.getCalendarioLaboral()).thenReturn(calendario);
         activity.setCantidadPersonas(1);
         activity.setFechaInicioPlanificada(LocalDate.now().minusDays(3));
         var carga = task(1, 10L, 0);
         carga.setDias(1);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(carga));
-        var service = new PrevistoRealService(projects, tasks, categories, calendars);
+        var service = new PrevistoRealService(projects, tasks, categories);
 
         var anexo = service.execute(1L).actividades().get(0).cargas().get(0).baseAnexo();
         assertTrue(anexo.dias() >= 3);
@@ -111,7 +110,7 @@ class PrevistoRealUseCaseTest {
         otroRubro.setRubro("Otro");
         project.setRubros(List.of(activity, otroRubro));
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(task(3, 10L, 2), task(1, 10L, 1)));
-        var service = new PrevistoRealService(projects, tasks, categories, calendars);
+        var service = new PrevistoRealService(projects, tasks, categories);
 
         var actividades = service.execute(1L).actividades();
         assertEquals(List.of(10L, 5L), actividades.stream().map(PrevistoRealService.Activity::rubroId).toList());
@@ -133,7 +132,7 @@ class PrevistoRealUseCaseTest {
     @Test void loadsWithoutQuantityAddNothingButDoNotErasePhysicalProgress() {
         var enProceso = task(2,10L,0); enProceso.setCantidadReal(null);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(task(1,10L,6),enProceso));
-        var service = new PrevistoRealService(projects,tasks,categories,calendars);
+        var service = new PrevistoRealService(projects,tasks,categories);
         assertEquals(6.,service.execute(1L).actividades().get(0).cantidadReal());
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(enProceso));
         assertNull(service.execute(1L).actividades().get(0).cantidadReal());
@@ -147,7 +146,7 @@ class PrevistoRealUseCaseTest {
         var conCantidad = new ObraTareaCreateDto("Desencofrado",null,null,"kg","x",null,null,null,null,40.,40.,null,15.,null,null,LocalDate.of(2026,10,14),10L,1,true);
         assertThrows(SolicitudInvalidaException.class,() -> service.create(1L,conCantidad));
         var normal = task(1,10L,6); var desencofrado = task(2,10L,0); desencofrado.setCantidadReal(null); desencofrado.setDesencofrado(true);
-        var summary = new PrevistoRealService(projects,tasks,categories,calendars);
+        var summary = new PrevistoRealService(projects,tasks,categories);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(normal));
         assertFalse(summary.execute(1L).actividades().get(0).conDesencofrado());
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(normal,desencofrado));
@@ -315,12 +314,14 @@ class PrevistoRealUseCaseTest {
         var company = mock(Empresa.class); when(company.getId()).thenReturn(20L); project.setEmpresaRelacionada(company);
         when(categories.findByEmpresaId(20L)).thenReturn(List.of(new CategoriaManoObraEmpresa(company,"OFICIAL",2000.,true),
             new CategoriaManoObraEmpresa(company,"AYUDANTE",1000.,true)));
-        when(calendars.findByEmpresaId(20L)).thenReturn(Optional.of(new CalendarioLaboralEmpresa(company)));
+        var calendario = mock(CalendarioLaboralEmpresa.class);
+        when(calendario.getHorasLunesAViernes()).thenReturn(8.);
+        when(company.getCalendarioLaboral()).thenReturn(calendario);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(task(1,10L,6)));
-        var result = new PrevistoRealService(projects,tasks,categories,calendars).execute(1L);
+        var result = new PrevistoRealService(projects,tasks,categories).execute(1L);
         assertEquals(101525.096525,result.actividades().get(0).indicadores().desvio(),1e-5);
         assertEquals(8.,result.horasJornada());
-        verify(categories,never()).save(any()); verify(calendars,never()).save(any());
+        verify(categories,never()).save(any());
     }
     @Test void unlinkedNewTaskIsRejected() {
         assertThrows(IllegalArgumentException.class,() -> new ObraTareaService(tasks,projects).create(1L,dto(null)));

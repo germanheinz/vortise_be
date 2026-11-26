@@ -58,7 +58,7 @@ class Quality14PostgresTest {
     @Autowired UsuarioEmpresaRepository userRepository;
     @Autowired UnidadMetricaEmpresaRepository units;
     @Autowired CategoriaManoObraEmpresaRepository categories;
-    @Autowired CalendarioLaboralEmpresaRepository calendars;
+    @Autowired EmpresaRepository companies;
 
     @DynamicPropertySource static void isolate(DynamicPropertyRegistry r) {
         String password = password();
@@ -136,7 +136,7 @@ class Quality14PostgresTest {
         race(() -> { initialize.execute(id); return true; }, () -> { initialize.execute(id); return true; });
         assertEquals(5, units.findByEmpresaId(id).size());
         assertEquals(4, categories.findByEmpresaId(id).size());
-        assertTrue(calendars.findByEmpresaId(id).isPresent());
+        assertNotNull(companies.findById(id).orElseThrow().getCalendarioLaboral());
     }
     @Test void concurrentCreationReservesTheLastSeatOnlyOnce() throws Exception {
         Long id = company(1);

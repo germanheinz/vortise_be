@@ -7,7 +7,6 @@ import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.model.CalendarioLaboralEmpresa;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.repository.CalendarioLaboralEmpresaRepository;
 import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import com.vortise.gestion.domain.repository.ObraTareaRepository;
@@ -27,14 +26,12 @@ import static org.mockito.Mockito.*;
 class CalendarioLaboralObraTest {
     private static final Long EMPRESA_ID = 7L;
     private ProyectoRepository proyectos;
-    private CalendarioLaboralEmpresaRepository calendarios;
     private Empresa empresa;
     private ProyectoAltaService create;
 
     @BeforeEach
     void setUp() {
         proyectos = mock(ProyectoRepository.class);
-        calendarios = mock(CalendarioLaboralEmpresaRepository.class);
         empresa = new Empresa("A", null);
         ReflectionTestUtils.setField(empresa, "id", EMPRESA_ID);
         EmpresaRepository empresas = mock(EmpresaRepository.class);
@@ -42,16 +39,15 @@ class CalendarioLaboralObraTest {
         var cambios = mock(ConfiguracionEmpresaObraService.class);
         when(cambios.execute(any(), any(), any())).thenReturn(List.of());
         when(proyectos.save(any(Proyecto.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        create = new ProyectoAltaService(proyectos, empresas, mock(CatalogoEmpresaRepository.class), mock(CurrentIdentity.class), cambios, calendarios);
+        create = new ProyectoAltaService(proyectos, empresas, mock(CatalogoEmpresaRepository.class), mock(CurrentIdentity.class), cambios);
     }
 
     @Test
     void newWorkStartsFromTheCompanyCalendarWhenTheRequestOmitsIt() {
-        var company = new CalendarioLaboralEmpresa(empresa);
+        var company = empresa.inicializarCalendarioLaboral();
         company.setHorasSabado(0.0);
         company.setTrabajaDomingo(true);
         company.setPagaDobleFeriado(true);
-        when(calendarios.findByEmpresaId(EMPRESA_ID)).thenReturn(Optional.of(company));
 
         var saved = create.execute(request(null));
 
@@ -60,9 +56,8 @@ class CalendarioLaboralObraTest {
 
     @Test
     void theRequestedCalendarOverridesTheCompanyOne() {
-        var company = new CalendarioLaboralEmpresa(empresa);
+        var company = empresa.inicializarCalendarioLaboral();
         company.setTrabajaDomingo(true);
-        when(calendarios.findByEmpresaId(EMPRESA_ID)).thenReturn(Optional.of(company));
         var requested = new CalendarioObraDto(false, false, false, true);
 
         var saved = create.execute(request(requested));

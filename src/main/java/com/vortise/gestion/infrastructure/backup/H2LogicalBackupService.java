@@ -412,6 +412,10 @@ public class H2LogicalBackupService {
                 }
             }
         }
+        // Include historical tables that still exist even when JPA no longer maps them.
+        for (String historical : List.of("altas_restriccion_chat", "calendarios_laborales_empresa", "vinculos_telegram")) {
+            if (actualNames.containsKey(historical)) mappedNames.add(historical);
+        }
         List<TableDefinition> definitions = new ArrayList<>();
         for (String mapped : mappedNames) {
             String actual = actualNames.get(mapped);

@@ -80,3 +80,7 @@ Los servicios se concentran en el paquete raíz `service`. Clerk se divide entre
 ### Consolidación de controllers de invitación
 
 Agrupar la administración y la aceptación pública de invitaciones de equipo y usuario en dos controllers. Conservar los once contratos HTTP, permisos, validaciones, DTO y cookies. El endpoint legado sigue disponible mientras se verifica su uso.
+
+### Retiro de entidades residuales de Telegram y alta por chat
+
+El modelo JPA deja de registrar las dos entidades de funciones retiradas. Los respaldos conservan las tablas históricas y el asistente web mantiene las consultas.

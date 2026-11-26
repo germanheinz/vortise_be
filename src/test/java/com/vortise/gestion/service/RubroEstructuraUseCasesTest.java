@@ -37,7 +37,6 @@ import com.vortise.gestion.domain.model.RubroObra;
 import com.vortise.gestion.domain.model.TipoNodoRubro;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.model.VarianteEstructura;
-import com.vortise.gestion.domain.repository.CalendarioLaboralEmpresaRepository;
 import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
 import com.vortise.gestion.domain.repository.CategoriaManoObraEmpresaRepository;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
@@ -505,7 +504,7 @@ class RubroEstructuraUseCasesTest {
         var projectsMock = mock(ProyectoRepository.class);
         when(projectsMock.findById(1L)).thenReturn(Optional.of(p));
         var summary = new PrevistoRealService(projectsMock, mock(ObraTareaRepository.class),
-            mock(CategoriaManoObraEmpresaRepository.class), mock(CalendarioLaboralEmpresaRepository.class)).execute(1L);
+            mock(CategoriaManoObraEmpresaRepository.class)).execute(1L);
         assertEquals(1, summary.actividades().size());
         assertEquals(3L, summary.actividades().get(0).rubroId());
         assertEquals("Subrubro 1", summary.actividades().get(0).nombre());

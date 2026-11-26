@@ -14,7 +14,6 @@ import com.vortise.gestion.domain.model.CategoriaManoObraEmpresa;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.ResponsableEmpresa;
 import com.vortise.gestion.domain.model.UnidadMetricaEmpresa;
-import com.vortise.gestion.domain.repository.CalendarioLaboralEmpresaRepository;
 import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
 import com.vortise.gestion.domain.repository.CategoriaManoObraEmpresaRepository;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
@@ -34,17 +33,15 @@ public class EmpresaConfiguracionService {
     private final ResponsableEmpresaRepository responsableRepository;
     private final UnidadMetricaEmpresaRepository unidadRepository;
     private final CatalogoEmpresaRepository catalogoRepository;
-    private final CalendarioLaboralEmpresaRepository calendarioRepository;
     private final CategoriaManoObraEmpresaRepository categoriaManoObraRepository;
 
     public EmpresaConfiguracionService(EmpresaRepository empresaRepository, ResponsableEmpresaRepository responsableRepository,
             UnidadMetricaEmpresaRepository unidadRepository, CatalogoEmpresaRepository catalogoRepository,
-            CalendarioLaboralEmpresaRepository calendarioRepository, CategoriaManoObraEmpresaRepository categoriaManoObraRepository) {
+            CategoriaManoObraEmpresaRepository categoriaManoObraRepository) {
         this.empresaRepository = empresaRepository;
         this.responsableRepository = responsableRepository;
         this.unidadRepository = unidadRepository;
         this.catalogoRepository = catalogoRepository;
-        this.calendarioRepository = calendarioRepository;
         this.categoriaManoObraRepository = categoriaManoObraRepository;
     }
 
@@ -151,22 +148,23 @@ public class EmpresaConfiguracionService {
 
     @Transactional(readOnly = true)
     public CalendarioLaboralEmpresaDto getCalendario(Long empresaId) {
-        requireEmpresa(empresaId);
-        CalendarioLaboralEmpresa calendario = calendarioRepository.findByEmpresaId(empresaId).orElseThrow(() -> new RecursoNoEncontradoException("Calendario no configurado"));
+        CalendarioLaboralEmpresa calendario = requireEmpresa(empresaId).getCalendarioLaboral();
+        if (calendario == null) {
+            throw new RecursoNoEncontradoException("Calendario no configurado");
+        }
         return toDto(calendario);
     }
 
     @Transactional
     public CalendarioLaboralEmpresaDto saveCalendario(Long empresaId, CalendarioLaboralEmpresaDto dto) {
-        lockEmpresa(empresaId);
-        CalendarioLaboralEmpresa calendario = calendarioRepository.findByEmpresaId(empresaId).orElseGet(() -> new CalendarioLaboralEmpresa(requireEmpresa(empresaId)));
+        CalendarioLaboralEmpresa calendario = lockEmpresa(empresaId).inicializarCalendarioLaboral();
         calendario.setHorasLunesAViernes(dto.horasLunesAViernes());
         calendario.setHorasSabado(dto.horasSabado());
         calendario.setTrabajaDomingo(dto.trabajaDomingo());
         calendario.setPagaDobleFeriado(dto.pagaDobleFeriado());
         calendario.setPagaDobleSabado(dto.pagaDobleSabado());
         calendario.setPagaDobleNoLaborable(dto.pagaDobleNoLaborable());
-        return toDto(calendarioRepository.save(calendario));
+        return toDto(calendario);
     }
 
     private Empresa lockEmpresa(Long id) {

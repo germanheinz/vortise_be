@@ -2,7 +2,6 @@ package com.vortise.gestion.service;
 
 import com.vortise.gestion.application.exception.ConflictoEstadoException;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
-import com.vortise.gestion.domain.repository.CalendarioLaboralEmpresaRepository;
 import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
 import com.vortise.gestion.domain.repository.CategoriaManoObraEmpresaRepository;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
@@ -22,13 +21,11 @@ public class EmpresaBajaService {
     private final UnidadMetricaEmpresaRepository unidadMetricaEmpresaRepository;
     private final CatalogoEmpresaRepository catalogoEmpresaRepository;
     private final CategoriaManoObraEmpresaRepository categoriaManoObraEmpresaRepository;
-    private final CalendarioLaboralEmpresaRepository calendarioLaboralEmpresaRepository;
 
     public EmpresaBajaService(EmpresaRepository empresaRepository, ProyectoRepository proyectoRepository,
             UsuarioEmpresaRepository usuarioEmpresaRepository, ResponsableEmpresaRepository responsableEmpresaRepository,
             UnidadMetricaEmpresaRepository unidadMetricaEmpresaRepository, CatalogoEmpresaRepository catalogoEmpresaRepository,
-            CategoriaManoObraEmpresaRepository categoriaManoObraEmpresaRepository,
-            CalendarioLaboralEmpresaRepository calendarioLaboralEmpresaRepository) {
+            CategoriaManoObraEmpresaRepository categoriaManoObraEmpresaRepository) {
         this.empresaRepository = empresaRepository;
         this.proyectoRepository = proyectoRepository;
         this.usuarioEmpresaRepository = usuarioEmpresaRepository;
@@ -36,7 +33,6 @@ public class EmpresaBajaService {
         this.unidadMetricaEmpresaRepository = unidadMetricaEmpresaRepository;
         this.catalogoEmpresaRepository = catalogoEmpresaRepository;
         this.categoriaManoObraEmpresaRepository = categoriaManoObraEmpresaRepository;
-        this.calendarioLaboralEmpresaRepository = calendarioLaboralEmpresaRepository;
     }
 
     @Transactional
@@ -58,7 +54,6 @@ public class EmpresaBajaService {
         unidadMetricaEmpresaRepository.findByEmpresaId(id).forEach(item -> unidadMetricaEmpresaRepository.deleteById(item.getId()));
         catalogoEmpresaRepository.findByEmpresaId(id).forEach(item -> catalogoEmpresaRepository.deleteById(item.getId()));
         categoriaManoObraEmpresaRepository.findByEmpresaId(id).forEach(item -> categoriaManoObraEmpresaRepository.deleteById(item.getId()));
-        calendarioLaboralEmpresaRepository.findByEmpresaId(id).ifPresent(item -> calendarioLaboralEmpresaRepository.deleteById(item.getId()));
 
         empresaRepository.deleteById(id);
     }

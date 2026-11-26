@@ -1,6 +1,7 @@
 package com.vortise.gestion.domain.model;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -32,6 +33,21 @@ public class Empresa {
     @Column(nullable = false)
     @org.hibernate.annotations.ColumnDefault("false")
     private boolean configuracionInicializada;
+
+    @Embedded
+    private CalendarioLaboralEmpresa calendarioLaboral;
+
+    public CalendarioLaboralEmpresa getCalendarioLaboral() {
+        return calendarioLaboral;
+    }
+
+    public CalendarioLaboralEmpresa inicializarCalendarioLaboral() {
+        if (calendarioLaboral == null) {
+            // Existing identity values are positive. Use a disjoint range for new calendars.
+            calendarioLaboral = new CalendarioLaboralEmpresa(-id);
+        }
+        return calendarioLaboral;
+    }
 
     public boolean isConfiguracionInicializada() { return configuracionInicializada; }
     public void marcarConfiguracionInicializada() { configuracionInicializada = true; }

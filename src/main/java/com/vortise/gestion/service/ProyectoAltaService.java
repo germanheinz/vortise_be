@@ -18,18 +18,15 @@ import com.vortise.gestion.application.dto.RubroCreateDto;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.port.CurrentIdentity;
-import com.vortise.gestion.domain.model.CalendarioLaboralEmpresa;
 import com.vortise.gestion.domain.model.ContratoObra;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RubroObra;
-import com.vortise.gestion.domain.repository.CalendarioLaboralEmpresaRepository;
 import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.rule.EstructuraRubros;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +37,6 @@ public class ProyectoAltaService {
     private final SubcontratistasProyecto subcontratistas;
     private final CurrentIdentity currentTenant;
     private final ConfiguracionEmpresaObraService cambiosEmpresa;
-    private final CalendarioLaboralEmpresaRepository calendarios;
 
     @SuppressWarnings("null")
     @Transactional
@@ -117,18 +113,11 @@ public class ProyectoAltaService {
 
     public ProyectoAltaService(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository,
             CurrentIdentity currentTenant, ConfiguracionEmpresaObraService cambiosEmpresa) {
-        this(proyectoRepository, empresaRepository, catalogoRepository, currentTenant, cambiosEmpresa, null);
-    }
-
-    @Autowired
-    public ProyectoAltaService(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository,
-            CurrentIdentity currentTenant, ConfiguracionEmpresaObraService cambiosEmpresa, CalendarioLaboralEmpresaRepository calendarios) {
         this.proyectoRepository = proyectoRepository;
         this.empresaRepository = empresaRepository;
         this.subcontratistas = new SubcontratistasProyecto(catalogoRepository);
         this.currentTenant = currentTenant;
         this.cambiosEmpresa = cambiosEmpresa;
-        this.calendarios = calendarios;
     }
 
     /** Sin calendario en la solicitud, la obra parte del calendario de su empresa (o de los valores por defecto de la empresa). */
@@ -137,11 +126,12 @@ public class ProyectoAltaService {
             proyecto.setCalendarioLaboral(dto.trabajaSabado(), dto.trabajaDomingo(), dto.pagaDobleFeriado(), dto.pagaDobleNoLaborable());
             return;
         }
-        Long empresaId = proyecto.getEmpresaRelacionada() == null ? null : proyecto.getEmpresaRelacionada().getId();
-        var calendario = empresaId == null || calendarios == null ? java.util.Optional.<CalendarioLaboralEmpresa>empty()
-            : calendarios.findByEmpresaId(empresaId);
-        calendario.ifPresent(item -> proyecto.setCalendarioLaboral(item.getHorasSabado() != null && item.getHorasSabado() > 0,
-            item.isTrabajaDomingo(), item.isPagaDobleFeriado(), item.isPagaDobleNoLaborable()));
+        var empresa = proyecto.getEmpresaRelacionada();
+        var item = empresa == null ? null : empresa.getCalendarioLaboral();
+        if (item != null) {
+            proyecto.setCalendarioLaboral(item.getHorasSabado() != null && item.getHorasSabado() > 0,
+            item.isTrabajaDomingo(), item.isPagaDobleFeriado(), item.isPagaDobleNoLaborable());
+        }
     }
 
     private void addDistinct(List<Long> selectedIds, List<Long> additionalIds) {

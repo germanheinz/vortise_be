@@ -5,7 +5,6 @@ import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.ResponsableEmpresa;
-import com.vortise.gestion.domain.repository.CalendarioLaboralEmpresaRepository;
 import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
 import com.vortise.gestion.domain.repository.CategoriaManoObraEmpresaRepository;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
@@ -40,7 +39,6 @@ class EmpresaConfiguracionUseCaseResponsableTest {
             responsables,
             mock(UnidadMetricaEmpresaRepository.class),
             mock(CatalogoEmpresaRepository.class),
-            mock(CalendarioLaboralEmpresaRepository.class),
             mock(CategoriaManoObraEmpresaRepository.class)
         );
         when(responsables.save(any(ResponsableEmpresa.class))).thenAnswer(invocation -> invocation.getArgument(0));

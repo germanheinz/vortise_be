@@ -3,7 +3,6 @@ package com.vortise.gestion.service;
 import com.vortise.gestion.application.dto.UnidadMetricaEmpresaDto;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.UnidadMetricaEmpresa;
-import com.vortise.gestion.domain.repository.CalendarioLaboralEmpresaRepository;
 import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
 import com.vortise.gestion.domain.repository.CategoriaManoObraEmpresaRepository;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
@@ -36,7 +35,6 @@ class EmpresaConfiguracionUseCaseUnidadTest {
             mock(ResponsableEmpresaRepository.class),
             unidades,
             mock(CatalogoEmpresaRepository.class),
-            mock(CalendarioLaboralEmpresaRepository.class),
             mock(CategoriaManoObraEmpresaRepository.class)
         );
         when(unidades.save(any(UnidadMetricaEmpresa.class))).thenAnswer(invocation -> invocation.getArgument(0));

@@ -3,11 +3,10 @@ package com.vortise.gestion.service;
 import com.vortise.gestion.application.helper.CalculoAnexoPrevistoReal;
 import com.vortise.gestion.application.helper.PrevistoRealCalculator;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
-import com.vortise.gestion.domain.model.CalendarioLaboralEmpresa;
+import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.CategoriaManoObraEmpresa;
 import com.vortise.gestion.domain.model.ObraTarea;
 import com.vortise.gestion.domain.model.RubroObra;
-import com.vortise.gestion.domain.repository.CalendarioLaboralEmpresaRepository;
 import com.vortise.gestion.domain.repository.CategoriaManoObraEmpresaRepository;
 import com.vortise.gestion.domain.repository.ObraTareaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
@@ -28,14 +27,12 @@ public class PrevistoRealService {
     private final ProyectoRepository proyectos;
     private final ObraTareaRepository tareas;
     private final CategoriaManoObraEmpresaRepository categorias;
-    private final CalendarioLaboralEmpresaRepository calendarios;
 
     public PrevistoRealService(ProyectoRepository proyectos, ObraTareaRepository tareas,
-            CategoriaManoObraEmpresaRepository categorias, CalendarioLaboralEmpresaRepository calendarios) {
+            CategoriaManoObraEmpresaRepository categorias) {
         this.proyectos = proyectos;
         this.tareas = tareas;
         this.categorias = categorias;
-        this.calendarios = calendarios;
     }
 
     public record BaseAnexo(Integer dias, Integer personas, Double hhPrevistasFecha, Double hhPrevistasHecho, Double hhReales) { }
@@ -58,8 +55,7 @@ public class PrevistoRealService {
     public Summary execute(Long proyectoId) {
         var proyecto = proyectos.findById(proyectoId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Obra no encontrada"));
-        Long empresaId = proyecto.getEmpresaRelacionada() == null ? null : proyecto.getEmpresaRelacionada().getId();
-        var datosLaborales = cargarDatosLaborales(empresaId);
+        var datosLaborales = cargarDatosLaborales(proyecto.getEmpresaRelacionada());
         var cargas = tareas.findByProyectoId(proyectoId);
         var rubros = proyecto.getRubros() == null ? List.<RubroObra>of() : proyecto.getRubros();
         var tareasPorRubro = agruparPorRubro(cargas);
@@ -77,15 +73,15 @@ public class PrevistoRealService {
                 datosLaborales.horasJornada(), tareasSinVincular, actividades);
     }
 
-    private DatosLaborales cargarDatosLaborales(Long empresaId) {
+    private DatosLaborales cargarDatosLaborales(Empresa empresa) {
+        Long empresaId = empresa == null ? null : empresa.getId();
         var categoriasEmpresa = empresaId == null
                 ? List.<CategoriaManoObraEmpresa>of()
                 : categorias.findByEmpresaId(empresaId);
         Double costoHoraOficial = costoHora(categoriasEmpresa, "OFICIAL");
         Double costoHoraAyudante = costoHora(categoriasEmpresa, "AYUDANTE");
-        Double horasJornada = empresaId == null ? null : calendarios.findByEmpresaId(empresaId)
-                .map(CalendarioLaboralEmpresa::getHorasLunesAViernes)
-                .orElse(null);
+        var calendario = empresa == null ? null : empresa.getCalendarioLaboral();
+        Double horasJornada = calendario == null ? null : calendario.getHorasLunesAViernes();
         return new DatosLaborales(costoHoraOficial, costoHoraAyudante, horasJornada);
     }
 

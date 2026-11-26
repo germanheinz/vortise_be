@@ -23,11 +23,10 @@ public class EmpresaInicializacionService {
     private final EmpresaRepository empresas;
     private final UnidadMetricaEmpresaRepository unidades;
     private final CategoriaManoObraEmpresaRepository categorias;
-    private final CalendarioLaboralEmpresaRepository calendarios;
 
     public EmpresaInicializacionService(EmpresaRepository empresas, UnidadMetricaEmpresaRepository unidades,
-            CategoriaManoObraEmpresaRepository categorias, CalendarioLaboralEmpresaRepository calendarios) {
-        this.empresas = empresas; this.unidades = unidades; this.categorias = categorias; this.calendarios = calendarios;
+            CategoriaManoObraEmpresaRepository categorias) {
+        this.empresas = empresas; this.unidades = unidades; this.categorias = categorias;
     }
 
     @Transactional
@@ -43,9 +42,7 @@ public class EmpresaInicializacionService {
             .map(CategoriaManoObraEmpresa::getNombre).collect(Collectors.toSet());
         CATEGORIAS.stream().filter(c -> !nombres.contains(c.nombre()))
             .forEach(c -> categorias.save(new CategoriaManoObraEmpresa(empresa, c.nombre(), null, c.habilitada())));
-        if (calendarios.findByEmpresaId(empresaId).isEmpty()) {
-            calendarios.save(new CalendarioLaboralEmpresa(empresa));
-        }
+        empresa.inicializarCalendarioLaboral();
         empresa.marcarConfiguracionInicializada();
         empresas.save(empresa);
     }
