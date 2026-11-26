@@ -1,7 +1,7 @@
 package com.vortise.gestion.controller;
 
 import com.vortise.gestion.application.dto.InvitacionUsuarioDto.*;
-import com.vortise.gestion.application.service.InvitacionUsuarioService;
+import com.vortise.gestion.service.InvitacionUsuarioService;
 import com.vortise.gestion.infrastructure.security.Guards;
 import jakarta.validation.Valid;
 import java.util.List;

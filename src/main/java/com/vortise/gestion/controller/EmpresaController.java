@@ -5,11 +5,11 @@ import com.vortise.gestion.application.dto.EmpresaDto;
 import com.vortise.gestion.application.dto.EmpresaResumenDto;
 import com.vortise.gestion.application.dto.RestriccionDto;
 import com.vortise.gestion.application.dto.PaginaDto;
-import com.vortise.gestion.application.service.EmpresaBajaService;
-import com.vortise.gestion.application.service.EmpresaResumenService;
-import com.vortise.gestion.application.service.EmpresaRestriccionesService;
-import com.vortise.gestion.application.service.ProyectoConsultaService;
-import com.vortise.gestion.application.service.EmpresaService;
+import com.vortise.gestion.service.EmpresaBajaService;
+import com.vortise.gestion.service.EmpresaResumenService;
+import com.vortise.gestion.service.EmpresaRestriccionesService;
+import com.vortise.gestion.service.ProyectoConsultaService;
+import com.vortise.gestion.service.EmpresaService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -33,12 +33,12 @@ public class EmpresaController {
     private final EmpresaBajaService bajaEmpresa;
     private final EmpresaResumenService resumen;
     private final EmpresaRestriccionesService restriccionesEmpresa;
-    private final com.vortise.gestion.application.service.EmpresaDashboardObrasService dashboardObras;
+    private final com.vortise.gestion.service.EmpresaDashboardObrasService dashboardObras;
 
     public EmpresaController(EmpresaService empresas, EmpresaBajaService bajaEmpresa,
             ProyectoConsultaService proyectos,
             EmpresaResumenService resumen, EmpresaRestriccionesService restriccionesEmpresa,
-            com.vortise.gestion.application.service.EmpresaDashboardObrasService dashboardObras) {
+            com.vortise.gestion.service.EmpresaDashboardObrasService dashboardObras) {
         this.dashboardObras = dashboardObras;
         this.proyectos = proyectos;
         this.resumen = resumen;

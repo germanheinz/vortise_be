@@ -1,5 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
+import com.vortise.gestion.controller.advice.GlobalExceptionHandler;
 import com.vortise.gestion.controller.AdminBackupController;
 import com.vortise.gestion.controller.AdminBackupDisabledController;
 import static org.junit.jupiter.api.Assertions.assertEquals;

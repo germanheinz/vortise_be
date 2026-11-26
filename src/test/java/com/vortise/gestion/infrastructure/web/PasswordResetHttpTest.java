@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.service.JwtService;
-import com.vortise.gestion.application.service.PasswordResetTransactions;
+import com.vortise.gestion.service.JwtService;
+import com.vortise.gestion.service.PasswordResetTransactions;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;

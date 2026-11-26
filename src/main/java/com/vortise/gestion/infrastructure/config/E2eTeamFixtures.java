@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.config;
 
-import com.vortise.gestion.application.service.EmpresaInicializacionService;
+import com.vortise.gestion.service.EmpresaInicializacionService;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.*;
 import java.time.Instant;

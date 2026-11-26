@@ -1,6 +1,6 @@
 package com.vortise.gestion.application.helper;
 
-import com.vortise.gestion.application.service.ProyectoEdicionService;
+import com.vortise.gestion.service.ProyectoEdicionService;
 import com.vortise.gestion.application.dto.*;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.*;

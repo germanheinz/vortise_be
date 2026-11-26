@@ -1,6 +1,6 @@
 package com.vortise.gestion.controller;
 import com.vortise.gestion.application.dto.InvitacionesDto.*;
-import com.vortise.gestion.application.service.InvitacionesService;
+import com.vortise.gestion.service.InvitacionesService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

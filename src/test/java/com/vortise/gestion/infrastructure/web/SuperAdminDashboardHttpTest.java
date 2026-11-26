@@ -4,7 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.vortise.gestion.application.service.JwtService;
+import com.vortise.gestion.service.JwtService;
 import com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder;
 import com.vortise.gestion.infrastructure.config.SuperAdminSeeder;
 import java.security.SecureRandom;

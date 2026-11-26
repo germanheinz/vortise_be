@@ -4,7 +4,7 @@ import com.vortise.gestion.dto.InvitacionAceptarDto;
 import com.vortise.gestion.dto.InvitacionValidaDto;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
-import com.vortise.gestion.service.ClerkUserSyncService;
+import com.vortise.gestion.service.usuario.ClerkUserSyncService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

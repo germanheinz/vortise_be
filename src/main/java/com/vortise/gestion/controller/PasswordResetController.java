@@ -1,6 +1,6 @@
 package com.vortise.gestion.controller;
 
-import com.vortise.gestion.application.service.PasswordResetService;
+import com.vortise.gestion.service.PasswordResetService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;

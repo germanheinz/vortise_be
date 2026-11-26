@@ -114,3 +114,10 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] «implementa» autorizó el traslado local de controllers y servicios de pagos. Se movieron 25 controllers y 3 servicios. La comparación con HEAD confirmó que los archivos movidos coinciden fuera de paquetes e imports. Se actualizó el escaneo de guardas. Documenta el método existente de aceptación pública de invitaciones mediante una excepción acotada en la prueba.
 - [x] `mvn -Dtest=WriteEndpointsGuardTest,StripeWebhookServiceTest,SuscripcionServiceTest,PaymentConfigurationControllerTest,RegistroHorasControllerTest,RestriccionAltaTest,RestriccionObraConsultaServiceTest clean test` pasó 35 pruebas sin fallos, errores ni omisiones. `git diff --check` pasó.
 - [ ] Integración con Spring y revisión independiente pendientes. Alcance local en `refactor`, sin cambios de proveedor ni entorno.
+
+### Unificar servicios y separar responsabilidades HTTP y de Clerk
+
+- [x] «apruebo» autorizó la reorganización local de paquetes del backend y las comprobaciones sin arranque de Spring.
+- [x] Se movieron 43 clases productivas y se actualizaron paquetes, imports y pruebas afectadas. La sincronización de usuarios está en service/usuario, la autenticación de Clerk en infrastructure/security/clerk, el manejador de errores en controller/advice y el filtro en infrastructure/observability.
+- [x] `mvn -Dtest=WriteEndpointsGuardTest,StripeWebhookServiceTest,SuscripcionServiceTest,AutenticacionServiceTest,UsuarioObrasAsignadasTest,RequestObservationFilterTest,FeatureUnavailableResponseTest,JwtAuthenticationFilterTest,ProductionConfigurationTest,RegistroHorasControllerTest clean test` pasó 56 pruebas. `git diff --check` pasó.
+- [ ] Integración con contexto de Spring y revisión independiente pendientes.

@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service;
 public class CurrentTenantService implements CurrentIdentity {
     private final EmpresaRepository empresaRepository;
     private final com.vortise.gestion.domain.repository.UsuarioEmpresaRepository usuarios;
-    private final com.vortise.gestion.application.service.EquipoAccessPolicy equipo;
+    private final com.vortise.gestion.service.EquipoAccessPolicy equipo;
 
-    public CurrentTenantService(EmpresaRepository empresaRepository, com.vortise.gestion.domain.repository.UsuarioEmpresaRepository usuarios, com.vortise.gestion.application.service.EquipoAccessPolicy equipo) {
+    public CurrentTenantService(EmpresaRepository empresaRepository, com.vortise.gestion.domain.repository.UsuarioEmpresaRepository usuarios, com.vortise.gestion.service.EquipoAccessPolicy equipo) {
         this.empresaRepository = empresaRepository; this.usuarios = usuarios; this.equipo = equipo;
     }
 

@@ -1,5 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
+import com.vortise.gestion.controller.advice.GlobalExceptionHandler;
+import com.vortise.gestion.infrastructure.observability.RequestObservationFilter;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.core.read.ListAppender;
 import ch.qos.logback.classic.spi.ILoggingEvent;

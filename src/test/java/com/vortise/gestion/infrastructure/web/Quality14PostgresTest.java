@@ -1,10 +1,10 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.service.EmpresaConfiguracionService;
-import com.vortise.gestion.application.service.EmpresaInicializacionService;
-import com.vortise.gestion.application.service.RegistroHorasService;
-import com.vortise.gestion.application.service.UsuarioEmpresaService;
-import com.vortise.gestion.application.service.EmpresaService;
+import com.vortise.gestion.service.EmpresaConfiguracionService;
+import com.vortise.gestion.service.EmpresaInicializacionService;
+import com.vortise.gestion.service.RegistroHorasService;
+import com.vortise.gestion.service.UsuarioEmpresaService;
+import com.vortise.gestion.service.EmpresaService;
 import com.vortise.gestion.application.dto.*;
 import com.vortise.gestion.application.exception.ConflictoEstadoException;
 import com.vortise.gestion.domain.model.*;

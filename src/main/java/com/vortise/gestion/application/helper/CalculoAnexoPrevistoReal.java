@@ -1,7 +1,7 @@
 package com.vortise.gestion.application.helper;
 
-import com.vortise.gestion.application.service.PrevistoRealService.BaseAnexo;
-import com.vortise.gestion.application.service.PrevistoRealService.Load;
+import com.vortise.gestion.service.PrevistoRealService.BaseAnexo;
+import com.vortise.gestion.service.PrevistoRealService.Load;
 import com.vortise.gestion.domain.model.ObraTarea;
 import com.vortise.gestion.domain.model.RubroObra;
 import java.time.LocalDate;

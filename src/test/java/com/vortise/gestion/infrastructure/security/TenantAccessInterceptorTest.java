@@ -39,7 +39,7 @@ class TenantAccessInterceptorTest {
     private final RestriccionObraRepository restricciones = mock(RestriccionObraRepository.class);
     private final CurrentTenantService tenant = new CurrentTenantService(mock(EmpresaRepository.class),
         mock(com.vortise.gestion.domain.repository.UsuarioEmpresaRepository.class),
-        mock(com.vortise.gestion.application.service.EquipoAccessPolicy.class));
+        mock(com.vortise.gestion.service.EquipoAccessPolicy.class));
     private final TenantAccessInterceptor interceptor = new TenantAccessInterceptor(tenant, proyectos, restricciones,
         mock(RegistroHorasRepository.class), mock(ObraTareaRepository.class));
 

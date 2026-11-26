@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.security;
 
-import com.vortise.gestion.application.service.JwtService;
+import com.vortise.gestion.service.JwtService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,10 +18,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
-    private final com.vortise.gestion.application.service.EquipoAccessPolicy equipo;
+    private final com.vortise.gestion.service.EquipoAccessPolicy equipo;
     private final com.vortise.gestion.domain.repository.UsuarioEmpresaRepository usuarios;
 
-    public JwtAuthenticationFilter(JwtService jwtService, com.vortise.gestion.domain.repository.UsuarioEmpresaRepository usuarios, com.vortise.gestion.application.service.EquipoAccessPolicy equipo) {
+    public JwtAuthenticationFilter(JwtService jwtService, com.vortise.gestion.domain.repository.UsuarioEmpresaRepository usuarios, com.vortise.gestion.service.EquipoAccessPolicy equipo) {
         this.jwtService = jwtService; this.usuarios = usuarios; this.equipo = equipo;
     }
 

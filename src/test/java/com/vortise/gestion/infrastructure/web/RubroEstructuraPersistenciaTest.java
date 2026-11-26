@@ -5,7 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.vortise.gestion.application.service.JwtService;
+import com.vortise.gestion.service.JwtService;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RolEmpresa;

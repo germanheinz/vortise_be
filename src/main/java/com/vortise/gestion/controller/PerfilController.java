@@ -1,7 +1,7 @@
 package com.vortise.gestion.controller;
 
 import com.vortise.gestion.application.dto.MeDto;
-import com.vortise.gestion.application.service.PerfilService;
+import com.vortise.gestion.service.PerfilService;
 import java.io.IOException;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;

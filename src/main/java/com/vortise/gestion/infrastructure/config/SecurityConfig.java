@@ -20,7 +20,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter, 
-            com.vortise.gestion.infrastructure.security.ClerkJwtInterceptor clerkInterceptor,
+            com.vortise.gestion.infrastructure.security.clerk.ClerkJwtInterceptor clerkInterceptor,
             WebEnvironmentConfiguration webEnvironment,
             @org.springframework.beans.factory.annotation.Value("${app.security.read-only-write-guard.enabled:true}") boolean readOnlyWriteGuardEnabled) throws Exception {
         return http.csrf(csrf -> csrf.disable())

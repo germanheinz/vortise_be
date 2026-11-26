@@ -1,9 +1,9 @@
 package com.vortise.gestion.infrastructure.security;
 
 import com.vortise.gestion.application.dto.LoginResponseDto;
-import com.vortise.gestion.application.service.JwtService;
-import com.vortise.gestion.application.service.RefreshTokenService;
-import com.vortise.gestion.application.service.SesionService;
+import com.vortise.gestion.service.JwtService;
+import com.vortise.gestion.service.RefreshTokenService;
+import com.vortise.gestion.service.SesionService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;

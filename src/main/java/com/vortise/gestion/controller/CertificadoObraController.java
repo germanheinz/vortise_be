@@ -8,7 +8,7 @@ import com.vortise.gestion.application.dto.CertificadoEmpresaDto;
 import com.vortise.gestion.application.dto.CertificadoExcedenteDto;
 import com.vortise.gestion.application.dto.CertificadoResumenDto;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
-import com.vortise.gestion.application.service.CertificadoObraService;
+import com.vortise.gestion.service.CertificadoObraService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;

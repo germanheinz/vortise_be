@@ -72,3 +72,7 @@ Se retiran la vinculación de Telegram, la recepción de eventos y el alta de re
 ### Controllers y pagos
 
 Los controllers HTTP quedan en `controller` y los tres de pagos y suscripciones en `controller.pagos`. Los servicios de pagos y suscripciones se agrupan en `service.pagos`. La integración con el SDK conserva su ubicación en infraestructura y el puerto conserva su contrato. Se preservan rutas, acceso, respuestas y verificación de firma sobre el cuerpo original del webhook.
+
+### Servicios, identidad y componentes web transversales
+
+Los servicios se concentran en el paquete raíz `service`. Clerk se divide entre la sincronización local de usuarios y la adaptación de autenticación externa. El advice HTTP y el filtro de observación tienen paquetes propios. Se preservan el orden de los filtros, las rutas, las respuestas, las transacciones y el contenido de las clases.

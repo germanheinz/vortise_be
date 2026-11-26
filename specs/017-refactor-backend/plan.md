@@ -104,3 +104,7 @@ Normalizar el sufijo de los servicios y usar nombres específicos para altas, ed
 ### Ordenar controllers y pagos
 
 Mover las clases anotadas con RestController fuera de infrastructure.web. Mantener filtros y advice HTTP en ese paquete. Agrupar StripeWebhookController, SuscripcionController y PaymentConfigurationController en controller.pagos. Agrupar el servicio de webhook y los dos servicios de suscripción en service.pagos. Actualizar consumidores y ampliar el escaneo de guardas al paquete raíz de controllers. Documentar la ruta pública existente de aceptación de invitaciones al incorporarla a ese escaneo. Verificar con una compilación limpia, comparación estática de los controllers y pruebas sin contexto.
+
+### Unificar servicios y separar Clerk por responsabilidad
+
+Elevar `application.service` a `service` y mantener los servicios de pagos en su subpaquete. Mover `ClerkUserSyncService` a `service.usuario`, su configuración y filtros a `infrastructure.security.clerk`, el advice a `controller.advice` y el filtro de observación a `infrastructure.observability`. Actualizar las referencias, mover en paralelo las pruebas del paquete de servicios y verificar compilación, equivalencia estática y pruebas focalizadas sin contexto.
