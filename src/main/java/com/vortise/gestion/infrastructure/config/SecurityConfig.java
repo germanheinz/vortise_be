@@ -1,6 +1,9 @@
 package com.vortise.gestion.infrastructure.config;
 
 import com.vortise.gestion.infrastructure.security.JwtAuthenticationFilter;
+import com.vortise.gestion.service.authentication.JwtService;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.service.EquipoAccessPolicy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
@@ -17,6 +20,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService, UsuarioEmpresaRepository usuarios, EquipoAccessPolicy equipo) {
+        return new JwtAuthenticationFilter(jwtService, usuarios, equipo);
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter, 

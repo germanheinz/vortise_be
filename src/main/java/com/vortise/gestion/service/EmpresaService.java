@@ -34,6 +34,19 @@ public class EmpresaService {
     private final CatalogoEmpresaRepository catalogoEmpresaRepository;
     private final CategoriaManoObraEmpresaRepository categoriaManoObraEmpresaRepository;
 
+    public EmpresaService(EmpresaRepository empresaRepository, CurrentIdentity currentTenant, EmpresaConfiguracionService configuracion,
+            ProyectoRepository proyectoRepository, UsuarioEmpresaRepository usuarioEmpresaRepository, ResponsableEmpresaRepository responsableEmpresaRepository,
+            UnidadMetricaEmpresaRepository unidadMetricaEmpresaRepository, CatalogoEmpresaRepository catalogoEmpresaRepository, CategoriaManoObraEmpresaRepository categoriaManoObraEmpresaRepository) {
+        this.empresaRepository = empresaRepository;
+        this.currentTenant = currentTenant;
+        this.configuracion = configuracion;
+        this.proyectoRepository = proyectoRepository;
+        this.usuarioEmpresaRepository = usuarioEmpresaRepository;
+        this.responsableEmpresaRepository = responsableEmpresaRepository;
+        this.unidadMetricaEmpresaRepository = unidadMetricaEmpresaRepository;
+        this.catalogoEmpresaRepository = catalogoEmpresaRepository;
+        this.categoriaManoObraEmpresaRepository = categoriaManoObraEmpresaRepository;
+    }
 
     @Transactional
     public EmpresaDto create(EmpresaCreateDto dto) {
