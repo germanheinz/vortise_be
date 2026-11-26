@@ -1,6 +1,6 @@
 package com.vortise.gestion.service;
 
-import com.vortise.gestion.application.helper.PrevistoRealCalculator;
+import com.vortise.gestion.domain.rule.PrevistoRealCalculator;
 import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.model.*;
 import com.vortise.gestion.repository.*;

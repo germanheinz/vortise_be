@@ -1,5 +1,6 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.domain.rule.CalculoAnexoPrevistoReal.BaseAnexo;
 import com.vortise.gestion.model.*;
 import com.vortise.gestion.repository.*;
 import com.vortise.gestion.application.dto.ObraTareaCreateDto;
@@ -59,10 +60,10 @@ class PrevistoRealUseCaseTest {
         var service = new PrevistoRealService(projects, tasks, categories);
 
         var cargas = service.execute(1L).actividades().get(0).cargas();
-        assertEquals(new PrevistoRealService.BaseAnexo(2, 2, 32., 30., 50.), cargas.get(0).baseAnexo());
-        assertEquals(new PrevistoRealService.BaseAnexo(1, 2, 16., 20., 30.), cargas.get(1).baseAnexo());
+        assertEquals(new BaseAnexo(2, 2, 32., 30., 50.), cargas.get(0).baseAnexo());
+        assertEquals(new BaseAnexo(1, 2, 16., 20., 30.), cargas.get(1).baseAnexo());
         segundo.setDias(0); segundo.setCantidadReal(0.);
-        assertEquals(new PrevistoRealService.BaseAnexo(0, 2, 0., 0., 30.),
+        assertEquals(new BaseAnexo(0, 2, 0., 0., 30.),
             service.execute(1L).actividades().get(0).cargas().get(1).baseAnexo());
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(primero));
         assertEquals(1, service.execute(1L).actividades().get(0).cargas().size());

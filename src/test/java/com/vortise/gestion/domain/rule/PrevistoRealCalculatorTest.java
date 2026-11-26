@@ -1,4 +1,4 @@
-package com.vortise.gestion.application.helper;
+package com.vortise.gestion.domain.rule;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;

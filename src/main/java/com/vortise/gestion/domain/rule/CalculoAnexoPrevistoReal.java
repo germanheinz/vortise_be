@@ -1,7 +1,5 @@
-package com.vortise.gestion.application.helper;
+package com.vortise.gestion.domain.rule;
 
-import com.vortise.gestion.service.PrevistoRealService.BaseAnexo;
-import com.vortise.gestion.service.PrevistoRealService.Load;
 import com.vortise.gestion.model.ObraTarea;
 import com.vortise.gestion.model.RubroObra;
 import java.time.LocalDate;
@@ -13,8 +11,11 @@ public final class CalculoAnexoPrevistoReal {
     private CalculoAnexoPrevistoReal() {
     }
 
-    public static BaseAnexo agregar(List<Load> cargas) {
-        var anexos = cargas.stream().map(Load::baseAnexo).filter(Objects::nonNull).toList();
+    public record BaseAnexo(Integer dias, Integer personas, Double hhPrevistasFecha, Double hhPrevistasHecho,
+            Double hhReales) { }
+
+    public static BaseAnexo agregar(List<BaseAnexo> bases) {
+        var anexos = bases.stream().filter(Objects::nonNull).toList();
         if (anexos.isEmpty()) {
             return null;
         }

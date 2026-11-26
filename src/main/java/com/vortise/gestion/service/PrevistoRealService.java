@@ -1,7 +1,8 @@
 package com.vortise.gestion.service;
 
-import com.vortise.gestion.application.helper.CalculoAnexoPrevistoReal;
-import com.vortise.gestion.application.helper.PrevistoRealCalculator;
+import com.vortise.gestion.domain.rule.CalculoAnexoPrevistoReal;
+import com.vortise.gestion.domain.rule.CalculoAnexoPrevistoReal.BaseAnexo;
+import com.vortise.gestion.domain.rule.PrevistoRealCalculator;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.model.Empresa;
 import com.vortise.gestion.model.CategoriaManoObraEmpresa;
@@ -35,7 +36,6 @@ public class PrevistoRealService {
         this.categorias = categorias;
     }
 
-    public record BaseAnexo(Integer dias, Integer personas, Double hhPrevistasFecha, Double hhPrevistasHecho, Double hhReales) { }
     public record Load(Long tareaId, PrevistoRealCalculator.Metrics indicadores, BaseAnexo baseAnexo) { }
     /** {@code conDesencofrado}: alguna carga de la actividad es de horas de desencofrado. */
     public record Activity(Long rubroId, String nombre, String unidad, Double cantidadReal,
@@ -102,7 +102,7 @@ public class PrevistoRealService {
         var cargas = tareasDelRubro.stream()
                 .map(tarea -> construirCarga(rubro, tarea, datosLaborales, personas))
                 .toList();
-        var anexoAgregado = CalculoAnexoPrevistoReal.agregar(cargas);
+        var anexoAgregado = CalculoAnexoPrevistoReal.agregar(cargas.stream().map(Load::baseAnexo).toList());
         return new Activity(rubro.getId(), nombreActividad(rubro), rubro.getUnidad(), cantidadReal,
                 horasOficiales, horasAyudantes,
                 calcularIndicadores(rubro, cantidadReal, horasOficiales, horasAyudantes, datosLaborales),
