@@ -1,7 +1,7 @@
 package com.vortise.gestion.application.mapper;
 
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.model.RubroObra;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.model.RubroObra;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

@@ -9,8 +9,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.vortise.gestion.domain.model.Empresa;
-import com.vortise.gestion.domain.repository.EmpresaRepository;
+import com.vortise.gestion.model.Empresa;
+import com.vortise.gestion.repository.EmpresaRepository;
 import io.jsonwebtoken.Jwts;
 import java.util.Arrays;
 import java.util.Optional;
@@ -27,7 +27,7 @@ class CurrentTenantServiceTest {
     private static final long FOREIGN_COMPANY = 2L;
 
     private final EmpresaRepository empresas = mock(EmpresaRepository.class);
-    private final CurrentTenantService service = new CurrentTenantService(empresas, org.mockito.Mockito.mock(com.vortise.gestion.domain.repository.UsuarioEmpresaRepository.class), org.mockito.Mockito.mock(com.vortise.gestion.service.EquipoAccessPolicy.class));
+    private final CurrentTenantService service = new CurrentTenantService(empresas, org.mockito.Mockito.mock(com.vortise.gestion.repository.UsuarioEmpresaRepository.class), org.mockito.Mockito.mock(com.vortise.gestion.service.EquipoAccessPolicy.class));
 
     @AfterEach
     void clearContext() {

@@ -3,7 +3,7 @@ import com.vortise.gestion.application.helper.InvitacionToken;
 import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.util.Set;
-import com.vortise.gestion.domain.model.InvitacionEquipo;
+import com.vortise.gestion.model.InvitacionEquipo;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import static org.junit.jupiter.api.Assertions.*;
 class InvitacionTokenTest {

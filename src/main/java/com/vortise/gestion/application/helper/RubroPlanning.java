@@ -2,7 +2,7 @@ package com.vortise.gestion.application.helper;
 
 import com.vortise.gestion.application.dto.RubroCreateDto;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
-import com.vortise.gestion.domain.model.RubroObra;
+import com.vortise.gestion.model.RubroObra;
 
 final class RubroPlanning {
     private RubroPlanning() { }

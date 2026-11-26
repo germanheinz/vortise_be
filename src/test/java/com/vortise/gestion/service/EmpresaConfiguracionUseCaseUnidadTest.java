@@ -1,13 +1,13 @@
 package com.vortise.gestion.service;
 
 import com.vortise.gestion.application.dto.UnidadMetricaEmpresaDto;
-import com.vortise.gestion.domain.model.Empresa;
-import com.vortise.gestion.domain.model.UnidadMetricaEmpresa;
-import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
-import com.vortise.gestion.domain.repository.CategoriaManoObraEmpresaRepository;
-import com.vortise.gestion.domain.repository.EmpresaRepository;
-import com.vortise.gestion.domain.repository.ResponsableEmpresaRepository;
-import com.vortise.gestion.domain.repository.UnidadMetricaEmpresaRepository;
+import com.vortise.gestion.model.Empresa;
+import com.vortise.gestion.model.UnidadMetricaEmpresa;
+import com.vortise.gestion.repository.CatalogoEmpresaRepository;
+import com.vortise.gestion.repository.CategoriaManoObraEmpresaRepository;
+import com.vortise.gestion.repository.EmpresaRepository;
+import com.vortise.gestion.repository.ResponsableEmpresaRepository;
+import com.vortise.gestion.repository.UnidadMetricaEmpresaRepository;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;

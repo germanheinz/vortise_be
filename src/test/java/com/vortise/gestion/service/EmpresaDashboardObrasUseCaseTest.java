@@ -2,8 +2,8 @@ package com.vortise.gestion.service;
 
 import com.vortise.gestion.application.helper.PrevistoRealCalculator;
 import com.vortise.gestion.application.port.CurrentIdentity;
-import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.domain.repository.*;
+import com.vortise.gestion.model.*;
+import com.vortise.gestion.repository.*;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;

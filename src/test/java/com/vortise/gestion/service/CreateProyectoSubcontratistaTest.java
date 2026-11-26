@@ -1,12 +1,12 @@
 package com.vortise.gestion.service;
 
 import com.vortise.gestion.application.dto.ProyectoCreateDto;
-import com.vortise.gestion.domain.model.CatalogoEmpresa;
-import com.vortise.gestion.domain.model.Empresa;
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
-import com.vortise.gestion.domain.repository.EmpresaRepository;
-import com.vortise.gestion.domain.repository.ProyectoRepository;
+import com.vortise.gestion.model.CatalogoEmpresa;
+import com.vortise.gestion.model.Empresa;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.repository.CatalogoEmpresaRepository;
+import com.vortise.gestion.repository.EmpresaRepository;
+import com.vortise.gestion.repository.ProyectoRepository;
 import com.vortise.gestion.infrastructure.security.CurrentTenantService;
 import java.util.List;
 import java.util.Optional;

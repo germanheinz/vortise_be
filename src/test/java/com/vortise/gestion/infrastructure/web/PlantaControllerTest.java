@@ -2,11 +2,11 @@ package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.controller.PlantaController;
 import com.vortise.gestion.application.dto.PlantaDto;
-import com.vortise.gestion.domain.model.Empresa;
-import com.vortise.gestion.domain.model.Planta;
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.repository.PlantaRepository;
-import com.vortise.gestion.domain.repository.ProyectoRepository;
+import com.vortise.gestion.model.Empresa;
+import com.vortise.gestion.model.Planta;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.repository.PlantaRepository;
+import com.vortise.gestion.repository.ProyectoRepository;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;

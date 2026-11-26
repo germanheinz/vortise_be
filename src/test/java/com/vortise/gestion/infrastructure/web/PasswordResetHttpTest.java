@@ -10,10 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import tools.jackson.databind.ObjectMapper;
 import com.vortise.gestion.application.port.PasswordMailGateway;
-import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.model.*;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import com.vortise.gestion.infrastructure.config.*;
-import com.vortise.gestion.domain.repository.PasswordResetTokenRepository;
+import com.vortise.gestion.repository.PasswordResetTokenRepository;
 import jakarta.persistence.EntityManager;
 import java.security.SecureRandom;
 import java.time.Instant;

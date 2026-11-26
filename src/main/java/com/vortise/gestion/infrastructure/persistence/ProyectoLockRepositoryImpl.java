@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.Proyecto;
+import com.vortise.gestion.model.Proyecto;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import java.util.Optional;

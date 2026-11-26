@@ -3,8 +3,8 @@ package com.vortise.gestion.service.authentication;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.vortise.gestion.domain.model.PasswordResetQuota;
-import com.vortise.gestion.domain.repository.PasswordResetQuotaRepository;
+import com.vortise.gestion.model.PasswordResetQuota;
+import com.vortise.gestion.repository.PasswordResetQuotaRepository;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;

@@ -2,8 +2,8 @@ package com.vortise.gestion.application.helper;
 
 import com.vortise.gestion.service.ProyectoEdicionService;
 import com.vortise.gestion.application.dto.*;
-import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.domain.repository.*;
+import com.vortise.gestion.model.*;
+import com.vortise.gestion.repository.*;
 import java.util.*;
 import org.junit.jupiter.api.Test;
 
@@ -127,10 +127,10 @@ class RubroPlanningTest {
         var projects = mock(ProyectoRepository.class);
         var tasks = mock(ObraTareaRepository.class);
         var service = new ProyectoEdicionService(projects,mock(EmpresaRepository.class),mock(CatalogoEmpresaRepository.class),tasks,
-            mock(com.vortise.gestion.domain.repository.RestriccionObraRepository.class),mock(com.vortise.gestion.infrastructure.security.CurrentTenantService.class),
-            mock(com.vortise.gestion.domain.repository.RegistroHorasRepository.class));
+            mock(com.vortise.gestion.repository.RestriccionObraRepository.class),mock(com.vortise.gestion.infrastructure.security.CurrentTenantService.class),
+            mock(com.vortise.gestion.repository.RegistroHorasRepository.class));
         var p = new Proyecto(); p.setId(1L);
-        var company = new com.vortise.gestion.domain.model.Empresa("Test", null);
+        var company = new com.vortise.gestion.model.Empresa("Test", null);
         org.springframework.test.util.ReflectionTestUtils.setField(company, "id", 1L);
         p.setEmpresaRelacionada(company);
         var r = new RubroObra(); r.setId(10L); r.setProyecto(p);

@@ -7,9 +7,9 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 
-import com.vortise.gestion.domain.repository.EmpresaRepository;
-import com.vortise.gestion.domain.repository.PlanSuscripcionRepository;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.repository.EmpresaRepository;
+import com.vortise.gestion.repository.PlanSuscripcionRepository;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
@@ -24,7 +24,7 @@ class SeedersSkipOnInitializedDatabaseTest {
         when(platformUsuarios.findByEmail("root@example.invalid")).thenReturn(Optional.empty());
         when(platformEmpresas.findByIdentificacionFiscal(SuperAdminSeeder.PLATFORM_TAX_ID)).thenReturn(Optional.empty());
         when(platformEmpresas.findByNombreIgnoreCase(SuperAdminSeeder.PLATFORM_NAME)).thenReturn(Optional.empty());
-        when(platformEmpresas.save(any(com.vortise.gestion.domain.model.Empresa.class)))
+        when(platformEmpresas.save(any(com.vortise.gestion.model.Empresa.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
         when(platformEncoder.encode("long-enough-password")).thenReturn("password-hash");
         new SuperAdminSeeder(platformEmpresas, platformUsuarios, platformEncoder,

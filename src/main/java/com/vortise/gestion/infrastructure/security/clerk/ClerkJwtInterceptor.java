@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.security.clerk;
 
-import com.vortise.gestion.domain.model.RolEmpresa;
-import com.vortise.gestion.domain.model.UsuarioEmpresa;
+import com.vortise.gestion.model.RolEmpresa;
+import com.vortise.gestion.model.UsuarioEmpresa;
 import com.vortise.gestion.service.authentication.JwtService;
 import com.vortise.gestion.service.usuario.ClerkUserSyncService;
 import io.jsonwebtoken.Jwts;

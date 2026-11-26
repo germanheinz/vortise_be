@@ -2,11 +2,11 @@ package com.vortise.gestion.service;
 
 import com.vortise.gestion.application.dto.RubroCreateDto;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
-import com.vortise.gestion.domain.model.CertificadoObra;
-import com.vortise.gestion.domain.model.ObraTarea;
-import com.vortise.gestion.domain.model.RubroObra;
-import com.vortise.gestion.domain.repository.CertificadoItemCompletadoRepository;
-import com.vortise.gestion.domain.repository.CertificadoObraRepository;
+import com.vortise.gestion.model.CertificadoObra;
+import com.vortise.gestion.model.ObraTarea;
+import com.vortise.gestion.model.RubroObra;
+import com.vortise.gestion.repository.CertificadoItemCompletadoRepository;
+import com.vortise.gestion.repository.CertificadoObraRepository;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;

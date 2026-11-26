@@ -6,8 +6,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.vortise.gestion.domain.model.PlanSuscripcion;
-import com.vortise.gestion.domain.repository.PlanSuscripcionRepository;
+import com.vortise.gestion.model.PlanSuscripcion;
+import com.vortise.gestion.repository.PlanSuscripcionRepository;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;

@@ -6,10 +6,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.vortise.gestion.service.authentication.JwtService;
-import com.vortise.gestion.domain.model.Empresa;
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.model.RolEmpresa;
-import com.vortise.gestion.domain.model.RubroObra;
+import com.vortise.gestion.model.Empresa;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.model.RolEmpresa;
+import com.vortise.gestion.model.RubroObra;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.security.SecureRandom;
@@ -84,7 +84,7 @@ class RubroEstructuraPersistenciaTest {
             proyecto.setNumeroProyecto("A");
             proyecto.setEmpresaRelacionada(empresa);
             em.persist(proyecto);
-            var subcontratista = new com.vortise.gestion.domain.model.CatalogoEmpresa(empresa, "SUBCONTRATISTA", "SUB1", "Subcontratista Test");
+            var subcontratista = new com.vortise.gestion.model.CatalogoEmpresa(empresa, "SUBCONTRATISTA", "SUB1", "Subcontratista Test");
             em.persist(subcontratista);
             proyecto.getSubcontratistas().add(subcontratista);
             subcontratistaId = subcontratista.getId();

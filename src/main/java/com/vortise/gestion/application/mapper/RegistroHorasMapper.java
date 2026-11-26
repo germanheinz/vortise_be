@@ -1,7 +1,7 @@
 package com.vortise.gestion.application.mapper;
 
 import com.vortise.gestion.application.dto.RegistroHorasDto;
-import com.vortise.gestion.domain.model.RegistroHoras;
+import com.vortise.gestion.model.RegistroHoras;
 
 public final class RegistroHorasMapper {
     private RegistroHorasMapper() {

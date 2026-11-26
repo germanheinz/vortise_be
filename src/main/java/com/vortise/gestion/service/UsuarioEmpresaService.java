@@ -7,10 +7,10 @@ import com.vortise.gestion.application.dto.UsuarioEmpresaUpdateDto;
 import com.vortise.gestion.application.exception.ConflictoEstadoException;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
-import com.vortise.gestion.domain.model.Empresa;
-import com.vortise.gestion.domain.model.UsuarioEmpresa;
-import com.vortise.gestion.domain.repository.EmpresaRepository;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.model.Empresa;
+import com.vortise.gestion.model.UsuarioEmpresa;
+import com.vortise.gestion.repository.EmpresaRepository;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import java.util.List;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,12 +24,12 @@ public class UsuarioEmpresaService {
     private final SuscripcionConsultaService suscripciones;
     private final EquipoAccessPolicy equipo;
     private final com.vortise.gestion.application.port.CurrentIdentity identity;
-    private final com.vortise.gestion.domain.repository.ProyectoRepository proyectos;
+    private final com.vortise.gestion.repository.ProyectoRepository proyectos;
 
     @org.springframework.beans.factory.annotation.Autowired
     public UsuarioEmpresaService(EmpresaRepository empresaRepository, UsuarioEmpresaRepository usuarioRepository, PasswordEncoder passwordEncoder,
             SuscripcionConsultaService suscripciones, EquipoAccessPolicy equipo, com.vortise.gestion.application.port.CurrentIdentity identity,
-            com.vortise.gestion.domain.repository.ProyectoRepository proyectos) {
+            com.vortise.gestion.repository.ProyectoRepository proyectos) {
         this.empresaRepository = empresaRepository; this.usuarioRepository = usuarioRepository; this.passwordEncoder = passwordEncoder;
         this.suscripciones = suscripciones; this.equipo = equipo; this.identity = identity; this.proyectos = proyectos;
     }
@@ -44,7 +44,7 @@ public class UsuarioEmpresaService {
     @Transactional
     public UsuarioEmpresaDto create(Long empresaId, UsuarioEmpresaDto dto) {
         Empresa empresa = lockEmpresa(empresaId);
-        if (dto.rol() == com.vortise.gestion.domain.model.RolEmpresa.COLABORADOR) throw new SolicitudInvalidaException("Usá una invitación para crear colaboradores.");
+        if (dto.rol() == com.vortise.gestion.model.RolEmpresa.COLABORADOR) throw new SolicitudInvalidaException("Usá una invitación para crear colaboradores.");
         PasswordPolicy.validate(dto.password());
         usuarioRepository.findByEmail(dto.email().trim().toLowerCase(java.util.Locale.ROOT)).ifPresent(existing -> { throw new SolicitudInvalidaException("Ya existe un usuario con ese email"); });
         long activos = usuarioRepository.countByEmpresaIdAndActivoTrue(empresaId);
@@ -59,7 +59,7 @@ public class UsuarioEmpresaService {
         if (usuario.isColaborador()) {
             requireInvitante(usuario);
             usuarioRepository.bloquearPorId(usuario.getInvitanteId()).orElseThrow(() -> new RecursoNoEncontradoException("Titular no encontrado"));
-            if (dto.rol() != com.vortise.gestion.domain.model.RolEmpresa.COLABORADOR) {
+            if (dto.rol() != com.vortise.gestion.model.RolEmpresa.COLABORADOR) {
                 throw new SolicitudInvalidaException("El rol de un invitado no se puede cambiar.");
             }
             if (dto.activo() && !usuario.isActivo()) {
@@ -70,7 +70,7 @@ public class UsuarioEmpresaService {
                     throw new ConflictoEstadoException("Pro permite hasta cinco usuarios invitados activos.");
                 }
             }
-        } else if (dto.rol() == com.vortise.gestion.domain.model.RolEmpresa.COLABORADOR) {
+        } else if (dto.rol() == com.vortise.gestion.model.RolEmpresa.COLABORADOR) {
             throw new SolicitudInvalidaException("El rol colaborador se asigna mediante invitación.");
         }
         Empresa empresa = lockEmpresa(empresaId);
@@ -98,7 +98,7 @@ public class UsuarioEmpresaService {
     }
     // Only a JEFE_DE_OBRA has assigned sites, and only sites of the same company; any change revokes its sessions.
     private void applyObras(UsuarioEmpresa usuario, Long empresaId, UsuarioEmpresaUpdateDto dto) {
-        if (dto.rol() != com.vortise.gestion.domain.model.RolEmpresa.JEFE_DE_OBRA) {
+        if (dto.rol() != com.vortise.gestion.model.RolEmpresa.JEFE_DE_OBRA) {
             if (dto.obrasAsignadas() != null && !dto.obrasAsignadas().isEmpty()) {
                 throw new SolicitudInvalidaException("Solo un jefe de obra tiene obras asignadas.");
             }
@@ -120,7 +120,7 @@ public class UsuarioEmpresaService {
         if (!identity.usuarioId().equals(usuario.getInvitanteId())) throw new org.springframework.security.access.AccessDeniedException("Solo el titular puede gestionar este invitado.");
     }
     private UsuarioEmpresaDto toDto(UsuarioEmpresa u) {
-        java.util.List<Long> obras = u.getRol() == com.vortise.gestion.domain.model.RolEmpresa.JEFE_DE_OBRA
+        java.util.List<Long> obras = u.getRol() == com.vortise.gestion.model.RolEmpresa.JEFE_DE_OBRA
             ? u.getObrasAsignadas().stream().sorted().toList() : java.util.List.of();
         return new UsuarioEmpresaDto(u.getId(), u.getEmail(), u.getNombre(), u.getRol(), u.isActivo(), null, suscripciones.resumenUsuario(u), obras);
     }

@@ -8,9 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
-import com.vortise.gestion.domain.model.RubroObra;
-import com.vortise.gestion.domain.model.TipoNodoRubro;
-import com.vortise.gestion.domain.model.VarianteEstructura;
+import com.vortise.gestion.model.RubroObra;
+import com.vortise.gestion.model.TipoNodoRubro;
+import com.vortise.gestion.model.VarianteEstructura;
 import com.vortise.gestion.domain.rule.EstructuraRubros.Entrada;
 import com.vortise.gestion.domain.rule.EstructuraRubros.Nodo;
 import java.util.ArrayList;

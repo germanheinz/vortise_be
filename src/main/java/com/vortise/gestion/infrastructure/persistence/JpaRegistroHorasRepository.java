@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.RegistroHoras;
-import com.vortise.gestion.domain.repository.RegistroHorasRepository;
+import com.vortise.gestion.model.RegistroHoras;
+import com.vortise.gestion.repository.RegistroHorasRepository;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

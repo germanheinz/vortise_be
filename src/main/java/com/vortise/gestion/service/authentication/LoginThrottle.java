@@ -1,7 +1,7 @@
 package com.vortise.gestion.service.authentication;
 
-import com.vortise.gestion.domain.model.PasswordResetQuota;
-import com.vortise.gestion.domain.repository.PasswordResetQuotaRepository;
+import com.vortise.gestion.model.PasswordResetQuota;
+import com.vortise.gestion.repository.PasswordResetQuotaRepository;
 import java.time.Instant;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;

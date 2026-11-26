@@ -82,4 +82,4 @@ La columna **Relación** indica el vínculo principal de la entidad. Los identif
 | ObraTarea y RegistroHoras | Comparten campos de cantidades, horas y cumplimiento, con distinta granularidad temporal. | Rastrear las escrituras y cálculos antes de elegir una fuente por dato. |
 | Tablas históricas de Telegram y chat | Sus clases JPA ya se retiraron. | El retiro físico requiere una decisión explícita sobre los datos. |
 
-Fuentes del inventario: [modelos Java](../src/main/java/com/vortise/gestion/domain/model), [Proyecto.java](../src/main/java/com/vortise/gestion/domain/model/Proyecto.java) y [migraciones SQL](../src/main/resources/db/migration).
+Fuentes del inventario: [modelos Java](../src/main/java/com/vortise/gestion/model), [Proyecto.java](../src/main/java/com/vortise/gestion/model/Proyecto.java) y [migraciones SQL](../src/main/resources/db/migration).

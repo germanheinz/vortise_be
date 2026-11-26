@@ -19,9 +19,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final com.vortise.gestion.service.EquipoAccessPolicy equipo;
-    private final com.vortise.gestion.domain.repository.UsuarioEmpresaRepository usuarios;
+    private final com.vortise.gestion.repository.UsuarioEmpresaRepository usuarios;
 
-    public JwtAuthenticationFilter(JwtService jwtService, com.vortise.gestion.domain.repository.UsuarioEmpresaRepository usuarios, com.vortise.gestion.service.EquipoAccessPolicy equipo) {
+    public JwtAuthenticationFilter(JwtService jwtService, com.vortise.gestion.repository.UsuarioEmpresaRepository usuarios, com.vortise.gestion.service.EquipoAccessPolicy equipo) {
         this.jwtService = jwtService; this.usuarios = usuarios; this.equipo = equipo;
     }
 

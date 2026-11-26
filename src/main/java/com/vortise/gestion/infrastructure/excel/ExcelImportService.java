@@ -14,15 +14,15 @@
  */
 package com.vortise.gestion.infrastructure.excel;
 
-import com.vortise.gestion.domain.model.Entrega;
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.model.Rendimiento;
-import com.vortise.gestion.domain.model.StatusTarea;
-import com.vortise.gestion.domain.model.Tarea;
-import com.vortise.gestion.domain.repository.EntregaRepository;
-import com.vortise.gestion.domain.repository.ProyectoRepository;
-import com.vortise.gestion.domain.repository.RendimientoRepository;
-import com.vortise.gestion.domain.repository.TareaRepository;
+import com.vortise.gestion.model.Entrega;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.model.Rendimiento;
+import com.vortise.gestion.model.StatusTarea;
+import com.vortise.gestion.model.Tarea;
+import com.vortise.gestion.repository.EntregaRepository;
+import com.vortise.gestion.repository.ProyectoRepository;
+import com.vortise.gestion.repository.RendimientoRepository;
+import com.vortise.gestion.repository.TareaRepository;
 import java.io.IOException;
 import java.util.HashMap;
 import org.apache.poi.ss.usermodel.Cell;

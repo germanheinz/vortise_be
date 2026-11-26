@@ -1,7 +1,7 @@
 package com.vortise.gestion.service;
 
 import static org.junit.jupiter.api.Assertions.*;
-import com.vortise.gestion.domain.model.PagoSuscripcion;
+import com.vortise.gestion.model.PagoSuscripcion;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 

@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.CertificadoItemCompletado;
-import com.vortise.gestion.domain.repository.CertificadoItemCompletadoRepository;
+import com.vortise.gestion.model.CertificadoItemCompletado;
+import com.vortise.gestion.repository.CertificadoItemCompletadoRepository;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

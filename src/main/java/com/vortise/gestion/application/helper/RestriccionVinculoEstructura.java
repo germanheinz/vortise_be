@@ -1,9 +1,9 @@
 package com.vortise.gestion.application.helper;
 
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
-import com.vortise.gestion.domain.model.RestriccionObra;
-import com.vortise.gestion.domain.model.RubroObra;
-import com.vortise.gestion.domain.repository.RubroObraRepository;
+import com.vortise.gestion.model.RestriccionObra;
+import com.vortise.gestion.model.RubroObra;
+import com.vortise.gestion.repository.RubroObraRepository;
 import com.vortise.gestion.domain.rule.EstructuraRubros;
 import java.util.ArrayList;
 import java.util.Collections;

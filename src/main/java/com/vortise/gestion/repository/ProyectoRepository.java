@@ -1,0 +1,34 @@
+/*
+ * Decompiled with CFR 0.152.
+ */
+package com.vortise.gestion.repository;
+
+import com.vortise.gestion.model.Proyecto;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+public interface ProyectoRepository {
+    public List<Proyecto> findAll();
+
+    public Optional<Proyecto> findById(Long var1);
+
+    public Optional<Proyecto> bloquearPorId(Long id);
+
+    public Proyecto save(Proyecto var1);
+
+    public void deleteById(Long var1);
+
+    public long count();
+
+    public long countByEmpresaRelacionadaId(Long empresaId);
+
+    @Query("select p.empresaRelacionada.id as empresaId, count(p) as cantidad from Proyecto p where p.empresaRelacionada.id in :empresaIds group by p.empresaRelacionada.id")
+    List<EmpresaConteoProjection> contarPorEmpresaRelacionada(@Param("empresaIds") Collection<Long> empresaIds);
+
+    public List<Proyecto> findByEmpresaRelacionadaId(Long empresaId);
+
+    public PageSlice<Proyecto> buscarPagina(Long empresaId, String q, int page, int size);
+}

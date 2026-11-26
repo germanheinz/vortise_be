@@ -1,7 +1,7 @@
 package com.vortise.gestion.application.mapper;
 
 import com.vortise.gestion.application.dto.EmpresaDto;
-import com.vortise.gestion.domain.model.Empresa;
+import com.vortise.gestion.model.Empresa;
 
 public final class EmpresaMapper {
     private EmpresaMapper() {

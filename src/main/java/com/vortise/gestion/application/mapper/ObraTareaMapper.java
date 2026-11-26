@@ -1,8 +1,8 @@
 package com.vortise.gestion.application.mapper;
 
 import com.vortise.gestion.application.dto.ObraTareaDto;
-import com.vortise.gestion.domain.model.ObraTarea;
-import com.vortise.gestion.domain.model.RubroObra;
+import com.vortise.gestion.model.ObraTarea;
+import com.vortise.gestion.model.RubroObra;
 
 public final class ObraTareaMapper {
     private ObraTareaMapper() {

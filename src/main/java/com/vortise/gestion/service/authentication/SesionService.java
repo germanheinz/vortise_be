@@ -2,7 +2,7 @@ package com.vortise.gestion.service.authentication;
 
 import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.application.exception.SesionInvalidaException;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

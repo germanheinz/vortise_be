@@ -9,10 +9,10 @@ import static org.mockito.Mockito.when;
 
 import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.application.exception.SesionInvalidaException;
-import com.vortise.gestion.domain.model.Empresa;
-import com.vortise.gestion.domain.model.RolEmpresa;
-import com.vortise.gestion.domain.model.UsuarioEmpresa;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.model.Empresa;
+import com.vortise.gestion.model.RolEmpresa;
+import com.vortise.gestion.model.UsuarioEmpresa;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;

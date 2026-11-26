@@ -108,10 +108,10 @@ class SuperAdminDashboardHttpTest {
 
     private String identity(String role, boolean admin) {
         return new org.springframework.transaction.support.TransactionTemplate(tm).execute(status -> {
-            var company = em.createQuery("select e from Empresa e order by e.id", com.vortise.gestion.domain.model.Empresa.class).setMaxResults(1).getResultStream().findFirst().orElseGet(() -> {
-                var e = new com.vortise.gestion.domain.model.Empresa("HTTP admin fixture", null); em.persist(e); em.flush(); return e;
+            var company = em.createQuery("select e from Empresa e order by e.id", com.vortise.gestion.model.Empresa.class).setMaxResults(1).getResultStream().findFirst().orElseGet(() -> {
+                var e = new com.vortise.gestion.model.Empresa("HTTP admin fixture", null); em.persist(e); em.flush(); return e;
             });
-            return HttpIdentityFixtures.token(em, jwtService, company.getId(), com.vortise.gestion.domain.model.RolEmpresa.valueOf(role), admin);
+            return HttpIdentityFixtures.token(em, jwtService, company.getId(), com.vortise.gestion.model.RolEmpresa.valueOf(role), admin);
         });
     }
 

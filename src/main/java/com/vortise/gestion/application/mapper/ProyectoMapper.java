@@ -5,10 +5,10 @@ import com.vortise.gestion.application.dto.PlantaDto;
 import com.vortise.gestion.application.dto.ContratoObraDto;
 import com.vortise.gestion.application.dto.ProyectoDto;
 import com.vortise.gestion.application.dto.RubroDto;
-import com.vortise.gestion.domain.model.Planta;
-import com.vortise.gestion.domain.model.ContratoObra;
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.model.RubroObra;
+import com.vortise.gestion.model.Planta;
+import com.vortise.gestion.model.ContratoObra;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.model.RubroObra;
 import com.vortise.gestion.domain.rule.EstructuraRubros;
 import java.util.List;
 

@@ -2,9 +2,9 @@ package com.vortise.gestion.application.helper;
 
 import com.vortise.gestion.application.dto.RegistroHorasDatos;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.model.RegistroHoras;
-import com.vortise.gestion.domain.repository.RegistroHorasRepository;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.model.RegistroHoras;
+import com.vortise.gestion.repository.RegistroHorasRepository;
 import com.vortise.gestion.domain.rule.EstructuraRubros;
 import java.time.Duration;
 

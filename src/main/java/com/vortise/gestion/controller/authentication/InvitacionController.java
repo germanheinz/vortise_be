@@ -2,8 +2,8 @@ package com.vortise.gestion.controller.authentication;
 
 import com.vortise.gestion.application.dto.InvitacionAceptarDto;
 import com.vortise.gestion.application.dto.InvitacionValidaDto;
-import com.vortise.gestion.domain.model.UsuarioEmpresa;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.model.UsuarioEmpresa;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import com.vortise.gestion.service.usuario.ClerkUserSyncService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

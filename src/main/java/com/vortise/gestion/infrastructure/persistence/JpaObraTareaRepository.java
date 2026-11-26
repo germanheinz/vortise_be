@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.ObraTarea;
-import com.vortise.gestion.domain.repository.ObraTareaRepository;
+import com.vortise.gestion.model.ObraTarea;
+import com.vortise.gestion.repository.ObraTareaRepository;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

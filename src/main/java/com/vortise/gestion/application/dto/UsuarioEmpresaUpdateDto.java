@@ -1,6 +1,6 @@
 package com.vortise.gestion.application.dto;
 
-import com.vortise.gestion.domain.model.RolEmpresa;
+import com.vortise.gestion.model.RolEmpresa;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

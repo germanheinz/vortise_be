@@ -1,6 +1,6 @@
 package com.vortise.gestion.application.dto;
 
-import com.vortise.gestion.domain.model.TitularSuscripcion;
+import com.vortise.gestion.model.TitularSuscripcion;
 import java.math.BigDecimal;
 import java.time.Instant;
 

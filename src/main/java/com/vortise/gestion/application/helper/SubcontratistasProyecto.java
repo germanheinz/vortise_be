@@ -2,9 +2,9 @@ package com.vortise.gestion.application.helper;
 
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
-import com.vortise.gestion.domain.model.CatalogoEmpresa;
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
+import com.vortise.gestion.model.CatalogoEmpresa;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.repository.CatalogoEmpresaRepository;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;

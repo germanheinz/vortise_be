@@ -6,11 +6,11 @@ import com.vortise.gestion.application.dto.ObraTareaDto;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.port.CurrentIdentity;
-import com.vortise.gestion.domain.model.ObraTarea;
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.model.TipoNodoRubro;
-import com.vortise.gestion.domain.repository.ObraTareaRepository;
-import com.vortise.gestion.domain.repository.ProyectoRepository;
+import com.vortise.gestion.model.ObraTarea;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.model.TipoNodoRubro;
+import com.vortise.gestion.repository.ObraTareaRepository;
+import com.vortise.gestion.repository.ProyectoRepository;
 import com.vortise.gestion.domain.rule.EstructuraRubros;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -118,7 +118,7 @@ public class ObraTareaService {
     }
 
     /** The obra does not control labor hours of subcontracted activities. */
-    private static boolean esSubcontrato(com.vortise.gestion.domain.model.RubroObra rubro) {
+    private static boolean esSubcontrato(com.vortise.gestion.model.RubroObra rubro) {
         return "SUBCONTRATO".equals(rubro.getTipoContratista());
     }
 

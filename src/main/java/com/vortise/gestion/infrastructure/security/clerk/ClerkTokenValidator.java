@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.security.clerk;
 
-import com.vortise.gestion.domain.model.UsuarioEmpresa;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.model.UsuarioEmpresa;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import com.vortise.gestion.service.usuario.ClerkUserSyncService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

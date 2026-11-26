@@ -8,8 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.repository.ProyectoRepository;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.repository.ProyectoRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 

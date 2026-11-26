@@ -7,8 +7,8 @@
  */
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.Planta;
-import com.vortise.gestion.domain.repository.PlantaRepository;
+import com.vortise.gestion.model.Planta;
+import com.vortise.gestion.repository.PlantaRepository;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

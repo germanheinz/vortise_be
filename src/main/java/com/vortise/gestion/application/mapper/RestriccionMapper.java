@@ -2,8 +2,8 @@ package com.vortise.gestion.application.mapper;
 
 import com.vortise.gestion.application.dto.RestriccionComentarioDto;
 import com.vortise.gestion.application.dto.RestriccionDto;
-import com.vortise.gestion.domain.model.RestriccionComentario;
-import com.vortise.gestion.domain.model.RestriccionObra;
+import com.vortise.gestion.model.RestriccionComentario;
+import com.vortise.gestion.model.RestriccionObra;
 
 public final class RestriccionMapper {
     private RestriccionMapper() {

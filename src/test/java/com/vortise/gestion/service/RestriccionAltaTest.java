@@ -2,12 +2,12 @@ package com.vortise.gestion.service;
 
 import com.vortise.gestion.application.dto.RestriccionCreateDto;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.model.RestriccionObra;
-import com.vortise.gestion.domain.model.RubroObra;
-import com.vortise.gestion.domain.repository.ProyectoRepository;
-import com.vortise.gestion.domain.repository.RestriccionObraRepository;
-import com.vortise.gestion.domain.repository.RubroObraRepository;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.model.RestriccionObra;
+import com.vortise.gestion.model.RubroObra;
+import com.vortise.gestion.repository.ProyectoRepository;
+import com.vortise.gestion.repository.RestriccionObraRepository;
+import com.vortise.gestion.repository.RubroObraRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

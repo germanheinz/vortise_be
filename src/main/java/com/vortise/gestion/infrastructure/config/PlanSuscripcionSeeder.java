@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.config;
 
-import com.vortise.gestion.domain.model.PlanSuscripcion;
-import com.vortise.gestion.domain.repository.PlanSuscripcionRepository;
+import com.vortise.gestion.model.PlanSuscripcion;
+import com.vortise.gestion.repository.PlanSuscripcionRepository;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;

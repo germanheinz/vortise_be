@@ -6,14 +6,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.vortise.gestion.domain.model.Empresa;
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.repository.EmpresaRepository;
-import com.vortise.gestion.domain.repository.ObraTareaRepository;
-import com.vortise.gestion.domain.repository.ProyectoRepository;
-import com.vortise.gestion.domain.repository.RegistroHorasRepository;
-import com.vortise.gestion.domain.repository.RestriccionObraRepository;
-import com.vortise.gestion.domain.model.RestriccionObra;
+import com.vortise.gestion.model.Empresa;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.repository.EmpresaRepository;
+import com.vortise.gestion.repository.ObraTareaRepository;
+import com.vortise.gestion.repository.ProyectoRepository;
+import com.vortise.gestion.repository.RegistroHorasRepository;
+import com.vortise.gestion.repository.RestriccionObraRepository;
+import com.vortise.gestion.model.RestriccionObra;
 import io.jsonwebtoken.Jwts;
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +38,7 @@ class TenantAccessInterceptorTest {
     private final ProyectoRepository proyectos = mock(ProyectoRepository.class);
     private final RestriccionObraRepository restricciones = mock(RestriccionObraRepository.class);
     private final CurrentTenantService tenant = new CurrentTenantService(mock(EmpresaRepository.class),
-        mock(com.vortise.gestion.domain.repository.UsuarioEmpresaRepository.class),
+        mock(com.vortise.gestion.repository.UsuarioEmpresaRepository.class),
         mock(com.vortise.gestion.service.EquipoAccessPolicy.class));
     private final TenantAccessInterceptor interceptor = new TenantAccessInterceptor(tenant, proyectos, restricciones,
         mock(RegistroHorasRepository.class), mock(ObraTareaRepository.class));

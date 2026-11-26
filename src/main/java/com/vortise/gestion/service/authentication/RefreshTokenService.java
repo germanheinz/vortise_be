@@ -2,10 +2,10 @@ package com.vortise.gestion.service.authentication;
 
 import com.vortise.gestion.application.audit.AuditLog;
 import com.vortise.gestion.application.exception.SesionInvalidaException;
-import com.vortise.gestion.domain.model.RefreshToken;
-import com.vortise.gestion.domain.model.UsuarioEmpresa;
-import com.vortise.gestion.domain.repository.RefreshTokenRepository;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.model.RefreshToken;
+import com.vortise.gestion.model.UsuarioEmpresa;
+import com.vortise.gestion.repository.RefreshTokenRepository;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;

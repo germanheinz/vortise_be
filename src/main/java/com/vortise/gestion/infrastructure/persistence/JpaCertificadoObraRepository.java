@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.CertificadoObra;
-import com.vortise.gestion.domain.repository.CertificadoObraRepository;
+import com.vortise.gestion.model.CertificadoObra;
+import com.vortise.gestion.repository.CertificadoObraRepository;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;

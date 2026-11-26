@@ -1,8 +1,8 @@
 package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.service.authentication.PasswordResetTransactions;
-import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.model.*;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import com.vortise.gestion.infrastructure.config.*;
 import jakarta.persistence.EntityManager;
 import java.nio.file.*;

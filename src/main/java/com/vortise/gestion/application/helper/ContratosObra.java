@@ -2,9 +2,9 @@ package com.vortise.gestion.application.helper;
 
 import com.vortise.gestion.application.dto.ContratoObraDto;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
-import com.vortise.gestion.domain.model.CatalogoEmpresa;
-import com.vortise.gestion.domain.model.ContratoObra;
-import com.vortise.gestion.domain.model.Proyecto;
+import com.vortise.gestion.model.CatalogoEmpresa;
+import com.vortise.gestion.model.ContratoObra;
+import com.vortise.gestion.model.Proyecto;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;

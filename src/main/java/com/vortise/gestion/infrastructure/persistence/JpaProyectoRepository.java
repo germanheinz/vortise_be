@@ -7,8 +7,8 @@
  */
 package com.vortise.gestion.infrastructure.persistence;
 
-import com.vortise.gestion.domain.model.Proyecto;
-import com.vortise.gestion.domain.repository.ProyectoRepository;
+import com.vortise.gestion.model.Proyecto;
+import com.vortise.gestion.repository.ProyectoRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -29,10 +29,10 @@ ProyectoRepository, ProyectoLockRepository {
         org.springframework.data.domain.Pageable pageable);
 
     @Override
-    default com.vortise.gestion.domain.repository.PageSlice<Proyecto> buscarPagina(Long empresaId, String q, int page, int size) {
+    default com.vortise.gestion.repository.PageSlice<Proyecto> buscarPagina(Long empresaId, String q, int page, int size) {
         var result = buscarPaginaJpa(empresaId, q, org.springframework.data.domain.PageRequest.of(page, size,
             org.springframework.data.domain.Sort.by("id")));
-        return new com.vortise.gestion.domain.repository.PageSlice<>(result.getContent(), result.getNumber(),
+        return new com.vortise.gestion.repository.PageSlice<>(result.getContent(), result.getNumber(),
             result.getSize(), result.getTotalElements(), result.getTotalPages());
     }
 }

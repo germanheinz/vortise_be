@@ -2,11 +2,11 @@ package com.vortise.gestion.service.pagos;
 
 import com.vortise.gestion.service.EquipoAccessPolicy;
 import com.vortise.gestion.application.dto.SuscripcionResumenDto;
-import com.vortise.gestion.domain.model.PagoSuscripcion;
-import com.vortise.gestion.domain.model.Suscripcion;
-import com.vortise.gestion.domain.model.UsuarioEmpresa;
-import com.vortise.gestion.domain.repository.PagoSuscripcionRepository;
-import com.vortise.gestion.domain.repository.SuscripcionRepository;
+import com.vortise.gestion.model.PagoSuscripcion;
+import com.vortise.gestion.model.Suscripcion;
+import com.vortise.gestion.model.UsuarioEmpresa;
+import com.vortise.gestion.repository.PagoSuscripcionRepository;
+import com.vortise.gestion.repository.SuscripcionRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Comparator;

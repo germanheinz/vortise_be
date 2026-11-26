@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.security;
 
 import com.vortise.gestion.application.port.CurrentIdentity;
-import com.vortise.gestion.domain.repository.EmpresaRepository;
+import com.vortise.gestion.repository.EmpresaRepository;
 import io.jsonwebtoken.Claims;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -12,10 +12,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class CurrentTenantService implements CurrentIdentity {
     private final EmpresaRepository empresaRepository;
-    private final com.vortise.gestion.domain.repository.UsuarioEmpresaRepository usuarios;
+    private final com.vortise.gestion.repository.UsuarioEmpresaRepository usuarios;
     private final com.vortise.gestion.service.EquipoAccessPolicy equipo;
 
-    public CurrentTenantService(EmpresaRepository empresaRepository, com.vortise.gestion.domain.repository.UsuarioEmpresaRepository usuarios, com.vortise.gestion.service.EquipoAccessPolicy equipo) {
+    public CurrentTenantService(EmpresaRepository empresaRepository, com.vortise.gestion.repository.UsuarioEmpresaRepository usuarios, com.vortise.gestion.service.EquipoAccessPolicy equipo) {
         this.empresaRepository = empresaRepository; this.usuarios = usuarios; this.equipo = equipo;
     }
 

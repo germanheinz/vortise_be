@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.service.authentication.JwtService;
-import com.vortise.gestion.domain.model.*;
+import com.vortise.gestion.model.*;
 import com.vortise.gestion.infrastructure.config.*;
 import java.security.SecureRandom;
 import java.util.Base64;

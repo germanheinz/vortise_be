@@ -1,8 +1,8 @@
 package com.vortise.gestion.infrastructure.config;
 
 import com.vortise.gestion.service.EmpresaConfiguracionService;
-import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.domain.repository.*;
+import com.vortise.gestion.model.*;
+import com.vortise.gestion.repository.*;
 import java.time.Instant;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Value;

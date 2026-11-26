@@ -1,10 +1,10 @@
 package com.vortise.gestion.infrastructure.config;
 
-import com.vortise.gestion.domain.model.Empresa;
-import com.vortise.gestion.domain.model.RolEmpresa;
-import com.vortise.gestion.domain.model.UsuarioEmpresa;
-import com.vortise.gestion.domain.repository.EmpresaRepository;
-import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
+import com.vortise.gestion.model.Empresa;
+import com.vortise.gestion.model.RolEmpresa;
+import com.vortise.gestion.model.UsuarioEmpresa;
+import com.vortise.gestion.repository.EmpresaRepository;
+import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
