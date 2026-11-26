@@ -1,8 +1,5 @@
 package com.vortise.gestion.infrastructure.config;
 
-import com.vortise.gestion.infrastructure.backup.H2LogicalBackupService;
-import com.vortise.gestion.controller.admin.AdminBackupController;
-import com.vortise.gestion.controller.admin.AdminBackupDisabledController;
 import com.vortise.gestion.controller.advice.GlobalExceptionHandler;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -19,11 +16,8 @@ class ProductionConfigurationTest {
         for (String profile : List.of("staging", "prod", "production")) {
             var environment = new MockEnvironment();
             environment.setActiveProfiles(profile, "demo", "local");
-            for (Class<?> type : List.of(DatabaseInitializationPolicy.class, H2LogicalBackupService.class, AdminBackupController.class)) {
-                assertFalse(environment.acceptsProfiles(Profiles.of(type.getAnnotation(Profile.class).value())), type.getName());
-            }
-            for (Class<?> type : List.of(StagingSeedRunPolicy.class, StagingPostgresConfiguration.class,
-                    AdminBackupDisabledController.class)) {
+            assertFalse(environment.acceptsProfiles(Profiles.of(DatabaseInitializationPolicy.class.getAnnotation(Profile.class).value())));
+            for (Class<?> type : List.of(StagingSeedRunPolicy.class, StagingPostgresConfiguration.class)) {
                 assertTrue(environment.acceptsProfiles(Profiles.of(type.getAnnotation(Profile.class).value())), type.getName());
             }
         }

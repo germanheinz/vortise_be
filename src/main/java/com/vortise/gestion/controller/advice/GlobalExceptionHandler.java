@@ -19,7 +19,6 @@ import com.vortise.gestion.application.exception.PagosNoConfiguradosException;
 import com.vortise.gestion.application.exception.ProveedorPagoException;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
-import com.vortise.gestion.infrastructure.backup.BackupValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -55,11 +54,6 @@ public class GlobalExceptionHandler {
             .header("Cache-Control", "no-store")
             .body(new ErrorResponseDto(429, "Too Many Requests", ex.getMessage()));
     }
-    @ExceptionHandler(value={BackupValidationException.class})
-    public ResponseEntity<ErrorResponseDto> handleBackupValidation(BackupValidationException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponseDto(400, "Bad Request", ex.getMessage()));
-    }
-
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<ErrorResponseDto> handleNotFound(RecursoNoEncontradoException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponseDto(404, "Not Found", ex.getMessage()));

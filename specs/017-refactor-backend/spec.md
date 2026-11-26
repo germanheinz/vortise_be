@@ -112,3 +112,7 @@ ProyectoService incorpora el alta. Alta y edición comparten la asignación de s
 ### Paquetes de autenticación
 
 Agrupar servicios y controllers de autenticación por responsabilidad. Preservar rutas, seguridad, sesiones, configuración y persistencia.
+
+### Retiro de respaldos desde la aplicación
+
+Retirar la exportación y restauración de H2 desde la administración y su acceso en el frontend. Conservar las bases actuales y los archivos de respaldo existentes.

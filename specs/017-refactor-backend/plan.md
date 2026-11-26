@@ -165,3 +165,9 @@ Mover el alta a ProyectoService con su transacción y bloqueo de empresa. Compar
 ### Paquetes de autenticación
 
 Mover ocho servicios a service/authentication y dos controllers a controller/authentication. Actualizar los imports de consumidores y mover las pruebas unitarias del paquete. Mantener infraestructura de seguridad, integración Clerk, política de acceso a empresas y repositorios en sus paquetes.
+
+### Retiro de respaldos desde la aplicación
+
+- Backend: retirar AdminBackupController, AdminBackupDisabledController, H2LogicalBackupService, BackupValidationException, su manejador y las pruebas exclusivas. Ajustar las pruebas de perfiles compartidas.
+- Frontend: retirar la página de respaldo, backupApi, el enlace en el menú y el tratamiento especial de la ruta en SuperAdminShell. Conservar la verificación de acceso del resto de administración.
+- Las herramientas y guías operativas de PostgreSQL y la migración selectiva son flujos separados. La eliminación propuesta se limita al respaldo integrado de la aplicación. No ejecutar restauraciones ni borrar archivos o datos.

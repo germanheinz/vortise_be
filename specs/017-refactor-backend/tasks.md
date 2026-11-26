@@ -185,3 +185,10 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] «IMPLEMENTALO» autorizó mover ocho servicios y dos controllers en el checkout local del backend. Se trasladaron cinco pruebas y se actualizaron imports.
 - [x] Comparado el código Java con HEAD. Los cambios se limitan a paquetes, imports y referencias calificadas. Pasaron `mvn -Dtest=AutenticacionServiceTest,RegistroServiceTest,SesionServiceTest,RefreshTokenServiceTest,JwtServiceConfigurationTest,LoginThrottleTest,JwtAuthenticationFilterTest,SessionCookiesTest,WriteEndpointsGuardTest clean test` y `git diff --check`.
 - [ ] Pendientes verificación HTTP con contexto de Spring y revisión independiente.
+
+### Retiro de respaldos desde la aplicación
+
+- [x] Rastreado el flujo completo de respaldo H2, sus pruebas y referencias en la administración.
+- [x] «apruebo» autorizó retirar el respaldo integrado en ambos repositorios y conservar datos, archivos y herramientas operativas.
+- [x] Backend: 6 pruebas con `mvn -Dtest=ProductionConfigurationTest,WriteEndpointsGuardTest,FeatureUnavailableResponseTest clean test`. Frontend: 17 pruebas con `node --test tests/context-queries.test.cjs tests/asistente-contexto.test.cjs`. Pasó `git diff --check` en archivos del cambio.
+- [ ] El chequeo TypeScript de fuentes conserva el error preexistente en la página de invitación de Clerk. Quedan pendientes la verificación HTTP con Spring y la revisión independiente.

@@ -71,15 +71,15 @@ La columna **Relación** indica el vínculo principal de la entidad. Los identif
 | `invitacion_usuario_obras` | InvitacionUsuario → obras | Guarda las obras que se asignarán al aceptar. |
 | `devoluciones_pago` | PagoSuscripcion → DevolucionPago | Guarda una colección de devoluciones. DevolucionPago es un @Embeddable. |
 | `calendarios_laborales_empresa` | Histórica desde V31 | Conserva las filas anteriores al corte. El calendario activo vive en `empresas`. |
-| `gastos_fijos` | Histórica | El módulo global se retiró. La tabla permanece en las migraciones y en el respaldo H2 cuando existe. |
-| `altas_restriccion_chat` | Histórica | Permanece en las migraciones y en el respaldo H2 cuando existe. |
-| `vinculos_telegram` | Histórica | Permanece en las migraciones y en el respaldo H2 cuando existe. |
+| `gastos_fijos` | Histórica | El módulo global se retiró. La tabla permanece en las migraciones. |
+| `altas_restriccion_chat` | Histórica | Permanece en las migraciones. |
+| `vinculos_telegram` | Histórica | Permanece en las migraciones. |
 
 ## Puntos a revisar para simplificar
 
 | Candidato | Evidencia en el modelo | Decisión pendiente |
 | --- | --- | --- |
 | ObraTarea y RegistroHoras | Comparten campos de cantidades, horas y cumplimiento, con distinta granularidad temporal. | Rastrear las escrituras y cálculos antes de elegir una fuente por dato. |
-| Tablas históricas de Telegram y chat | Sus clases JPA ya se retiraron. | El retiro físico requiere una decisión explícita sobre los datos y la compatibilidad de los respaldos. |
+| Tablas históricas de Telegram y chat | Sus clases JPA ya se retiraron. | El retiro físico requiere una decisión explícita sobre los datos. |
 
 Fuentes del inventario: [modelos Java](../src/main/java/com/vortise/gestion/domain/model), [Proyecto.java](../src/main/java/com/vortise/gestion/domain/model/Proyecto.java) y [migraciones SQL](../src/main/resources/db/migration).
