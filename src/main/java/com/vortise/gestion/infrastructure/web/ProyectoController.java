@@ -21,9 +21,7 @@ import com.vortise.gestion.application.dto.ProyectoUpdateDto;
 import com.vortise.gestion.application.exception.FeatureUnavailableException;
 import com.vortise.gestion.application.usecase.CreateProyectoUseCase;
 import com.vortise.gestion.application.usecase.DeleteProyectoUseCase;
-import com.vortise.gestion.application.usecase.GetProyectoByIdUseCase;
-import com.vortise.gestion.application.usecase.GetProyectoPaginaUseCase;
-import com.vortise.gestion.application.usecase.GetProyectosUseCase;
+import com.vortise.gestion.application.usecase.ProyectoConsultaService;
 import com.vortise.gestion.application.usecase.UpdateProyectoUseCase;
 import com.vortise.gestion.infrastructure.config.DataSeeder;
 import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
@@ -45,9 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value={"/api/proyectos"})
 public class ProyectoController {
-    private final GetProyectoPaginaUseCase pagina;
-    private final GetProyectosUseCase getProyectosUseCase;
-    private final GetProyectoByIdUseCase getProyectoByIdUseCase;
+    private final ProyectoConsultaService proyectos;
     private final CreateProyectoUseCase createProyectoUseCase;
     private final UpdateProyectoUseCase updateProyectoUseCase;
     private final DeleteProyectoUseCase deleteProyectoUseCase;
@@ -56,19 +52,19 @@ public class ProyectoController {
 
     @GetMapping
     public ResponseEntity<List<ProyectoDto>> getAll() {
-        return ResponseEntity.ok(this.getProyectosUseCase.execute());
+        return ResponseEntity.ok(proyectos.listarDeEmpresaActual());
     }
 
     @GetMapping("/pagina")
     public ResponseEntity<PaginaDto<com.vortise.gestion.application.dto.ProyectoDto>> getPagina(@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size,
             @RequestParam(defaultValue = "") String q) {
-        return ResponseEntity.ok(pagina.execute(null, q, page, size));
+        return ResponseEntity.ok(proyectos.paginar(null, q, page, size));
     }
 
     @GetMapping(value="/{id}")
     public ResponseEntity<ProyectoDto> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(this.getProyectoByIdUseCase.execute(id));
+        return ResponseEntity.ok(proyectos.obtener(id));
     }
 
     @PostMapping
@@ -101,18 +97,14 @@ public class ProyectoController {
     }
 
     public ProyectoController(
-        GetProyectosUseCase getProyectosUseCase,
-        GetProyectoByIdUseCase getProyectoByIdUseCase,
         CreateProyectoUseCase createProyectoUseCase,
         UpdateProyectoUseCase updateProyectoUseCase,
         DeleteProyectoUseCase deleteProyectoUseCase,
         DataSeeder dataSeeder,
         ProductionFeaturePolicy featurePolicy,
-        GetProyectoPaginaUseCase pagina
+        ProyectoConsultaService proyectos
     ) {
-        this.pagina = pagina;
-        this.getProyectosUseCase = getProyectosUseCase;
-        this.getProyectoByIdUseCase = getProyectoByIdUseCase;
+        this.proyectos = proyectos;
         this.createProyectoUseCase = createProyectoUseCase;
         this.updateProyectoUseCase = updateProyectoUseCase;
         this.deleteProyectoUseCase = deleteProyectoUseCase;

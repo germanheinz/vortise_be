@@ -3,8 +3,6 @@ package com.vortise.gestion.infrastructure.web;
 import com.vortise.gestion.application.dto.RegistroHorasCreateDto;
 import com.vortise.gestion.application.dto.RegistroHorasDto;
 import com.vortise.gestion.application.dto.RegistroHorasUpdateDto;
-import com.vortise.gestion.application.usecase.GetRegistroHorasByIdUseCase;
-import com.vortise.gestion.application.usecase.GetRegistrosHorasUseCase;
 import com.vortise.gestion.application.usecase.RegistroHorasService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -22,28 +20,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 public class RegistroHorasController {
-    private final GetRegistrosHorasUseCase getRegistrosHorasUseCase;
-    private final GetRegistroHorasByIdUseCase getRegistroHorasByIdUseCase;
     private final RegistroHorasService registroHorasService;
 
-    public RegistroHorasController(
-        GetRegistrosHorasUseCase getRegistrosHorasUseCase,
-        GetRegistroHorasByIdUseCase getRegistroHorasByIdUseCase,
-        RegistroHorasService registroHorasService
-    ) {
-        this.getRegistrosHorasUseCase = getRegistrosHorasUseCase;
-        this.getRegistroHorasByIdUseCase = getRegistroHorasByIdUseCase;
+    public RegistroHorasController(RegistroHorasService registroHorasService) {
         this.registroHorasService = registroHorasService;
     }
 
     @GetMapping("/proyectos/{proyectoId}/registro-horas")
     public ResponseEntity<List<RegistroHorasDto>> getAllByProyecto(@PathVariable Long proyectoId) {
-        return ResponseEntity.ok(getRegistrosHorasUseCase.execute(proyectoId));
+        return ResponseEntity.ok(registroHorasService.listar(proyectoId));
     }
 
     @GetMapping("/registro-horas/{id}")
     public ResponseEntity<RegistroHorasDto> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(getRegistroHorasByIdUseCase.execute(id));
+        return ResponseEntity.ok(registroHorasService.obtener(id));
     }
 
     @PostMapping("/proyectos/{proyectoId}/registro-horas")

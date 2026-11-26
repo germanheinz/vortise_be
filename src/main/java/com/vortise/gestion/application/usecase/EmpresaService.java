@@ -8,17 +8,19 @@ import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class SaveEmpresaUseCase {
+public class EmpresaService {
     private final EmpresaRepository empresaRepository;
     private final CurrentIdentity currentTenant;
 
     private final InicializarEmpresaUseCase inicializar;
 
-    public SaveEmpresaUseCase(EmpresaRepository empresaRepository, CurrentIdentity currentTenant, InicializarEmpresaUseCase inicializar) {
+    public EmpresaService(EmpresaRepository empresaRepository, CurrentIdentity currentTenant, InicializarEmpresaUseCase inicializar) {
         this.empresaRepository = empresaRepository;
         this.currentTenant = currentTenant;
         this.inicializar = inicializar;
@@ -70,5 +72,29 @@ public class SaveEmpresaUseCase {
 
     private String normalize(String value) {
         return value == null || value.trim().isEmpty() ? null : value.trim();
+    }
+
+    public List<EmpresaDto> listar() {
+        if (currentTenant.isSuperAdmin()) {
+            return empresaRepository.findAll().stream().map(EmpresaMapper::toDto).toList();
+        }
+
+        if (currentTenant.isCollaborator()) {
+            return currentTenant.empresasAccesibles().stream().flatMap(id -> empresaRepository.findById(id).stream())
+                .map(EmpresaMapper::toDto).toList();
+        }
+        Long ownId = currentTenant.empresaId();
+        List<Empresa> empresas = new ArrayList<>(empresaRepository.findById(ownId).stream().toList());
+        if (currentTenant.isAdministrator()) {
+            empresaRepository.findByCreadoPorUsuarioId(currentTenant.usuarioId()).stream()
+                .filter(empresa -> !empresa.getId().equals(ownId))
+                .forEach(empresas::add);
+        }
+        return empresas.stream().map(EmpresaMapper::toDto).toList();
+    }
+
+    public EmpresaDto obtener(Long id) {
+        return EmpresaMapper.toDto(empresaRepository.findById(id)
+            .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada")));
     }
 }

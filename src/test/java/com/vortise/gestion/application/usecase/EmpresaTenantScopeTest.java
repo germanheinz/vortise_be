@@ -25,7 +25,7 @@ class EmpresaTenantScopeTest {
     void superAdminListsAllCompanies() {
         when(tenant.isSuperAdmin()).thenReturn(true);
         when(empresas.findAll()).thenReturn(List.of(company(1L, "A"), company(2L, "B"), company(3L, "C")));
-        assertEquals(List.of("A", "B", "C"), names(new GetEmpresasUseCase(empresas, tenant).execute()));
+        assertEquals(List.of("A", "B", "C"), names(new EmpresaService(empresas, tenant, mock(InicializarEmpresaUseCase.class)).listar()));
     }
 
     @Test
@@ -36,7 +36,7 @@ class EmpresaTenantScopeTest {
         Empresa own = company(1L, "Own");
         when(empresas.findById(1L)).thenReturn(Optional.of(own));
         when(empresas.findByCreadoPorUsuarioId(7L)).thenReturn(List.of(own, company(4L, "Created")));
-        assertEquals(List.of("Own", "Created"), names(new GetEmpresasUseCase(empresas, tenant).execute()));
+        assertEquals(List.of("Own", "Created"), names(new EmpresaService(empresas, tenant, mock(InicializarEmpresaUseCase.class)).listar()));
         verify(empresas, never()).findAll();
     }
 
@@ -44,7 +44,7 @@ class EmpresaTenantScopeTest {
     void nonAdminListsOwnCompanyOnly() {
         when(tenant.empresaId()).thenReturn(1L);
         when(empresas.findById(1L)).thenReturn(Optional.of(company(1L, "Own")));
-        assertEquals(List.of("Own"), names(new GetEmpresasUseCase(empresas, tenant).execute()));
+        assertEquals(List.of("Own"), names(new EmpresaService(empresas, tenant, mock(InicializarEmpresaUseCase.class)).listar()));
         verify(empresas, never()).findByCreadoPorUsuarioId(any());
         verify(empresas, never()).findAll();
     }
@@ -54,7 +54,7 @@ class EmpresaTenantScopeTest {
         when(tenant.usuarioId()).thenReturn(7L);
         when(empresas.findByNombreIgnoreCase("Nueva")).thenReturn(Optional.empty());
         when(empresas.save(any(Empresa.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        new SaveEmpresaUseCase(empresas, tenant, mock(InicializarEmpresaUseCase.class)).create(new EmpresaCreateDto("Nueva", null));
+        new EmpresaService(empresas, tenant, mock(InicializarEmpresaUseCase.class)).create(new EmpresaCreateDto("Nueva", null));
         verify(empresas).save(org.mockito.ArgumentMatchers.argThat(empresa -> Long.valueOf(7L).equals(empresa.getCreadoPorUsuarioId())));
     }
 

@@ -2,9 +2,8 @@ package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.ObraTareaCreateDto;
 import com.vortise.gestion.application.dto.ObraTareaDto;
-import com.vortise.gestion.application.usecase.CreateObraTareaUseCase;
-import com.vortise.gestion.application.usecase.DeleteObraTareaUseCase;
-import com.vortise.gestion.application.usecase.GetObraTareasUseCase;
+import com.vortise.gestion.application.usecase.ObraTareaService;
+import com.vortise.gestion.application.usecase.GetPrevistoRealUseCase;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -21,49 +20,40 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/proyectos/{proyectoId}/obra-tareas")
 public class ObraTareaController {
-    private final com.vortise.gestion.application.usecase.GetPrevistoRealUseCase comparison;
-    private final GetObraTareasUseCase getObraTareasUseCase;
-    private final CreateObraTareaUseCase createObraTareaUseCase;
-    private final DeleteObraTareaUseCase deleteObraTareaUseCase;
+    private final ObraTareaService obraTareaService;
+    private final GetPrevistoRealUseCase comparison;
 
-    public ObraTareaController(
-        GetObraTareasUseCase getObraTareasUseCase,
-        CreateObraTareaUseCase createObraTareaUseCase,
-        DeleteObraTareaUseCase deleteObraTareaUseCase,
-        com.vortise.gestion.application.usecase.GetPrevistoRealUseCase comparison
-    ) {
+    public ObraTareaController(ObraTareaService obraTareaService, GetPrevistoRealUseCase comparison) {
+        this.obraTareaService = obraTareaService;
         this.comparison = comparison;
-        this.getObraTareasUseCase = getObraTareasUseCase;
-        this.createObraTareaUseCase = createObraTareaUseCase;
-        this.deleteObraTareaUseCase = deleteObraTareaUseCase;
     }
 
     @GetMapping("/indicadores")
-    public com.vortise.gestion.application.usecase.GetPrevistoRealUseCase.Summary indicadores(@PathVariable Long proyectoId) {
+    public GetPrevistoRealUseCase.Summary indicadores(@PathVariable Long proyectoId) {
         return comparison.execute(proyectoId);
     }
 
     @GetMapping
     public ResponseEntity<List<ObraTareaDto>> getAll(@PathVariable Long proyectoId) {
-        return ResponseEntity.ok(getObraTareasUseCase.execute(proyectoId));
+        return ResponseEntity.ok(obraTareaService.listar(proyectoId));
     }
 
     @PostMapping
     @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ResponseEntity<ObraTareaDto> create(@PathVariable Long proyectoId, @Valid @RequestBody ObraTareaCreateDto dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(createObraTareaUseCase.execute(proyectoId, dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(obraTareaService.create(proyectoId, dto));
     }
 
     @PutMapping("/{id}")
     @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ResponseEntity<ObraTareaDto> update(@PathVariable Long proyectoId, @PathVariable Long id, @Valid @RequestBody ObraTareaCreateDto dto) {
-        return ResponseEntity.ok(createObraTareaUseCase.update(proyectoId, id, dto));
+        return ResponseEntity.ok(obraTareaService.update(proyectoId, id, dto));
     }
 
     @DeleteMapping("/{id}")
     @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.GERENTE)
     public ResponseEntity<Void> delete(@PathVariable Long proyectoId, @PathVariable Long id) {
-        deleteObraTareaUseCase.execute(proyectoId, id);
+        obraTareaService.delete(proyectoId, id);
         return ResponseEntity.noContent().build();
     }
 }

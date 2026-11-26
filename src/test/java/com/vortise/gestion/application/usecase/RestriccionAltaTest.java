@@ -15,11 +15,11 @@ import org.mockito.ArgumentCaptor;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class CreateRestriccionUseCaseTest {
+class RestriccionAltaTest {
     private RestriccionObraRepository restricciones;
     private ProyectoRepository proyectos;
     private RubroObraRepository rubros;
-    private CreateRestriccionUseCase useCase;
+    private RestriccionService useCase;
     private Proyecto proyecto;
 
     @BeforeEach
@@ -27,7 +27,7 @@ class CreateRestriccionUseCaseTest {
         restricciones = mock(RestriccionObraRepository.class);
         proyectos = mock(ProyectoRepository.class);
         rubros = mock(RubroObraRepository.class);
-        useCase = new CreateRestriccionUseCase(restricciones, proyectos, rubros);
+        useCase = new RestriccionService(restricciones, proyectos, rubros, null);
         proyecto = new Proyecto();
         proyecto.setId(10L);
         proyecto.setNombre("Obra de prueba");
@@ -48,7 +48,7 @@ class CreateRestriccionUseCaseTest {
 
         var start = java.time.LocalDate.of(2026, 10, 1);
         var due = start.plusDays(3);
-        var result = useCase.execute(10L, new RestriccionCreateDto("Esperar inspección", 31L,
+        var result = useCase.crear(10L, new RestriccionCreateDto("Esperar inspección", 31L,
             null, null, null, null, null, "Ana", start, due, due, null, null, "RESUELTO", " Compras "));
 
         ArgumentCaptor<RestriccionObra> saved = ArgumentCaptor.forClass(RestriccionObra.class);
@@ -66,7 +66,7 @@ class CreateRestriccionUseCaseTest {
     void acceptsRestrictionWithoutSubrubro() {
         when(restricciones.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var result = useCase.execute(10L, request(null));
+        var result = useCase.crear(10L, request(null));
 
         ArgumentCaptor<RestriccionObra> saved = ArgumentCaptor.forClass(RestriccionObra.class);
         verify(restricciones).save(saved.capture());
@@ -81,7 +81,7 @@ class CreateRestriccionUseCaseTest {
         proyecto.setFechaInicio(java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")).minusDays(2));
         proyecto.setPedidosDeObraDias(1);
 
-        assertThrows(SolicitudInvalidaException.class, () -> useCase.execute(10L, request(null)));
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.crear(10L, request(null)));
         verify(restricciones, never()).save(any());
     }
 
@@ -91,7 +91,7 @@ class CreateRestriccionUseCaseTest {
         proyecto.setFechaInicio(java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")).minusDays(1));
         proyecto.setPedidosDeObraDias(1);
 
-        useCase.execute(10L, request(null));
+        useCase.crear(10L, request(null));
 
         verify(restricciones).save(any());
     }
@@ -102,7 +102,7 @@ class CreateRestriccionUseCaseTest {
         proyecto.setFechaInicio(java.time.LocalDate.now().minusYears(1));
         proyecto.setPedidosDeObraDias(null);
 
-        useCase.execute(10L, request(null));
+        useCase.crear(10L, request(null));
 
         verify(restricciones).save(any());
     }
@@ -117,8 +117,8 @@ class CreateRestriccionUseCaseTest {
         when(rubros.findById(33L)).thenReturn(Optional.of(nivel));
         when(restricciones.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var onRubro = useCase.execute(10L, request(32L));
-        var onNivel = useCase.execute(10L, request(33L));
+        var onRubro = useCase.crear(10L, request(32L));
+        var onNivel = useCase.crear(10L, request(33L));
 
         assertEquals(32L, onRubro.rubroId());
         assertEquals("Estructura", onRubro.rubro());
@@ -136,7 +136,7 @@ class CreateRestriccionUseCaseTest {
         foreignActivity.setSubRubro("Tendido eléctrico");
         when(rubros.findById(33L)).thenReturn(Optional.of(foreignActivity));
 
-        assertThrows(IllegalArgumentException.class, () -> useCase.execute(10L, request(33L)));
+        assertThrows(IllegalArgumentException.class, () -> useCase.crear(10L, request(33L)));
         verify(restricciones, never()).save(any());
     }
 
@@ -146,7 +146,7 @@ class CreateRestriccionUseCaseTest {
     }
 
     @Test void rejectsRestrictionWithoutDeadline() {
-        assertThrows(IllegalArgumentException.class, () -> useCase.execute(10L,
+        assertThrows(IllegalArgumentException.class, () -> useCase.crear(10L,
             new RestriccionCreateDto("Esperar inspección", null, null, null, null, null, null,
                 null, null, null, null, null, null, null)));
         verify(restricciones, never()).save(any());
@@ -158,7 +158,7 @@ class CreateRestriccionUseCaseTest {
 
     @Test void invalidChronologyIsRejectedBeforePersistence() {
         var start = java.time.LocalDate.of(2026, 10, 1);
-        assertThrows(IllegalArgumentException.class, () -> useCase.execute(10L,
+        assertThrows(IllegalArgumentException.class, () -> useCase.crear(10L,
             new RestriccionCreateDto("Inspección", 31L, null, null, null, null, null,
                 "Ana", start, start.minusDays(1), null, null, null, "PENDIENTE", "Compras")));
         verify(restricciones, never()).save(any());

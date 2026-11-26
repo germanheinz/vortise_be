@@ -70,3 +70,11 @@ Compartir la consulta de suma, la normalización del agregado nulo y el redondeo
 2. Evaluar consolidar las consultas de Registro de horas y después los CRUD de tareas, restricciones y gastos fijos. Para cada módulo, revisar qué lectores y escritores comparten permisos, transacciones y respuestas. Mover mappers y reglas al paquete del módulo cuando ayude a seguir el flujo y no rompa consumidores.
 3. Revisar Proyectos y Empresa por separado. Mantener servicios con responsabilidades propias, como certificados, reportes y Previsto vs. Real. Conservar interfaces de repositorio, adaptadores y modelo de datos.
 4. Verificar cada corte con pruebas focalizadas y revisar HTTP al aprobarse el arranque de Spring. La revisión independiente y el cierre documentan resultados y limitaciones por módulo.
+
+### Servicios consolidados
+
+- `RegistroHorasService` reúne consultas y mutaciones, y conserva la transacción en los tres métodos de escritura.
+- `ObraTareaService` reúne el CRUD. Previsto vs. Real conserva su servicio de indicadores. El listado permanece en una transacción de solo lectura, el alta y la edición mantienen sus transacciones y la baja sigue usando la del repositorio.
+- `RestriccionService` reúne las operaciones sobre restricciones. `ComentarioRestriccionService` concentra las de comentarios. Las operaciones de chat conservan sus reglas y llaman al servicio de restricciones.
+- `GastoFijoService` comparte el mapeo entre listado y guardado. El controller verifica la disponibilidad de la funcionalidad antes de delegar.
+- `ProyectoConsultaService` agrupa cuatro consultas y lo comparten los controllers de proyecto y empresa. `EmpresaService` agrupa lectura y guardado de empresa. Los flujos de creación, edición y borrado de proyecto y la baja de empresa conservan sus servicios especializados por sus reglas y dependencias.

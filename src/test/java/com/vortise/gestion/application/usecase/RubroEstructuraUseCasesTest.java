@@ -523,21 +523,21 @@ class RubroEstructuraUseCasesTest {
         var tasksMock = mock(ObraTareaRepository.class);
         when(projectsMock.findById(1L)).thenReturn(Optional.of(p));
         when(tasksMock.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        var useCase = new CreateObraTareaUseCase(tasksMock, projectsMock);
+        var useCase = new ObraTareaService(tasksMock, projectsMock);
         for (long groupingId : new long[]{1L, 2L, 4L, 5L}) {
             var dto = new ObraTareaCreateDto("Carga", null, null, "kg", "x", null, null, null, null, 100., 80., null, 6., null, null,
                 LocalDate.of(2026, 10, 14), groupingId);
-            assertThrows(SolicitudInvalidaException.class, () -> useCase.execute(1L, dto));
+            assertThrows(SolicitudInvalidaException.class, () -> useCase.create(1L, dto));
         }
         verify(tasksMock, never()).save(any());
         var subrubroDto = new ObraTareaCreateDto("Carga", null, null, "kg", "x", null, null, null, null, 100., 80., null, 6., null, null,
             LocalDate.of(2026, 10, 14), 3L);
-        var saved = useCase.execute(1L, subrubroDto);
+        var saved = useCase.create(1L, subrubroDto);
         assertEquals(3L, saved.rubroId());
         assertEquals("General", saved.nivel());
         var pisoDto = new ObraTareaCreateDto("Carga", null, null, "kg", "x", null, null, null, null, 100., 80., null, 6., null, null,
             LocalDate.of(2026, 10, 14), 6L);
-        var avancePiso = useCase.execute(1L, pisoDto);
+        var avancePiso = useCase.create(1L, pisoDto);
         assertEquals(6L, avancePiso.rubroId());
         assertEquals("SS1", avancePiso.nivel());
         assertEquals("m2", avancePiso.unidad());
@@ -554,12 +554,12 @@ class RubroEstructuraUseCasesTest {
         when(projectsMock.findById(1L)).thenReturn(Optional.of(p));
         for (RubroObra rubro : p.getRubros()) when(rubrosMock.findById(rubro.getId())).thenReturn(Optional.of(rubro));
         when(restrictionsMock.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        var useCase = new CreateRestriccionUseCase(restrictionsMock, projectsMock, rubrosMock);
+        var useCase = new RestriccionService(restrictionsMock, projectsMock, rubrosMock, null);
 
-        var onGroup = useCase.execute(1L, restrictionRequest(2L));
+        var onGroup = useCase.crear(1L, restrictionRequest(2L));
         assertEquals(2L, onGroup.rubroId());
         assertTrue(onGroup.rubro().contains(" › "));
-        var saved = useCase.execute(1L, restrictionRequest(3L));
+        var saved = useCase.crear(1L, restrictionRequest(3L));
         assertEquals("Hormigón · Subrubro 1", saved.rubro());
         assertEquals("General", saved.nivel());
     }

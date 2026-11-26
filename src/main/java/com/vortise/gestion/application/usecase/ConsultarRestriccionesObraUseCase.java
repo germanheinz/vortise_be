@@ -19,10 +19,10 @@ public class ConsultarRestriccionesObraUseCase {
     private static final ZoneId ZONA_OBRA = ZoneId.of("America/Argentina/Buenos_Aires");
     private static final int LIMITE_LISTADO = 10;
 
-    private final GetRestriccionesUseCase restricciones;
+    private final RestriccionService restricciones;
     private final ProyectoRepository proyectos;
 
-    public ConsultarRestriccionesObraUseCase(GetRestriccionesUseCase restricciones, ProyectoRepository proyectos) {
+    public ConsultarRestriccionesObraUseCase(RestriccionService restricciones, ProyectoRepository proyectos) {
         this.restricciones = restricciones;
         this.proyectos = proyectos;
     }
@@ -32,7 +32,7 @@ public class ConsultarRestriccionesObraUseCase {
             .orElseThrow(() -> new RecursoNoEncontradoException("Obra no encontrada")).getNombre();
         LocalDate fecha = corte == null ? LocalDate.now(ZONA_OBRA) : corte;
         String prioridadFiltro = normalizar(prioridad);
-        var filas = restricciones.execute(proyectoId).stream()
+        var filas = restricciones.listarPorProyecto(proyectoId).stream()
             .filter(dto -> dto.fechaSolicitud() == null || !dto.fechaSolicitud().isAfter(fecha))
             .map(dto -> new Fila(dto, estado(dto, fecha)))
             .toList();

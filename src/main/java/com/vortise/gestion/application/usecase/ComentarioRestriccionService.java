@@ -8,19 +8,20 @@ import com.vortise.gestion.domain.model.RestriccionObra;
 import com.vortise.gestion.domain.repository.RestriccionComentarioRepository;
 import com.vortise.gestion.domain.repository.RestriccionObraRepository;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CreateRestriccionComentarioUseCase {
+public class ComentarioRestriccionService {
     private final RestriccionComentarioRepository comentarioRepository;
     private final RestriccionObraRepository restriccionRepository;
 
-    public CreateRestriccionComentarioUseCase(RestriccionComentarioRepository comentarioRepository, RestriccionObraRepository restriccionRepository) {
+    public ComentarioRestriccionService(RestriccionComentarioRepository comentarioRepository, RestriccionObraRepository restriccionRepository) {
         this.comentarioRepository = comentarioRepository;
         this.restriccionRepository = restriccionRepository;
     }
 
-    public RestriccionComentarioDto execute(Long restriccionId, RestriccionComentarioCreateDto dto) {
+    public RestriccionComentarioDto crear(Long restriccionId, RestriccionComentarioCreateDto dto) {
         RestriccionObra restriccion = restriccionRepository.findById(restriccionId)
             .orElseThrow(() -> new RecursoNoEncontradoException("Restriccion no encontrada"));
 
@@ -31,5 +32,12 @@ public class CreateRestriccionComentarioUseCase {
         comentario.setCreadoEn(LocalDateTime.now());
 
         return RestriccionMapper.toComentarioDto(comentarioRepository.save(comentario));
+    }
+
+    public List<RestriccionComentarioDto> listar(Long restriccionId) {
+        return comentarioRepository.findByRestriccionIdOrderByCreadoEnAsc(restriccionId)
+            .stream()
+            .map(RestriccionMapper::toComentarioDto)
+            .toList();
     }
 }

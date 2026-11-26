@@ -5,13 +5,13 @@ import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.*;
+import java.util.List;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Serializes mutations of a project's hour ledger before deriving its total. */
 @Service
-@Transactional
 public class RegistroHorasService {
     private final CurrentIdentity identity;
     private final ProyectoRepository projects;
@@ -23,6 +23,15 @@ public class RegistroHorasService {
         this.records = records;
     }
 
+    public List<RegistroHorasDto> listar(Long proyectoId) {
+        return records.findByProyectoId(proyectoId).stream().map(RegistroHorasMapper::toDto).toList();
+    }
+
+    public RegistroHorasDto obtener(Long id) {
+        return records.findById(id).map(RegistroHorasMapper::toDto).orElseThrow(RegistroHorasService::missingRecord);
+    }
+
+    @Transactional
     public RegistroHorasDto create(Long projectId, RegistroHorasDatos input) {
         Proyecto project = lockProject(projectId);
         RegistroHoras record = new RegistroHoras();
@@ -33,6 +42,7 @@ public class RegistroHorasService {
         return RegistroHorasMapper.toDto(saved);
     }
 
+    @Transactional
     public RegistroHorasDto update(Long id, RegistroHorasDatos input) {
         Proyecto project = lockRecordProject(id);
         RegistroHoras record = records.findById(id).orElseThrow(RegistroHorasService::missingRecord);
@@ -43,6 +53,7 @@ public class RegistroHorasService {
         return RegistroHorasMapper.toDto(saved);
     }
 
+    @Transactional
     public void delete(Long id) {
         Proyecto project = lockRecordProject(id);
         RegistroHoras record = records.findById(id).orElseThrow(RegistroHorasService::missingRecord);

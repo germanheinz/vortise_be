@@ -8,15 +8,10 @@ import com.vortise.gestion.application.dto.RestriccionUpdateDto;
 import com.vortise.gestion.application.usecase.ConsultarRestriccionesObraUseCase;
 import com.vortise.gestion.application.usecase.ConsultarRestriccionesObraUseCase.Filtro;
 import com.vortise.gestion.application.usecase.ConsultarRestriccionesObraUseCase.Respuesta;
-import com.vortise.gestion.application.usecase.CreateRestriccionComentarioUseCase;
-import com.vortise.gestion.application.usecase.CreateRestriccionUseCase;
+import com.vortise.gestion.application.usecase.ComentarioRestriccionService;
 import com.vortise.gestion.application.usecase.CrearRestriccionChatUseCase;
-import com.vortise.gestion.application.usecase.DeleteRestriccionUseCase;
-import com.vortise.gestion.application.usecase.GetRestriccionByIdUseCase;
-import com.vortise.gestion.application.usecase.GetRestriccionComentariosUseCase;
-import com.vortise.gestion.application.usecase.GetRestriccionesUseCase;
-import com.vortise.gestion.application.usecase.UpdateRestriccionUseCase;
 import com.vortise.gestion.infrastructure.security.Guards;
+import com.vortise.gestion.application.usecase.RestriccionService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
@@ -38,41 +33,26 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 public class RestriccionController {
+    private final RestriccionService restricciones;
     private final CrearRestriccionChatUseCase crearRestriccionChatUseCase;
     private final ConsultarRestriccionesObraUseCase consultarRestriccionesObraUseCase;
-    private final GetRestriccionesUseCase getRestriccionesUseCase;
-    private final CreateRestriccionUseCase createRestriccionUseCase;
-    private final GetRestriccionByIdUseCase getRestriccionByIdUseCase;
-    private final UpdateRestriccionUseCase updateRestriccionUseCase;
-    private final DeleteRestriccionUseCase deleteRestriccionUseCase;
-    private final GetRestriccionComentariosUseCase getRestriccionComentariosUseCase;
-    private final CreateRestriccionComentarioUseCase createRestriccionComentarioUseCase;
+    private final ComentarioRestriccionService comentarios;
 
     public RestriccionController(
+        RestriccionService restricciones,
         CrearRestriccionChatUseCase crearRestriccionChatUseCase,
         ConsultarRestriccionesObraUseCase consultarRestriccionesObraUseCase,
-        GetRestriccionesUseCase getRestriccionesUseCase,
-        CreateRestriccionUseCase createRestriccionUseCase,
-        GetRestriccionByIdUseCase getRestriccionByIdUseCase,
-        UpdateRestriccionUseCase updateRestriccionUseCase,
-        DeleteRestriccionUseCase deleteRestriccionUseCase,
-        GetRestriccionComentariosUseCase getRestriccionComentariosUseCase,
-        CreateRestriccionComentarioUseCase createRestriccionComentarioUseCase
+        ComentarioRestriccionService comentarios
     ) {
+        this.restricciones = restricciones;
         this.crearRestriccionChatUseCase = crearRestriccionChatUseCase;
         this.consultarRestriccionesObraUseCase = consultarRestriccionesObraUseCase;
-        this.getRestriccionesUseCase = getRestriccionesUseCase;
-        this.createRestriccionUseCase = createRestriccionUseCase;
-        this.getRestriccionByIdUseCase = getRestriccionByIdUseCase;
-        this.updateRestriccionUseCase = updateRestriccionUseCase;
-        this.deleteRestriccionUseCase = deleteRestriccionUseCase;
-        this.getRestriccionComentariosUseCase = getRestriccionComentariosUseCase;
-        this.createRestriccionComentarioUseCase = createRestriccionComentarioUseCase;
+        this.comentarios = comentarios;
     }
 
     @GetMapping("/proyectos/{proyectoId}/restricciones")
     public ResponseEntity<List<RestriccionDto>> getAll(@PathVariable Long proyectoId) {
-        return ResponseEntity.ok(getRestriccionesUseCase.execute(proyectoId));
+        return ResponseEntity.ok(restricciones.listarPorProyecto(proyectoId));
     }
 
     @GetMapping("/proyectos/{proyectoId}/chat/restricciones")
@@ -95,42 +75,42 @@ public class RestriccionController {
 
     @GetMapping("/restricciones")
     public ResponseEntity<List<RestriccionDto>> getAllRestricciones() {
-        return ResponseEntity.ok(getRestriccionesUseCase.executeAll());
+        return ResponseEntity.ok(restricciones.listarPorEmpresaActual());
     }
 
     @GetMapping("/restricciones/{id}")
     public ResponseEntity<RestriccionDto> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(getRestriccionByIdUseCase.execute(id));
+        return ResponseEntity.ok(restricciones.obtener(id));
     }
 
     @PostMapping("/proyectos/{proyectoId}/restricciones")
     @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ResponseEntity<RestriccionDto> create(@PathVariable Long proyectoId, @Valid @RequestBody RestriccionCreateDto dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(createRestriccionUseCase.execute(proyectoId, dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(restricciones.crear(proyectoId, dto));
     }
 
-    // A JEFE_DE_OBRA may only release a restriction once; UpdateRestriccionUseCase enforces it.
+    // A JEFE_DE_OBRA may only release a restriction once; RestriccionService enforces it.
     @PatchMapping("/restricciones/{id}")
     @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ResponseEntity<RestriccionDto> update(@PathVariable Long id, @RequestBody RestriccionUpdateDto dto) {
-        return ResponseEntity.ok(updateRestriccionUseCase.execute(id, dto));
+        return ResponseEntity.ok(restricciones.actualizar(id, dto));
     }
 
     @DeleteMapping("/restricciones/{id}")
     @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.GERENTE)
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        deleteRestriccionUseCase.execute(id);
+        restricciones.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/restricciones/{id}/comentarios")
     public ResponseEntity<List<RestriccionComentarioDto>> getComentarios(@PathVariable Long id) {
-        return ResponseEntity.ok(getRestriccionComentariosUseCase.execute(id));
+        return ResponseEntity.ok(comentarios.listar(id));
     }
 
     @PostMapping("/restricciones/{id}/comentarios")
     @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
     public ResponseEntity<RestriccionComentarioDto> createComentario(@PathVariable Long id, @Valid @RequestBody RestriccionComentarioCreateDto dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(createRestriccionComentarioUseCase.execute(id, dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(comentarios.crear(id, dto));
     }
 }

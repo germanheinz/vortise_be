@@ -12,20 +12,20 @@ import com.vortise.gestion.domain.repository.ObraTareaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.service.EstructuraRubros;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
-public class CreateObraTareaUseCase {
+public class ObraTareaService {
     private final ObraTareaRepository obraTareaRepository;
     private final ProyectoRepository proyectoRepository;
     private final CertificadoBloqueos bloqueos;
     private final CurrentIdentity identity;
 
     @Autowired
-    public CreateObraTareaUseCase(ObraTareaRepository obraTareaRepository, ProyectoRepository proyectoRepository,
+    public ObraTareaService(ObraTareaRepository obraTareaRepository, ProyectoRepository proyectoRepository,
             CertificadoBloqueos bloqueos, CurrentIdentity identity) {
         this.obraTareaRepository = obraTareaRepository;
         this.proyectoRepository = proyectoRepository;
@@ -33,11 +33,12 @@ public class CreateObraTareaUseCase {
         this.identity = identity;
     }
 
-    public CreateObraTareaUseCase(ObraTareaRepository obraTareaRepository, ProyectoRepository proyectoRepository) {
+    public ObraTareaService(ObraTareaRepository obraTareaRepository, ProyectoRepository proyectoRepository) {
         this(obraTareaRepository, proyectoRepository, null, null);
     }
 
-    public ObraTareaDto execute(Long proyectoId, ObraTareaCreateDto dto) {
+    @Transactional
+    public ObraTareaDto create(Long proyectoId, ObraTareaCreateDto dto) {
         Proyecto proyecto = proyectoRepository.findById(proyectoId)
             .orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado"));
 
@@ -51,6 +52,7 @@ public class CreateObraTareaUseCase {
         return ObraTareaMapper.toDto(obraTareaRepository.save(tarea));
     }
 
+    @Transactional
     public ObraTareaDto update(Long proyectoId, Long tareaId, ObraTareaCreateDto dto) {
         ObraTarea tarea = obraTareaRepository.findById(tareaId)
             .filter(item -> item.getProyecto().getId().equals(proyectoId))
@@ -64,6 +66,23 @@ public class CreateObraTareaUseCase {
         aplicarDatosDeCarga(tarea, dto);
 
         return ObraTareaMapper.toDto(obraTareaRepository.save(tarea));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ObraTareaDto> listar(Long proyectoId) {
+        return obraTareaRepository.findByProyectoId(proyectoId).stream().map(ObraTareaMapper::toDto).toList();
+    }
+
+    public void delete(Long proyectoId, Long tareaId) {
+        ObraTarea tarea = obraTareaRepository.findById(tareaId)
+            .orElseThrow(() -> new RecursoNoEncontradoException("Tarea no encontrada"));
+
+        if (tarea.getProyecto() == null || !proyectoId.equals(tarea.getProyecto().getId())) {
+            throw new SolicitudInvalidaException("La tarea no pertenece a la obra indicada");
+        }
+        if (bloqueos != null) bloqueos.validarAvance(proyectoId, tarea.getActividad(), tarea.getFecha());
+
+        obraTareaRepository.deleteById(tareaId);
     }
 
     private static void aplicarDatosDeCarga(ObraTarea tarea, ObraTareaCreateDto dto) {

@@ -51,7 +51,7 @@ class Quality14PostgresTest {
     @Autowired RegistroHorasService ledger;
     @Autowired InicializarEmpresaUseCase initialize;
     @Autowired EmpresaConfiguracionUseCase configuration;
-    @Autowired SaveEmpresaUseCase companyEditor;
+    @Autowired EmpresaService companyEditor;
     @Autowired UsuarioEmpresaUseCase users;
     @Autowired UsuarioEmpresaRepository userRepository;
     @Autowired UnidadMetricaEmpresaRepository units;

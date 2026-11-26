@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 class ConsultarRestriccionesObraUseCaseTest {
     private static final LocalDate CORTE = LocalDate.of(2026, 11, 20);
     private final ProyectoRepository proyectos = mock(ProyectoRepository.class);
-    private final GetRestriccionesUseCase restricciones = mock(GetRestriccionesUseCase.class);
+    private final RestriccionService restricciones = mock(RestriccionService.class);
     private final ConsultarRestriccionesObraUseCase consulta = new ConsultarRestriccionesObraUseCase(restricciones, proyectos);
 
     @Test
@@ -24,7 +24,7 @@ class ConsultarRestriccionesObraUseCaseTest {
         var obra = new Proyecto();
         obra.setNombre("Obra Norte");
         when(proyectos.findById(9L)).thenReturn(Optional.of(obra));
-        when(restricciones.execute(9L)).thenReturn(List.of(
+        when(restricciones.listarPorProyecto(9L)).thenReturn(List.of(
             restriccion(1L, CORTE.minusDays(1), null, " alta "),
             restriccion(2L, CORTE, null, "MEDIA"),
             restriccion(3L, CORTE.minusDays(2), CORTE, "ALTA")

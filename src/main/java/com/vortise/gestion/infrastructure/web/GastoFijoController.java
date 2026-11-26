@@ -18,11 +18,9 @@
 package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.GastoFijoDto;
-import com.vortise.gestion.application.usecase.DeleteGastoFijoUseCase;
-import com.vortise.gestion.application.usecase.GetGastosFijosUseCase;
-import com.vortise.gestion.application.usecase.SaveGastoFijoUseCase;
 import com.vortise.gestion.application.exception.FeatureUnavailableException;
 import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
+import com.vortise.gestion.application.usecase.GastoFijoService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -40,9 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value={"/api/gastos-fijos"})
 public class GastoFijoController {
-    private final GetGastosFijosUseCase getGastosFijosUseCase;
-    private final SaveGastoFijoUseCase saveGastoFijoUseCase;
-    private final DeleteGastoFijoUseCase deleteGastoFijoUseCase;
+    private final GastoFijoService gastoFijoService;
     private final ProductionFeaturePolicy featurePolicy;
 
     private void requireFeatureEnabled() {
@@ -54,7 +50,7 @@ public class GastoFijoController {
     @GetMapping
     public ResponseEntity<List<GastoFijoDto>> getAll() {
         requireFeatureEnabled();
-        return ResponseEntity.ok(this.getGastosFijosUseCase.execute());
+        return ResponseEntity.ok(gastoFijoService.listar());
     }
 
     @PostMapping
@@ -62,7 +58,7 @@ public class GastoFijoController {
     public ResponseEntity<GastoFijoDto> create(@Valid @RequestBody GastoFijoDto dto) {
         requireFeatureEnabled();
         GastoFijoDto sinId = new GastoFijoDto(null, dto.concepto(), dto.monto(), dto.categoria(), dto.mes());
-        return ResponseEntity.status((HttpStatusCode)HttpStatus.CREATED).body(this.saveGastoFijoUseCase.execute(sinId));
+        return ResponseEntity.status((HttpStatusCode)HttpStatus.CREATED).body(gastoFijoService.guardar(sinId));
     }
 
     @PutMapping(value={"/{id}"})
@@ -70,22 +66,19 @@ public class GastoFijoController {
     public ResponseEntity<GastoFijoDto> update(@PathVariable Long id, @Valid @RequestBody GastoFijoDto dto) {
         requireFeatureEnabled();
         GastoFijoDto conId = new GastoFijoDto(id, dto.concepto(), dto.monto(), dto.categoria(), dto.mes());
-        return ResponseEntity.ok(this.saveGastoFijoUseCase.execute(conId));
+        return ResponseEntity.ok(gastoFijoService.guardar(conId));
     }
 
     @DeleteMapping(value={"/{id}"})
     @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         requireFeatureEnabled();
-        this.deleteGastoFijoUseCase.execute(id);
+        gastoFijoService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 
-    public GastoFijoController(GetGastosFijosUseCase getGastosFijosUseCase, SaveGastoFijoUseCase saveGastoFijoUseCase,
-            DeleteGastoFijoUseCase deleteGastoFijoUseCase, ProductionFeaturePolicy featurePolicy) {
-        this.getGastosFijosUseCase = getGastosFijosUseCase;
-        this.saveGastoFijoUseCase = saveGastoFijoUseCase;
-        this.deleteGastoFijoUseCase = deleteGastoFijoUseCase;
+    public GastoFijoController(GastoFijoService gastoFijoService, ProductionFeaturePolicy featurePolicy) {
+        this.gastoFijoService = gastoFijoService;
         this.featurePolicy = featurePolicy;
     }
 }

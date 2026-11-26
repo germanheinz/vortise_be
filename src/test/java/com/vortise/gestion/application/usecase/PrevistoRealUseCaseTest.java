@@ -125,10 +125,10 @@ class PrevistoRealUseCaseTest {
     @Test void savesAnActivityInProcessWithoutExecutedQuantity() {
         when(tasks.save(any())).thenAnswer(i -> i.getArgument(0));
         var sinCantidad = new ObraTareaCreateDto("Carga",null,null,"kg","x",null,null,null,null,100.,80.,null,null,null,null,LocalDate.of(2026,10,14),10L);
-        var saved = new CreateObraTareaUseCase(tasks,projects).execute(1L,sinCantidad);
+        var saved = new ObraTareaService(tasks,projects).create(1L,sinCantidad);
         assertEquals(10L,saved.rubroId()); assertNull(saved.cantidadReal()); assertNull(saved.porcentajeCumplimiento());
         var invalida = new ObraTareaCreateDto("Carga",null,null,"kg","x",null,null,null,null,100.,80.,null,-1.,null,null,LocalDate.of(2026,10,14),10L);
-        assertThrows(SolicitudInvalidaException.class,() -> new CreateObraTareaUseCase(tasks,projects).execute(1L,invalida));
+        assertThrows(SolicitudInvalidaException.class,() -> new ObraTareaService(tasks,projects).create(1L,invalida));
     }
     @Test void loadsWithoutQuantityAddNothingButDoNotErasePhysicalProgress() {
         var enProceso = task(2,10L,0); enProceso.setCantidadReal(null);
@@ -140,12 +140,12 @@ class PrevistoRealUseCaseTest {
     }
     @Test void desencofradoLoadsOnlyImputeHoursAndAreFlaggedOnTheActivity() {
         when(tasks.save(any())).thenAnswer(i -> i.getArgument(0));
-        var service = new CreateObraTareaUseCase(tasks,projects);
+        var service = new ObraTareaService(tasks,projects);
         var soloHoras = new ObraTareaCreateDto("Desencofrado",null,null,"kg","x",null,null,null,null,40.,40.,null,null,null,null,LocalDate.of(2026,10,14),10L,1,true);
-        var saved = service.execute(1L,soloHoras);
+        var saved = service.create(1L,soloHoras);
         assertTrue(saved.desencofrado()); assertNull(saved.cantidadReal());
         var conCantidad = new ObraTareaCreateDto("Desencofrado",null,null,"kg","x",null,null,null,null,40.,40.,null,15.,null,null,LocalDate.of(2026,10,14),10L,1,true);
-        assertThrows(SolicitudInvalidaException.class,() -> service.execute(1L,conCantidad));
+        assertThrows(SolicitudInvalidaException.class,() -> service.create(1L,conCantidad));
         var normal = task(1,10L,6); var desencofrado = task(2,10L,0); desencofrado.setCantidadReal(null); desencofrado.setDesencofrado(true);
         var summary = new GetPrevistoRealUseCase(projects,tasks,categories,calendars);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(normal));
@@ -161,33 +161,33 @@ class PrevistoRealUseCaseTest {
     }
     @Test void loadSpansTheRequestedDaysAndDefaultsToOneWhenOmitted() {
         when(tasks.save(any())).thenAnswer(i -> i.getArgument(0));
-        var service = new CreateObraTareaUseCase(tasks,projects);
-        assertEquals(3,service.execute(1L,conDias(3)).dias());
-        assertEquals(1,service.execute(1L,dto(10L)).dias(),"a client that does not send days gets one day");
+        var service = new ObraTareaService(tasks,projects);
+        assertEquals(3,service.create(1L,conDias(3)).dias());
+        assertEquals(1,service.create(1L,dto(10L)).dias(),"a client that does not send days gets one day");
     }
     @Test void rejectsDaysOutOfRangeAndKeepsThemWhenAnEditOmitsThem() {
         when(tasks.save(any())).thenAnswer(i -> i.getArgument(0));
-        var service = new CreateObraTareaUseCase(tasks,projects);
-        assertThrows(SolicitudInvalidaException.class,() -> service.execute(1L,conDias(0)));
-        assertThrows(SolicitudInvalidaException.class,() -> service.execute(1L,conDias(ObraTareaCreateDto.MAX_DIAS + 1)));
+        var service = new ObraTareaService(tasks,projects);
+        assertThrows(SolicitudInvalidaException.class,() -> service.create(1L,conDias(0)));
+        assertThrows(SolicitudInvalidaException.class,() -> service.create(1L,conDias(ObraTareaCreateDto.MAX_DIAS + 1)));
         var existing = task(1,10L,6); existing.setDias(4);
         when(tasks.findById(1L)).thenReturn(Optional.of(existing));
         assertEquals(4,service.update(1L,1L,dto(10L)).dias(),"an edit without days does not reset them");
         assertEquals(2,service.update(1L,1L,conDias(2)).dias());
     }
     @Test void rejectsForeignActivityBeforeSaving() {
-        assertThrows(IllegalArgumentException.class,() -> new CreateObraTareaUseCase(tasks,projects).execute(1L,dto(99L)));
+        assertThrows(IllegalArgumentException.class,() -> new ObraTareaService(tasks,projects).create(1L,dto(99L)));
         verify(tasks,never()).save(any());
     }
     @Test void derivesIdentityFromOwnedActivity() {
         when(tasks.save(any())).thenAnswer(i -> i.getArgument(0));
-        var saved = new CreateObraTareaUseCase(tasks,projects).execute(1L,dto(10L));
+        var saved = new ObraTareaService(tasks,projects).create(1L,dto(10L));
         assertEquals(10L,saved.rubroId()); assertEquals("m3",saved.unidad()); assertEquals("Hormigón",saved.rubro());
     }
     @Test
     void editChecksPreviousAdvanceThenNewAdvanceAndPreservesRegistration() {
         var bloqueos = mock(CertificadoBloqueos.class);
-        var service = new CreateObraTareaUseCase(tasks, projects, bloqueos, null);
+        var service = new ObraTareaService(tasks, projects, bloqueos, null);
         var existing = task(1, 10L, 6);
         var actividadAnterior = existing.getActividad();
         var fechaAnterior = LocalDate.of(2026, 10, 10);
@@ -214,7 +214,7 @@ class PrevistoRealUseCaseTest {
         var other = new Proyecto(); other.setId(2L);
         var t = task(1,10L,6); t.setProyecto(other);
         when(tasks.findById(1L)).thenReturn(Optional.of(t));
-        assertThrows(IllegalArgumentException.class,() -> new CreateObraTareaUseCase(tasks,projects).update(1L,1L,dto(10L)));
+        assertThrows(IllegalArgumentException.class,() -> new ObraTareaService(tasks,projects).update(1L,1L,dto(10L)));
         verify(tasks,never()).save(any());
     }
     @Test
@@ -223,12 +223,12 @@ class PrevistoRealUseCaseTest {
         activity.setHorasOficialesPrevistas(100.);
         activity.setHorasAyudantesPrevistas(100.);
         when(tasks.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        var service = new CreateObraTareaUseCase(tasks, projects);
+        var service = new ObraTareaService(tasks, projects);
 
         var datos = new ObraTareaCreateDto("Carga", null, null, "m2", "Hormigón", 90.,
                 null, null, null, 100., 80., 99., 6., null, null, LocalDate.of(2026, 10, 14), 10L);
 
-        var creada = service.execute(1L, datos);
+        var creada = service.create(1L, datos);
         assertEquals(18., creada.cantidadPrevista());
         assertEquals(33.33, creada.porcentajeCumplimiento());
         var guardada = org.mockito.ArgumentCaptor.forClass(ObraTarea.class);
@@ -259,9 +259,9 @@ class PrevistoRealUseCaseTest {
     void stillRejectsAnInvalidPreviewQuantity() {
         var datos = new ObraTareaCreateDto("Carga", null, null, "m2", "Hormigón", null,
                 null, null, null, 100., 80., -1., 6., null, null, LocalDate.of(2026, 10, 14), 10L);
-        var service = new CreateObraTareaUseCase(tasks, projects);
+        var service = new ObraTareaService(tasks, projects);
 
-        var error = assertThrows(SolicitudInvalidaException.class, () -> service.execute(1L, datos));
+        var error = assertThrows(SolicitudInvalidaException.class, () -> service.create(1L, datos));
         assertEquals("Cantidad prevista inválida", error.getMessage());
         verify(tasks, never()).save(any());
     }
@@ -275,19 +275,19 @@ class PrevistoRealUseCaseTest {
         carga.setCantidadPrevista(99.);
         carga.setPorcentajeCumplimiento(42.);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(carga));
-        var listado = new GetObraTareasUseCase(tasks);
+        var listado = new ObraTareaService(tasks, projects);
 
-        var inicial = listado.execute(1L).get(0);
+        var inicial = listado.listar(1L).get(0);
         assertEquals(18., inicial.cantidadPrevista());
         assertEquals(33.33, inicial.porcentajeCumplimiento());
 
         activity.setCantidad(10.);
-        var actualizado = listado.execute(1L).get(0);
+        var actualizado = listado.listar(1L).get(0);
         assertEquals(9., actualizado.cantidadPrevista());
         assertEquals(66.67, actualizado.porcentajeCumplimiento());
 
         carga.setHorasAyudantes(null);
-        var sinHorasCompletas = listado.execute(1L).get(0);
+        var sinHorasCompletas = listado.listar(1L).get(0);
         assertNull(sinHorasCompletas.cantidadPrevista());
         assertNull(sinHorasCompletas.porcentajeCumplimiento());
     }
@@ -302,7 +302,7 @@ class PrevistoRealUseCaseTest {
         }
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(sinVinculo, rubroAusente));
 
-        var respuestas = new GetObraTareasUseCase(tasks).execute(1L);
+        var respuestas = new ObraTareaService(tasks, projects).listar(1L);
         assertEquals(2, respuestas.size());
         for (var respuesta : respuestas) {
             assertEquals(8., respuesta.cantidadPrevista());
@@ -323,24 +323,24 @@ class PrevistoRealUseCaseTest {
         verify(categories,never()).save(any()); verify(calendars,never()).save(any());
     }
     @Test void unlinkedNewTaskIsRejected() {
-        assertThrows(IllegalArgumentException.class,() -> new CreateObraTareaUseCase(tasks,projects).execute(1L,dto(null)));
+        assertThrows(IllegalArgumentException.class,() -> new ObraTareaService(tasks,projects).create(1L,dto(null)));
         verify(tasks,never()).save(any());
     }
     @Test void subcontractedActivityAcceptsLoadsWithoutHoursAndDropsAnySent() {
         activity.setTipoContratista("SUBCONTRATO");
         when(tasks.save(any())).thenAnswer(i -> i.getArgument(0));
         var withoutHours = new ObraTareaCreateDto("Carga",null,null,"kg","wrong",null,null,null,null,null,null,null,6.,null,null,LocalDate.of(2026,10,14),10L);
-        var saved = new CreateObraTareaUseCase(tasks,projects).execute(1L,withoutHours);
+        var saved = new ObraTareaService(tasks,projects).create(1L,withoutHours);
         assertNull(saved.horasOficiales()); assertNull(saved.horasAyudantes()); assertEquals(6.,saved.cantidadReal());
-        var ignored = new CreateObraTareaUseCase(tasks,projects).execute(1L,dto(10L));
+        var ignored = new ObraTareaService(tasks,projects).create(1L,dto(10L));
         assertNull(ignored.horasOficiales()); assertNull(ignored.horasAyudantes());
         var withoutQuantity = new ObraTareaCreateDto("Carga",null,null,"kg","wrong",null,null,null,null,null,null,null,null,null,null,LocalDate.of(2026,10,14),10L);
         // La cantidad ejecutada es opcional: la carga queda como actividad en proceso.
-        assertNull(new CreateObraTareaUseCase(tasks,projects).execute(1L,withoutQuantity).cantidadReal());
+        assertNull(new ObraTareaService(tasks,projects).create(1L,withoutQuantity).cantidadReal());
     }
     @Test void ownLaborActivityStillRequiresHours() {
         var withoutHours = new ObraTareaCreateDto("Carga",null,null,"kg","wrong",null,null,null,null,null,null,null,6.,null,null,LocalDate.of(2026,10,14),10L);
-        assertThrows(IllegalArgumentException.class,() -> new CreateObraTareaUseCase(tasks,projects).execute(1L,withoutHours));
+        assertThrows(IllegalArgumentException.class,() -> new ObraTareaService(tasks,projects).create(1L,withoutHours));
         verify(tasks,never()).save(any());
     }
 

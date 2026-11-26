@@ -27,11 +27,11 @@ public class CrearRestriccionChatUseCase {
 
     private final ProyectoRepository proyectos;
     private final AltaRestriccionChatRepository altas;
-    private final CreateRestriccionUseCase crear;
+    private final RestriccionService crear;
     private final CurrentIdentity identidad;
 
     public CrearRestriccionChatUseCase(ProyectoRepository proyectos, AltaRestriccionChatRepository altas,
-            CreateRestriccionUseCase crear, CurrentIdentity identidad) {
+            RestriccionService crear, CurrentIdentity identidad) {
         this.proyectos = proyectos;
         this.altas = altas;
         this.crear = crear;
@@ -64,7 +64,7 @@ public class CrearRestriccionChatUseCase {
             return new Resultado(alta.getRestriccionId(), proyectoId, proyecto.getNombre(), fechaLimite, true);
         }
 
-        var creada = crear.execute(proyectoId, new RestriccionCreateDto(descripcion,
+        var creada = crear.crear(proyectoId, new RestriccionCreateDto(descripcion,
             null, null, null, null, null, null, null, LocalDate.now(ZONA_OBRA),
             fechaLimite, null, null, null, "PENDIENTE"));
         altas.save(new AltaRestriccionChat(claveHash, solicitudHash, proyectoId, usuarioId, creada.id()));

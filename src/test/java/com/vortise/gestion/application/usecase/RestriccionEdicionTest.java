@@ -13,10 +13,10 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class UpdateRestriccionUseCaseTest {
+class RestriccionEdicionTest {
     private RestriccionObraRepository repository;
     private RubroObraRepository rubros;
-    private UpdateRestriccionUseCase useCase;
+    private RestriccionService useCase;
     private RestriccionObra restriction;
     private Proyecto project;
     private final LocalDate start = LocalDate.of(2026, 10, 1);
@@ -25,7 +25,7 @@ class UpdateRestriccionUseCaseTest {
     @BeforeEach void setup() {
         repository = mock(RestriccionObraRepository.class);
         rubros = mock(RubroObraRepository.class);
-        useCase = new UpdateRestriccionUseCase(repository, rubros);
+        useCase = new RestriccionService(repository, null, rubros, null);
         project = new Proyecto(); project.setId(1L); project.setNombre("Obra");
         restriction = new RestriccionObra(); restriction.setId(2L); restriction.setProyecto(project);
         restriction.setArea("Compras"); restriction.setResponsable("Ana");
@@ -35,7 +35,7 @@ class UpdateRestriccionUseCaseTest {
     }
 
     @Test void boardStatusUpdatePreservesAreaAndDates() {
-        var result = useCase.execute(2L, new RestriccionUpdateDto(null, "RESUELTO", 3));
+        var result = useCase.actualizar(2L, new RestriccionUpdateDto(null, "RESUELTO", 3));
         assertEquals("Compras", result.area()); assertEquals("Ana", result.responsable());
         assertEquals(start, result.fechaSolicitud()); assertEquals(due, result.fechaMaximaEntrega());
         assertEquals("RESUELTO", result.estado());
@@ -46,8 +46,8 @@ class UpdateRestriccionUseCaseTest {
     @Test void resolvingKeepsExistingRealDateAndReopeningClearsIt() {
         var real = start.plusDays(2);
         restriction.setFechaRealEntrega(real);
-        assertEquals(real, useCase.execute(2L, new RestriccionUpdateDto(null, "RESUELTO", null)).fechaRealEntrega());
-        assertNull(useCase.execute(2L, new RestriccionUpdateDto(null, "PENDIENTE", null)).fechaRealEntrega());
+        assertEquals(real, useCase.actualizar(2L, new RestriccionUpdateDto(null, "RESUELTO", null)).fechaRealEntrega());
+        assertNull(useCase.actualizar(2L, new RestriccionUpdateDto(null, "PENDIENTE", null)).fechaRealEntrega());
     }
 
     @Test void linksPreviouslyUnassignedRestrictionToSubrubroFromSameProject() {
@@ -56,7 +56,7 @@ class UpdateRestriccionUseCaseTest {
         activity.setSubRubro("Tendido eléctrico"); activity.setNivel("Nivel 2"); activity.setUnidad("m");
         when(rubros.findById(31L)).thenReturn(Optional.of(activity));
 
-        var result = useCase.execute(2L, new RestriccionUpdateDto(null, null, null,
+        var result = useCase.actualizar(2L, new RestriccionUpdateDto(null, null, null,
             null, null, null, null, null, false, 31L));
 
         assertEquals(31L, result.rubroId());
@@ -70,7 +70,7 @@ class UpdateRestriccionUseCaseTest {
         foreignActivity.setId(31L); foreignActivity.setProyecto(otherProject); foreignActivity.setSubRubro("Tendido eléctrico");
         when(rubros.findById(31L)).thenReturn(Optional.of(foreignActivity));
 
-        assertThrows(IllegalArgumentException.class, () -> useCase.execute(2L,
+        assertThrows(IllegalArgumentException.class, () -> useCase.actualizar(2L,
             new RestriccionUpdateDto(null, null, null, null, null, null, null, null, false, 31L)));
         assertNull(restriction.getRubroVinculado());
         verify(repository, never()).save(any());
@@ -78,11 +78,11 @@ class UpdateRestriccionUseCaseTest {
 
     @Test void storesIndependentAreaAndDeliveryDatesAndSupportsExplicitClearing() {
         var real = due.plusDays(2);
-        var result = useCase.execute(2L, new RestriccionUpdateDto(null, null, null,
+        var result = useCase.actualizar(2L, new RestriccionUpdateDto(null, null, null,
             " Ingeniería ", "Luis", start, due, real, true));
         assertEquals("Ingeniería", result.area()); assertEquals("Luis", result.responsable());
         assertEquals(real, result.fechaRealEntrega());
-        var cleared = useCase.execute(2L, new RestriccionUpdateDto(null, null, null,
+        var cleared = useCase.actualizar(2L, new RestriccionUpdateDto(null, null, null,
             "", "", start, due, null, true));
         assertNull(cleared.area()); assertNull(cleared.responsable()); assertNull(cleared.fechaRealEntrega());
         assertEquals(start, cleared.fechaSolicitud()); assertEquals(due, cleared.fechaMaximaEntrega());
@@ -90,7 +90,7 @@ class UpdateRestriccionUseCaseTest {
 
     @Test void rejectsInvalidDatesBeforeMutatingOrSaving() {
         for (var dates : new LocalDate[][]{{start, start.minusDays(1), null}, {start, due, start.minusDays(1)}, {start, null, null}}) {
-            assertThrows(IllegalArgumentException.class, () -> useCase.execute(2L,
+            assertThrows(IllegalArgumentException.class, () -> useCase.actualizar(2L,
                 new RestriccionUpdateDto(null, null, null, "Nueva", null, dates[0], dates[1], dates[2], true)));
         }
         assertEquals("Compras", restriction.getArea()); assertEquals(due, restriction.getFechaMaximaEntrega());
@@ -98,7 +98,7 @@ class UpdateRestriccionUseCaseTest {
     }
 
     @Test void areaLengthAndNormalizationAreValidated() {
-        assertThrows(IllegalArgumentException.class, () -> useCase.execute(2L,
+        assertThrows(IllegalArgumentException.class, () -> useCase.actualizar(2L,
             new RestriccionUpdateDto(null, null, null, "x".repeat(121), null, null, null, null, false)));
         assertEquals("Compras", restriction.getArea()); verify(repository, never()).save(any());
     }

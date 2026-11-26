@@ -24,7 +24,7 @@ import org.springframework.security.access.AccessDeniedException;
 class UpdateRestriccionJefeRulesTest {
     private final RestriccionObraRepository repository = mock(RestriccionObraRepository.class);
     private final CurrentIdentity identity = mock(CurrentIdentity.class);
-    private final UpdateRestriccionUseCase useCase = new UpdateRestriccionUseCase(repository, mock(RubroObraRepository.class), identity);
+    private final RestriccionService useCase = new RestriccionService(repository, null, mock(RubroObraRepository.class), identity);
     private RestriccionObra restriction;
 
     @BeforeEach
@@ -43,22 +43,22 @@ class UpdateRestriccionJefeRulesTest {
 
     @Test
     void jefeCanReleaseAPendingRestriction() {
-        assertEquals("RESUELTO", useCase.execute(2L, new RestriccionUpdateDto(null, "RESUELTO", 3)).estado());
+        assertEquals("RESUELTO", useCase.actualizar(2L, new RestriccionUpdateDto(null, "RESUELTO", 3)).estado());
     }
 
     @Test
     void jefeCannotChangeAResolvedRestrictionAgain() {
         restriction.setEstado("RESUELTO");
 
-        assertThrows(ReglaDeEstadoException.class, () -> useCase.execute(2L, new RestriccionUpdateDto(null, "PENDIENTE", null)));
+        assertThrows(ReglaDeEstadoException.class, () -> useCase.actualizar(2L, new RestriccionUpdateDto(null, "PENDIENTE", null)));
         verify(repository, never()).save(any());
     }
 
     @Test
     void jefeCannotEditRestrictionData() {
-        assertThrows(AccessDeniedException.class, () -> useCase.execute(2L, new RestriccionUpdateDto("ALTA", null, null)));
-        assertThrows(AccessDeniedException.class, () -> useCase.execute(2L, new RestriccionUpdateDto("ALTA", "RESUELTO", null)));
-        assertThrows(AccessDeniedException.class, () -> useCase.execute(2L, new RestriccionUpdateDto(null, null, null,
+        assertThrows(AccessDeniedException.class, () -> useCase.actualizar(2L, new RestriccionUpdateDto("ALTA", null, null)));
+        assertThrows(AccessDeniedException.class, () -> useCase.actualizar(2L, new RestriccionUpdateDto("ALTA", "RESUELTO", null)));
+        assertThrows(AccessDeniedException.class, () -> useCase.actualizar(2L, new RestriccionUpdateDto(null, null, null,
             "Compras", null, null, null, null, false, null)));
         verify(repository, never()).save(any());
     }
@@ -68,6 +68,6 @@ class UpdateRestriccionJefeRulesTest {
         when(identity.isJefeDeObra()).thenReturn(false);
         restriction.setEstado("RESUELTO");
 
-        assertEquals("PENDIENTE", useCase.execute(2L, new RestriccionUpdateDto("ALTA", "PENDIENTE", null)).estado());
+        assertEquals("PENDIENTE", useCase.actualizar(2L, new RestriccionUpdateDto("ALTA", "PENDIENTE", null)).estado());
     }
 }

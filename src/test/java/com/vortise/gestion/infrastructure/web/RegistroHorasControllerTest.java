@@ -10,8 +10,6 @@ import static org.mockito.Mockito.when;
 import com.vortise.gestion.application.dto.RegistroHorasCreateDto;
 import com.vortise.gestion.application.dto.RegistroHorasDto;
 import com.vortise.gestion.application.dto.RegistroHorasUpdateDto;
-import com.vortise.gestion.application.usecase.GetRegistroHorasByIdUseCase;
-import com.vortise.gestion.application.usecase.GetRegistrosHorasUseCase;
 import com.vortise.gestion.application.usecase.RegistroHorasService;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.Test;
@@ -21,8 +19,7 @@ class RegistroHorasControllerTest {
     @Test
     void mutationsDelegateToServiceAndReturnExistingStatuses() {
         var servicio = mock(RegistroHorasService.class);
-        var controller = new RegistroHorasController(
-                mock(GetRegistrosHorasUseCase.class), mock(GetRegistroHorasByIdUseCase.class), servicio);
+        var controller = new RegistroHorasController(servicio);
         var inicio = OffsetDateTime.parse("2026-11-26T08:00:00Z");
         var alta = new RegistroHorasCreateDto(null, null, null, null, null, inicio, inicio.plusHours(1),
                 null, null, null, null, null, null, null, null);
