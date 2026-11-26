@@ -43,15 +43,24 @@ public class ClerkUserSyncService {
             return existing.get();
         }
 
-        // 2. Buscar por email (usuario pre-existente a migrar)
+        // 2. Buscar por email (usuario pre-existente o invitado)
         email = email.trim().toLowerCase();
         Optional<UsuarioEmpresa> preExistente = usuarioRepository.findByEmail(email);
         if (preExistente.isPresent()) {
             UsuarioEmpresa usuario = preExistente.get();
+            
+            // Si fue invitado, invalidar código de invitación
+            if (usuario.getCodigoInvitacion() != null) {
+                log.info("Accepting invitation for user: {}", email);
+                usuario.setCodigoInvitacion(null);
+                usuario.setInvitacionExpiraEn(null);
+            }
+            
             usuario.setClerkUserId(clerkUserId);
             usuario.setMigradoAClerk(true);
+            usuario.setTieneLogin(true);
             usuarioRepository.save(usuario);
-            log.info("Migrated pre-existing user {} to Clerk", email);
+            log.info("Migrated user {} to Clerk", email);
             return usuario;
         }
 
