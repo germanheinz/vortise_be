@@ -1,4 +1,4 @@
-package com.vortise.gestion.controller;
+package com.vortise.gestion.controller.admin;
 
 import com.vortise.gestion.infrastructure.backup.BackupValidationException;
 import com.vortise.gestion.infrastructure.backup.H2LogicalBackupService;

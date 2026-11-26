@@ -1,4 +1,4 @@
-package com.vortise.gestion.controller;
+package com.vortise.gestion.controller.admin;
 
 import com.vortise.gestion.application.exception.FeatureUnavailableException;
 import org.springframework.context.annotation.Profile;
