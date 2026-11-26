@@ -24,4 +24,7 @@ public class AceptarInvitacionUsuarioController {
     @PostMapping("/aceptar") public ResponseEntity<LoginResponseDto> aceptar(@Valid @RequestBody Aceptar dto) {
         return cookies.respond(HttpStatus.CREATED, sesiones.abrir(useCase.aceptar(dto)));
     }
+    @PostMapping("/aceptar-clerk") public ResponseEntity<LoginResponseDto> aceptarClerk(@Valid @RequestBody AceptarClerk dto) {
+        return cookies.respond(HttpStatus.CREATED, sesiones.abrir(useCase.aceptarClerk(dto)));
+    }
 }

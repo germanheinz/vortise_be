@@ -27,6 +27,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.vortise.gestion.service.ClerkUserSyncService;
 
 /**
  * An administrator invites a person to the company with a fixed role. The person opens a one-time link,
@@ -44,13 +45,14 @@ public class InvitacionUsuarioService {
     private final CurrentIdentity identity;
     private final PasswordEncoder encoder;
     private final AutenticacionService autenticacion;
+    private final ClerkUserSyncService clerkSync;
     private final String frontend;
 
     public InvitacionUsuarioService(EmpresaRepository empresas, UsuarioEmpresaRepository usuarios, InvitacionUsuarioRepository invitaciones,
             ProyectoRepository proyectos, CurrentIdentity identity, PasswordEncoder encoder, AutenticacionService autenticacion,
-            @Value("${app.frontend-url}") String frontend) {
+            ClerkUserSyncService clerkSync, @Value("${app.frontend-url}") String frontend) {
         this.empresas = empresas; this.usuarios = usuarios; this.invitaciones = invitaciones; this.proyectos = proyectos;
-        this.identity = identity; this.encoder = encoder; this.autenticacion = autenticacion;
+        this.identity = identity; this.encoder = encoder; this.autenticacion = autenticacion; this.clerkSync = clerkSync;
         this.frontend = frontend.replaceAll("/+$", "");
     }
 
@@ -71,7 +73,7 @@ public class InvitacionUsuarioService {
         InvitacionUsuario invitacion = invitaciones.save(new InvitacionUsuario(InvitacionToken.hash(token), empresaId,
             identity.usuarioId(), email, dto.rol(), obras, now));
         AuditLog.userInvited(identity.usuarioId(), invitacion.getId(), dto.rol().name(), obras.size());
-        return new Creada(invitacion.getId(), frontend + "/invitacion-usuario#token=" + token, invitacion.getVenceEn(), email, dto.rol(), obras.size());
+        return new Creada(invitacion.getId(), frontend + "/invitacion-usuario#codigo=" + token, invitacion.getVenceEn(), email, dto.rol(), obras.size());
     }
 
     @Transactional(readOnly = true)
@@ -120,6 +122,33 @@ public class InvitacionUsuarioService {
         return autenticacion.sesion(usuario);
     }
 
+    @Transactional
+    public LoginResponseDto aceptarClerk(AceptarClerk dto) {
+        InvitacionUsuario invitacion = disponible(dto.codigo());
+        Long empresaId = invitacion.getEmpresaId();
+        Empresa empresa = empresas.bloquearPorId(empresaId).orElseThrow(this::noDisponible);
+        invitacion = invitaciones.bloquearPorId(invitacion.getId()).orElseThrow(this::noDisponible);
+        Instant now = Instant.now();
+        if (!invitacion.disponible(now)) throw noDisponible();
+        
+        if (usuarios.countByEmpresaIdAndActivoTrue(empresaId) >= empresa.getLimiteUsuarios()) {
+            throw new ConflictoEstadoException("La empresa alcanzó su límite de usuarios. Pedile al administrador que libere una plaza.");
+        }
+        
+        UsuarioEmpresa usuario = clerkSync.sincronizarDesdeClerk(dto.clerkUserId(), invitacion.getEmail());
+        if (usuario == null) {
+            throw new SolicitudInvalidaException("No se pudo sincronizar el usuario con Clerk.");
+        }
+        
+        if (invitacion.getRol() == RolEmpresa.JEFE_DE_OBRA) {
+            usuario.asignarObras(obrasDeLaEmpresa(empresaId, invitacion.getObraIds()));
+            usuarios.save(usuario);
+        }
+        
+        invitacion.consumir(now);
+        AuditLog.userInvitationAccepted(usuario.getId(), invitacion.getId(), invitacion.getRol().name());
+        return autenticacion.sesion(usuario);
+    }
     private void verificarCupo(Empresa empresa, Instant now) {
         long ocupadas = usuarios.countByEmpresaIdAndActivoTrue(empresa.getId()) + invitaciones.contarPendientes(empresa.getId(), now);
         if (ocupadas >= empresa.getLimiteUsuarios()) {
