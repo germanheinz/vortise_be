@@ -55,6 +55,7 @@ class ClerkTokenVerifierTest {
         assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(token(otherKeys, "kid-1", "user_1", null, later)));
         assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(token(clerkKeys, "kid-1", "user_1", null, NOW.minusSeconds(60))));
         assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(token(clerkKeys, "kid-1", "user_1", "https://evil.example", later)));
+        assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(token(clerkKeys, "kid-1", "user_1", null, later)));
         assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(token(clerkKeys, "unknown", "user_1", null, later)));
         assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(token(clerkKeys, "kid-1", "org_1", null, later)));
         assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(Jwts.builder().subject("user_1").compact()));
@@ -74,6 +75,19 @@ class ClerkTokenVerifierTest {
             {"primary_email_address_id":"e1","email_addresses":[
               {"id":"e1","email_address":"pending@example.invalid","verification":{"status":"unverified"}}]}""";
         assertEquals(Optional.empty(), verifier.verifiedPrimaryEmail("user_1"));
+    }
+
+    @Test
+    void anUnavailableKeySetIsRequestedAtMostOncePerInterval() {
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        var verifier = new ClerkTokenVerifier(true, path -> { calls.incrementAndGet(); throw new java.io.IOException("down"); },
+            List.of("http://localhost:3000"), Clock.fixed(NOW, ZoneOffset.UTC));
+        String token = token(clerkKeys, "kid-1", "user_1", "http://localhost:3000", NOW.plusSeconds(60));
+
+        assertThrows(FeatureUnavailableException.class, () -> verifier.verifySession(token));
+        assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(token));
+
+        assertEquals(1, calls.get());
     }
 
     @Test

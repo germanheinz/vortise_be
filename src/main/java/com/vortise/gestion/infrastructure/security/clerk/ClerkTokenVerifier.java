@@ -29,6 +29,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -48,6 +51,7 @@ public class ClerkTokenVerifier implements IdentidadExternaVerificador {
         String get(String path) throws IOException;
     }
 
+    private static final Logger log = LoggerFactory.getLogger(ClerkTokenVerifier.class);
     private static final Duration KEY_REFRESH_INTERVAL = Duration.ofMinutes(1);
     private static final Duration CLOCK_SKEW = Duration.ofSeconds(5);
 
@@ -57,14 +61,19 @@ public class ClerkTokenVerifier implements IdentidadExternaVerificador {
     private final Clock clock;
     private final ObjectMapper json = new ObjectMapper();
     private volatile Map<String, RSAPublicKey> keys = Map.of();
-    private volatile Instant keysFetchedAt = Instant.EPOCH;
+    // Recorded before fetching, so a failing or slow Clerk API is still called at most once per interval.
+    private final AtomicReference<Instant> lastKeyRefresh = new AtomicReference<>(Instant.EPOCH);
 
     @Autowired
     public ClerkTokenVerifier(@Value("${app.clerk.enabled:false}") boolean enabled,
             @Value("${app.clerk.secret-key:}") String secretKey,
             @Value("${app.clerk.api-url:https://api.clerk.com/v1}") String apiUrl,
+            @Value("${app.auth.password-login.enabled:false}") boolean passwordLogin,
             WebEnvironmentConfiguration web) {
         this(enabled && secretKey != null && !secretKey.isBlank(), httpApi(apiUrl, secretKey), web.allowedOrigins(), Clock.systemUTC());
+        if (!this.enabled && !passwordLogin) {
+            log.error("Clerk is not configured (CLERK_ENABLED / CLERK_SECRET_KEY) and password login is off: nobody can sign in");
+        }
     }
 
     ClerkTokenVerifier(boolean enabled, ClerkApi api, List<String> allowedOrigins, Clock clock) {
@@ -99,8 +108,9 @@ public class ClerkTokenVerifier implements IdentidadExternaVerificador {
         }
         String userId = claims.getSubject();
         if (userId == null || !userId.startsWith("user_")) throw new IdentidadNoVerificadaException("La sesión de la cuenta no es válida.");
+        // Browser session tokens always carry the requesting origin.
         String azp = claims.get("azp", String.class);
-        if (azp != null && !allowedOrigins.contains(azp.replaceAll("/+$", ""))) {
+        if (azp == null || !allowedOrigins.contains(azp.replaceAll("/+$", ""))) {
             throw new IdentidadNoVerificadaException("La sesión de la cuenta no es válida.");
         }
         return userId;
@@ -127,15 +137,11 @@ public class ClerkTokenVerifier implements IdentidadExternaVerificador {
     private Key keyFor(String keyId) {
         RSAPublicKey key = keyId == null ? null : keys.get(keyId);
         if (key != null) return key;
-        // Clerk rotates keys; refresh on an unknown kid, but not more than once per interval.
+        // Clerk rotates keys; refresh on an unknown kid. Only one caller per interval fetches; the rest never wait on it.
         Instant now = clock.instant();
-        if (Duration.between(keysFetchedAt, now).compareTo(KEY_REFRESH_INTERVAL) >= 0) {
-            synchronized (this) {
-                if (Duration.between(keysFetchedAt, now).compareTo(KEY_REFRESH_INTERVAL) >= 0) {
-                    keys = fetchKeys();
-                    keysFetchedAt = now;
-                }
-            }
+        Instant previous = lastKeyRefresh.get();
+        if (Duration.between(previous, now).compareTo(KEY_REFRESH_INTERVAL) >= 0 && lastKeyRefresh.compareAndSet(previous, now)) {
+            keys = fetchKeys();
             key = keyId == null ? null : keys.get(keyId);
         }
         if (key == null) throw new IdentidadNoVerificadaException("La sesión de la cuenta no es válida.");

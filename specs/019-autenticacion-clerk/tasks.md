@@ -6,8 +6,9 @@
 - [x] Decisiones de producto confirmadas por el usuario (2026-11-26): intercambio de sesión, solo Clerk, registro con Clerk, Google, super admin vinculado.
 - [x] Spec y plan aprobados por el usuario (2026-11-26). Alcance: implementación BE019/FE041 y tests unitarios sin contexto.
 - [ ] Tests HTTP y `mvn verify`: **no autorizados** (2026-11-26); pendientes de aprobación.
-- [ ] Implementación.
-- [ ] Verificación.
+- [x] Implementación (2026-11-26).
+- [x] Tests unitarios sin contexto: 50/50 (ver evidencia).
+- [ ] Tests HTTP y `mvn verify` (no autorizados).
 - [ ] Revisión independiente y cierre.
 
 ## Tareas
@@ -21,6 +22,29 @@
 7. Eliminar `ClerkJwtInterceptor`, `ClerkTokenValidator`, `InvitacionController` y DTO asociados.
 8. `SuperAdminSeeder` sin contraseña utilizable.
 9. Tests unitarios y HTTP.
+
+## Evidencia de implementación
+
+Comando (sin Spring ni base de datos):
+
+`mvn -Dtest=ClerkTokenVerifierTest,IdentidadExternaServiceTest,RegistroServiceTest,InvitacionUsuarioServiceTest,InvitacionesServiceIdentidadTest,SuperAdminSeederTest,SeedersSkipOnInitializedDatabaseTest,WriteEndpointsGuardTest,CompanyInitializationTest,AutenticacionServiceTest test`
+
+Resultado: 50 tests, 0 fallos, 0 errores. `mvn test-compile` compila todo el árbol de tests.
+
+Cambios relevantes:
+
+- Puerto `application/port/IdentidadExternaVerificador`; adaptador `ClerkTokenVerifier`.
+- `IdentidadExternaService` (login y vinculación por email verificado), `RegistroService.registrarConIdentidad`, `InvitacionUsuarioService.aceptarConIdentidad`, `InvitacionesService.aceptarConIdentidad`.
+- `UsuarioEmpresa.conIdentidadExterna` y `vincularIdentidadExterna`.
+- `ClerkAuthController` (`/api/auth/clerk/sesion`, `/api/auth/clerk/registro`) y `/api/auth/invitaciones/aceptar-clerk`.
+- `LoginConContrasenaPolicy` (`app.auth.password-login.enabled`, `false` por defecto; `true` en `planta-authorization-test`, `e2e-local` y `TeamInvitationsPostgresTest`), `410 LOGIN_CON_CONTRASENA_DESACTIVADO`.
+- Eliminados: `ClerkJwtInterceptor`, `ClerkTokenValidator`, `ClerkConfig`, `ClerkUserSyncService`, `InvitacionController` (`/api/invitacion/**`) y sus DTO.
+- `SuperAdminSeeder` sin contraseña utilizable cuando el login por contraseña está apagado.
+
+## Pendientes
+
+- Tests HTTP de los endpoints nuevos con un verificador falso y `mvn verify` (requieren aprobación).
+- Las columnas `codigo_invitacion` e `invitacion_expira_en` quedan sin uso; eliminarlas requiere una migración aparte.
 
 ## Evidencia previa (cambios ya aplicados en esta sesión)
 
