@@ -1,5 +1,6 @@
-package com.vortise.gestion.service;
+package com.vortise.gestion.service.authentication;
 
+import com.vortise.gestion.service.EmpresaConfiguracionService;
 import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.application.dto.RegistroRequestDto;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;

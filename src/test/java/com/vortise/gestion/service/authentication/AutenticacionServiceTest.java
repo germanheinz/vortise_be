@@ -1,5 +1,6 @@
-package com.vortise.gestion.service;
+package com.vortise.gestion.service.authentication;
 
+import com.vortise.gestion.service.EquipoAccessPolicy;
 import com.vortise.gestion.service.pagos.SuscripcionConsultaService;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;

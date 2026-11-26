@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.service.JwtService;
+import com.vortise.gestion.service.authentication.JwtService;
 import com.vortise.gestion.domain.model.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;

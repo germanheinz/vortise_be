@@ -108,3 +108,7 @@ ProyectoService reúne las consultas y la baja. Se conservan las rutas, guardas,
 ### Alta y datos comunes de proyecto
 
 ProyectoService incorpora el alta. Alta y edición comparten la asignación de superficies y calendario explícito, conservando las reglas de cuándo se asignan y los límites transaccionales.
+
+### Paquetes de autenticación
+
+Agrupar servicios y controllers de autenticación por responsabilidad. Preservar rutas, seguridad, sesiones, configuración y persistencia.

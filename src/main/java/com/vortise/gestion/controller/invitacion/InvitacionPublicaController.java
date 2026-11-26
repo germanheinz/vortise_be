@@ -6,7 +6,7 @@ import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.infrastructure.security.SessionCookies;
 import com.vortise.gestion.service.InvitacionUsuarioService;
 import com.vortise.gestion.service.InvitacionesService;
-import com.vortise.gestion.service.SesionService;
+import com.vortise.gestion.service.authentication.SesionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

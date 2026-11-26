@@ -1,4 +1,4 @@
-package com.vortise.gestion.service;
+package com.vortise.gestion.service.authentication;
 
 import com.vortise.gestion.application.helper.PasswordPolicy;
 import com.vortise.gestion.application.exception.ConflictoEstadoException;

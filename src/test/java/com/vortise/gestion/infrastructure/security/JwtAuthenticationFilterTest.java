@@ -2,7 +2,7 @@ package com.vortise.gestion.infrastructure.security;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import com.vortise.gestion.service.JwtService;
+import com.vortise.gestion.service.authentication.JwtService;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import java.util.*;

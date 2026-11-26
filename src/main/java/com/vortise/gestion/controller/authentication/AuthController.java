@@ -1,4 +1,4 @@
-package com.vortise.gestion.controller;
+package com.vortise.gestion.controller.authentication;
 
 import com.vortise.gestion.application.dto.ErrorResponseDto;
 import com.vortise.gestion.application.dto.LoginRequestDto;
@@ -6,9 +6,9 @@ import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.application.dto.MeDto;
 import com.vortise.gestion.application.dto.RegistroRequestDto;
 import com.vortise.gestion.application.exception.SesionInvalidaException;
-import com.vortise.gestion.service.AutenticacionService;
-import com.vortise.gestion.service.RegistroService;
-import com.vortise.gestion.service.SesionService;
+import com.vortise.gestion.service.authentication.AutenticacionService;
+import com.vortise.gestion.service.authentication.RegistroService;
+import com.vortise.gestion.service.authentication.SesionService;
 import com.vortise.gestion.infrastructure.security.SessionCookies;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;

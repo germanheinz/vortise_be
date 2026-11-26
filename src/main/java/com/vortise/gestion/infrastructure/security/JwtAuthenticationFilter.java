@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.security;
 
-import com.vortise.gestion.service.JwtService;
+import com.vortise.gestion.service.authentication.JwtService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

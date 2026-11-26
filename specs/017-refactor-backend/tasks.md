@@ -179,3 +179,9 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] «mismo patron» autorizó continuar la consolidación de proyectos. Alta movida a ProyectoService; superficies y calendario explícito compartidos con edición.
 - [x] Pasaron 37 pruebas con `mvn -Dtest=ProyectoServiceTest,WriteEndpointsGuardTest,CreateProyectoSubcontratistaTest,CalendarioLaboralObraTest,RubroEstructuraUseCasesTest clean test`. Pasó `git diff --check`.
 - [ ] Pendientes integración con Spring y revisión independiente.
+
+### Paquetes de autenticación
+
+- [x] «IMPLEMENTALO» autorizó mover ocho servicios y dos controllers en el checkout local del backend. Se trasladaron cinco pruebas y se actualizaron imports.
+- [x] Comparado el código Java con HEAD. Los cambios se limitan a paquetes, imports y referencias calificadas. Pasaron `mvn -Dtest=AutenticacionServiceTest,RegistroServiceTest,SesionServiceTest,RefreshTokenServiceTest,JwtServiceConfigurationTest,LoginThrottleTest,JwtAuthenticationFilterTest,SessionCookiesTest,WriteEndpointsGuardTest clean test` y `git diff --check`.
+- [ ] Pendientes verificación HTTP con contexto de Spring y revisión independiente.

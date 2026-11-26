@@ -1,5 +1,6 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.service.authentication.AutenticacionService;
 import com.vortise.gestion.application.helper.InvitacionToken;
 import com.vortise.gestion.application.helper.PasswordPolicy;
 import com.vortise.gestion.application.audit.AuditLog;

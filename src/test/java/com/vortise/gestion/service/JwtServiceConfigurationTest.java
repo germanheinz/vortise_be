@@ -1,5 +1,6 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.service.authentication.JwtService;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;

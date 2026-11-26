@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.service.PasswordResetTransactions;
+import com.vortise.gestion.service.authentication.PasswordResetTransactions;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import com.vortise.gestion.infrastructure.config.*;

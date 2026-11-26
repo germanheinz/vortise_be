@@ -161,3 +161,7 @@ Integrar ProyectoBajaService en ProyectoConsultaService y renombrar el resultado
 ### Alta y datos comunes de proyecto
 
 Mover el alta a ProyectoService con su transacción y bloqueo de empresa. Compartir la asignación de superficies y calendario en DatosProyecto. Mantener la edición en su servicio porque coordina bloqueos de certificados y dependencias de rubros, tareas y horas.
+
+### Paquetes de autenticación
+
+Mover ocho servicios a service/authentication y dos controllers a controller/authentication. Actualizar los imports de consumidores y mover las pruebas unitarias del paquete. Mantener infraestructura de seguridad, integración Clerk, política de acceso a empresas y repositorios en sus paquetes.

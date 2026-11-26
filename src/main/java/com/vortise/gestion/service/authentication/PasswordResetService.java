@@ -1,4 +1,4 @@
-package com.vortise.gestion.service;
+package com.vortise.gestion.service.authentication;
 
 import com.vortise.gestion.application.port.PasswordMailGateway;
 import java.util.Locale;

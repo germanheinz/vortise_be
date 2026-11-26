@@ -1,5 +1,6 @@
-package com.vortise.gestion.service;
+package com.vortise.gestion.service.authentication;
 
+import com.vortise.gestion.service.EquipoAccessPolicy;
 import com.vortise.gestion.service.pagos.SuscripcionConsultaService;
 import com.vortise.gestion.application.dto.LoginRequestDto;
 import com.vortise.gestion.application.dto.LoginResponseDto;

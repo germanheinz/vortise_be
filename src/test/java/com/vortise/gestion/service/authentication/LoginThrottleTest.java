@@ -1,4 +1,4 @@
-package com.vortise.gestion.service;
+package com.vortise.gestion.service.authentication;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
