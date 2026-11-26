@@ -57,8 +57,6 @@ class CookieSessionHttpTest {
     @Autowired EntityManager em;
     @Autowired PlatformTransactionManager tm;
     @Autowired PasswordEncoder encoder;
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder demoSeeder;
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @MockitoBean SuperAdminSeeder adminSeeder;
     private Long userId;

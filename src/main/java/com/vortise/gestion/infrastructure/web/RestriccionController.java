@@ -9,7 +9,6 @@ import com.vortise.gestion.application.service.RestriccionObraConsultaService;
 import com.vortise.gestion.application.service.RestriccionObraConsultaService.Filtro;
 import com.vortise.gestion.application.service.RestriccionObraConsultaService.Respuesta;
 import com.vortise.gestion.application.service.ComentarioRestriccionService;
-import com.vortise.gestion.application.service.RestriccionChatAltaService;
 import com.vortise.gestion.infrastructure.security.Guards;
 import com.vortise.gestion.application.service.RestriccionService;
 import jakarta.validation.Valid;
@@ -25,7 +24,6 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,18 +32,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class RestriccionController {
     private final RestriccionService restricciones;
-    private final RestriccionChatAltaService altaPorChat;
     private final RestriccionObraConsultaService consultaObra;
     private final ComentarioRestriccionService comentarios;
 
     public RestriccionController(
         RestriccionService restricciones,
-        RestriccionChatAltaService altaPorChat,
         RestriccionObraConsultaService consultaObra,
         ComentarioRestriccionService comentarios
     ) {
         this.restricciones = restricciones;
-        this.altaPorChat = altaPorChat;
         this.consultaObra = consultaObra;
         this.comentarios = comentarios;
     }
@@ -62,15 +57,6 @@ public class RestriccionController {
             @RequestParam(defaultValue = "ABIERTAS") Filtro filtro,
             @RequestParam(required = false) String prioridad) {
         return consultaObra.execute(proyectoId, corte, filtro, prioridad);
-    }
-
-    @PostMapping("/proyectos/{proyectoId}/chat/restricciones")
-    @PreAuthorize(Guards.GERENCIA_CHAT)
-    public ResponseEntity<RestriccionChatAltaService.Resultado> crearParaGerencia(@PathVariable Long proyectoId,
-            @RequestHeader(value = "Idempotency-Key", required = false) String clave,
-            @Valid @RequestBody RestriccionChatAltaService.Solicitud solicitud) {
-        var resultado = altaPorChat.execute(proyectoId, clave, solicitud);
-        return ResponseEntity.status(resultado.repetida() ? HttpStatus.OK : HttpStatus.CREATED).body(resultado);
     }
 
     @GetMapping("/restricciones")

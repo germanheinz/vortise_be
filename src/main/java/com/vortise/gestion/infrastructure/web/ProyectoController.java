@@ -18,13 +18,10 @@ import com.vortise.gestion.application.dto.PaginaDto;
 import com.vortise.gestion.application.dto.ProyectoCreateDto;
 import com.vortise.gestion.application.dto.ProyectoDto;
 import com.vortise.gestion.application.dto.ProyectoUpdateDto;
-import com.vortise.gestion.application.exception.FeatureUnavailableException;
 import com.vortise.gestion.application.service.ProyectoAltaService;
 import com.vortise.gestion.application.service.ProyectoBajaService;
 import com.vortise.gestion.application.service.ProyectoConsultaService;
 import com.vortise.gestion.application.service.ProyectoEdicionService;
-import com.vortise.gestion.infrastructure.config.DataSeeder;
-import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -47,8 +44,6 @@ public class ProyectoController {
     private final ProyectoAltaService altaProyecto;
     private final ProyectoEdicionService edicionProyecto;
     private final ProyectoBajaService bajaProyecto;
-    private final DataSeeder dataSeeder;
-    private final ProductionFeaturePolicy featurePolicy;
 
     @GetMapping
     public ResponseEntity<List<ProyectoDto>> getAll() {
@@ -86,29 +81,15 @@ public class ProyectoController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping(value="/reset-demo")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<String> resetDemo() {
-        if (!featurePolicy.demoResetEnabled()) {
-            throw new FeatureUnavailableException("El reset demo está deshabilitado hasta confirmar un entorno de datos sintéticos aislado.");
-        }
-        this.dataSeeder.resetDemoData();
-        return ResponseEntity.ok("Demo seed reset successfully");
-    }
-
     public ProyectoController(
         ProyectoAltaService altaProyecto,
         ProyectoEdicionService edicionProyecto,
         ProyectoBajaService bajaProyecto,
-        DataSeeder dataSeeder,
-        ProductionFeaturePolicy featurePolicy,
         ProyectoConsultaService proyectos
     ) {
         this.proyectos = proyectos;
         this.altaProyecto = altaProyecto;
         this.edicionProyecto = edicionProyecto;
         this.bajaProyecto = bajaProyecto;
-        this.dataSeeder = dataSeeder;
-        this.featurePolicy = featurePolicy;
     }
 }

@@ -31,7 +31,7 @@ public class E2eLocalConfiguration {
             String uploads = env.getRequiredProperty("APP_E2E_UPLOADS_DIR");
             require(uploads.matches("/(?:private/)?tmp/e2e10-[A-Za-z0-9_-]+/uploads"));
             require(uploads.equals(env.getRequiredProperty("app.uploads.dir")));
-            for (String key : List.of("app.password-mail.enabled", "app.demo.reset-enabled", "app.features.gastos-fijos-enabled")) {
+            for (String key : List.of("app.password-mail.enabled", "app.features.gastos-fijos-enabled")) {
                 require("false".equals(env.getRequiredProperty(key)));
             }
             for (String key : List.of("app.superadmin.email", "app.superadmin.password", "app.stripe.secret-key",

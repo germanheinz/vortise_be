@@ -44,7 +44,6 @@ public class SecurityConfig {
                 .requestMatchers("/actuator", "/actuator/**").denyAll()
                 // Authenticated by the Stripe-Signature header instead of a JWT.
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/stripe/webhook").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/integraciones/telegram/evento").permitAll()
                 .anyRequest().authenticated())
             .addFilterBefore(clerkInterceptor, JwtAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

@@ -1,17 +1,11 @@
 package com.vortise.gestion.infrastructure.web;
 
-import tools.jackson.databind.ObjectMapper;
 import com.vortise.gestion.application.service.JwtService;
 import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.infrastructure.config.DataSeeder;
-import com.vortise.gestion.infrastructure.config.UsuarioDemoSeeder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.*;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.test.context.transaction.TestTransaction;
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,12 +34,9 @@ class RestriccionDetalleHttpTest {
     private static final String URL = BASE_URL + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
     private static final String KEY = signingKey();
     @Autowired MockMvc mvc;
-    @Autowired ObjectMapper mapper;
     @Autowired JwtService jwt;
     @Autowired DataSource source;
     @PersistenceContext EntityManager em;
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder usuarioDemoSeeder;
     @MockitoBean com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
     private Proyecto own, other;
     private Long restrictionId, foreignRestrictionId;
@@ -118,95 +108,10 @@ class RestriccionDetalleHttpTest {
         mvc.perform(get(path)).andExpect(status().isUnauthorized());
     }
 
-    @Test void chatCreationPersistsOnceAndRejectsReuseWithDifferentData() throws Exception {
-        String path = "/api/proyectos/" + own.getId() + "/chat/restricciones";
-        String body = """
-            {"descripcion":"Aprobar plano eléctrico","fechaMaximaEntrega":"2099-10-10"}
-            """;
-        var created = mvc.perform(post(path).header("Authorization", "Bearer " + token)
-                .header("Idempotency-Key", "evento-42").contentType(MediaType.APPLICATION_JSON).content(body))
-            .andExpect(status().isCreated()).andExpect(jsonPath("$.repetida").value(false)).andReturn();
-        long id = mapper.readTree(created.getResponse().getContentAsString()).get("id").asLong();
-        mvc.perform(post(path).header("Authorization", "Bearer " + token)
-                .header("Idempotency-Key", "evento-42").contentType(MediaType.APPLICATION_JSON).content(body))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(id)).andExpect(jsonPath("$.repetida").value(true));
-        mvc.perform(post(path).header("Authorization", "Bearer " + token)
-                .header("Idempotency-Key", "evento-42").contentType(MediaType.APPLICATION_JSON)
-                .content(body.replace("plano eléctrico", "plano sanitario")))
-            .andExpect(status().isConflict());
-        mvc.perform(get("/api/proyectos/" + own.getId() + "/chat/restricciones").header("Authorization", "Bearer " + token))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(2));
-        mvc.perform(get("/api/restricciones/" + id).header("Authorization", "Bearer " + token))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.estado").value("PENDIENTE"))
-            .andExpect(jsonPath("$.restriccion").value("Aprobar plano eléctrico"));
-    }
-
-    @Test void chatCreationChecksPermissionsAndRequiredFields() throws Exception {
-        String path = "/api/proyectos/" + own.getId() + "/chat/restricciones";
-        String body = """
-            {"descripcion":"Aprobar plano","fechaMaximaEntrega":"2099-10-10"}
-            """;
-        mvc.perform(post(path).header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON).content(body))
-            .andExpect(status().isBadRequest());
-        mvc.perform(post(path).header("Authorization", "Bearer " + collaboratorToken)
-                .header("Idempotency-Key", "evento-43").contentType(MediaType.APPLICATION_JSON).content(body))
-            .andExpect(status().isForbidden());
-        mvc.perform(post("/api/proyectos/" + other.getId() + "/chat/restricciones").header("Authorization", "Bearer " + token)
-                .header("Idempotency-Key", "evento-43").contentType(MediaType.APPLICATION_JSON).content(body))
-            .andExpect(status().isForbidden());
-        mvc.perform(post(path).header("Authorization", "Bearer " + token)
-                .header("Idempotency-Key", "evento-43").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"descripcion\":\"Aprobar plano\"}"))
-            .andExpect(status().isBadRequest());
-        mvc.perform(post(path).header("Authorization", "Bearer " + token)
-                .header("Idempotency-Key", "evento-43").contentType(MediaType.APPLICATION_JSON).content(body))
-            .andExpect(status().isCreated());
-    }
-
-    @Test void concurrentChatRetriesCreateOneRestriction() throws Exception {
-        String path = "/api/proyectos/" + own.getId() + "/chat/restricciones";
-        var start = new CyclicBarrier(2);
-        java.util.concurrent.Callable<MvcResult> request = () -> {
-            start.await(5, TimeUnit.SECONDS);
-            return mvc.perform(post(path).header("Authorization", "Bearer " + token)
-                    .header("Idempotency-Key", "evento-concurrente")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("""
-                        {"descripcion":"Coordinar hormigonado","fechaMaximaEntrega":"2099-10-10"}
-                        """))
-                .andReturn();
-        };
-
-        var pool = Executors.newFixedThreadPool(2);
-        try {
-            var first = pool.submit(request);
-            var second = pool.submit(request);
-            var a = first.get(10, TimeUnit.SECONDS).getResponse();
-            var b = second.get(10, TimeUnit.SECONDS).getResponse();
-            assertEquals(Set.of(200, 201), new HashSet<>(List.of(a.getStatus(), b.getStatus())));
-            assertEquals(mapper.readTree(a.getContentAsString()).get("id"),
-                mapper.readTree(b.getContentAsString()).get("id"));
-        } finally {
-            pool.shutdownNow();
-        }
-        mvc.perform(get(path).header("Authorization", "Bearer " + token))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(2));
-    }
-
-    @Test void platformSuperAdminCanLinkTelegramAndManageRestrictionsInAnotherCompany() throws Exception {
-        String auth = "Bearer " + superAdminToken;
-        mvc.perform(post("/api/integraciones/telegram/vinculo").header("Authorization", auth))
-            .andExpect(status().isOk()).andExpect(jsonPath("$.codigo").isString());
-        String path = "/api/proyectos/" + other.getId() + "/chat/restricciones";
-        mvc.perform(get(path).header("Authorization", auth))
+    @Test void platformSuperAdminCanConsultRestrictionsInAnotherCompany() throws Exception {
+        mvc.perform(get("/api/proyectos/" + other.getId() + "/chat/restricciones")
+                .header("Authorization", "Bearer " + superAdminToken))
             .andExpect(status().isOk()).andExpect(jsonPath("$.obra").value("B"));
-        mvc.perform(post(path).header("Authorization", auth)
-                .header("Idempotency-Key", "superadmin-evento")
-                .contentType(MediaType.APPLICATION_JSON).content("""
-                    {"descripcion":"Validar estructura","fechaMaximaEntrega":"2099-10-10"}
-                    """))
-            .andExpect(status().isCreated()).andExpect(jsonPath("$.obra").value("B"));
     }
 
     @Test void areaAndDeliveryDatesCanBeEditedOnlyWithinTheAuthorizedCompany() throws Exception {

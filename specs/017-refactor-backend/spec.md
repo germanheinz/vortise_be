@@ -60,3 +60,11 @@ Los servicios de aplicación quedan en `application.service`, los mappers en `ap
 ### Nombres y reglas de dominio
 
 Los componentes de aplicación llevan nombres de servicio según su responsabilidad. La jerarquía de rubros reside en `domain.rule` y conserva su comportamiento. Los puertos mantienen los contratos con infraestructura. Se preservan las rutas, DTO, permisos y transacciones.
+
+### Retiro de funcionalidades demo
+
+El backend arranca sin generar empresas, usuarios, proyectos, avances ni gastos demo. Se retiran el reset demo y el módulo global de gastos fijos, junto con su pantalla y cliente API del frontend si se aprueba el corte coordinado. Las pruebas conservan la cobertura de funcionalidades desplegadas y preparan sus propios datos en contextos efímeros. Se preservan la configuración de planes, el alta administrativa autorizada, el importador Excel, la protección del entorno de pruebas y los datos históricos.
+
+### Retiro de Telegram y del alta por chat
+
+Se retiran la vinculación de Telegram, la recepción de eventos y el alta de restricciones desde el chat. El asistente web conserva las consultas de restricciones y estado de obra. El alta y la edición regulares de restricciones conservan sus rutas, permisos y validaciones. Se conservan las restricciones existentes y la compatibilidad con respaldos en el primer corte.

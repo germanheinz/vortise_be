@@ -86,3 +86,17 @@ Mover `EmpresaMapper` a `application.mapper` y `EmpresaService` a `application.s
 Aplicar la organización a todo el antiguo paquete `application.usecase`. Mantener nombres de clase y agrupar las pruebas por el tipo principal que prueban. Cambiar visibilidad solo en las entradas necesarias entre paquetes. Comparar los cuerpos con la revisión previa y compilar desde cero para comprobar las referencias.
 
 Normalizar el sufijo de los servicios y usar nombres específicos para altas, ediciones, bajas y consultas que tengan responsabilidades distintas. Mover `EstructuraRubros` y su prueba a `domain.rule`. Retirar `CostoCalculadorService` tras comprobar referencias, configuración y consumidores. Actualizar imports y ejecutar compilación limpia y pruebas sin contexto.
+
+### Retiro de seeders de negocio demo
+
+1. Retirar `DataSeeder`, `DataSeederRunner`, `DemoOperationalSeed`, `UsuarioDemoSeeder`, `SeedProfiles` y la entrada de reset demo. Eliminar pruebas exclusivas de esas funciones. En las pruebas de producción, retirar sus mocks y conservar la creación local de fixtures y las protecciones H2. Mantener `SeedRunPolicy` y sus implementaciones mientras los seeders operativos las consuman.
+2. Revisar `E2eTeamFixtures` junto con el lanzador E2E del frontend. Trasladar el aprovisionamiento a código de pruebas compatible con el lanzador antes de quitar su componente del backend. La configuración de aislamiento E2E se conserva durante esa transición.
+3. Retirar la API de gastos fijos globales y su pantalla y cliente del frontend en un corte coordinado. Evaluar entidad, adaptador y respaldo H2 por separado. El primer cambio de código conserva la tabla y la lectura de respaldos históricos. Mantener el resto de modelos y flujos de Excel.
+4. Comparar endpoints de producción y ejecutar por separado las comprobaciones de backend y frontend. La autorización de ejecución debe cubrir los contextos reales seleccionados. El alcance no incluye limpiar bases persistentes, ejecutar resets, migraciones destructivas ni publicar cambios.
+
+### Retiro de Telegram y del alta por chat
+
+- Backend: retirar el controller, comando, conversación y servicio de vinculación de Telegram y su excepción de autorización HTTP. Retirar el POST de restricciones por chat, el servicio idempotente y repositorios exclusivos. Conservar el GET y el servicio de consulta usados por el asistente web. Retirar el código de pruebas exclusivo y conservar las pruebas de restricciones normales.
+- Frontend: quitar el modo de alta del asistente, el POST y la invalidación de caché asociada. Conservar las acciones de lectura y las pantallas de restricciones normales. Retirar el workflow de Telegram versionado y sus pruebas exclusivas. Revisar los cambios de autenticación locales antes de editar archivos.
+- Mantener las migraciones aplicadas y los mappings históricos que necesita la huella de respaldos. No modificar filas existentes. No operar sobre workflows remotos de n8n ni Telegram; cualquier retiro remoto se coordina por separado.
+- Verificar contratos de lectura y alta regular, referencias obsoletas y resultados por repositorio. La ejecución de contextos Spring requiere autorización según las reglas del backend.

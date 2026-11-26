@@ -14,7 +14,7 @@ class GastoFijoAvailabilityTest {
     @Test
     void disabledFeatureRejectsReadBeforeAccessingGlobalRepository() {
         var servicio = org.mockito.Mockito.mock(GastoFijoService.class);
-        ProductionFeaturePolicy policy = new ProductionFeaturePolicy(new MockEnvironment(), false, false, false, false);
+        ProductionFeaturePolicy policy = new ProductionFeaturePolicy(new MockEnvironment(), false, false, false);
         GastoFijoController controller = new GastoFijoController(servicio, policy);
 
         assertThrows(FeatureUnavailableException.class, controller::getAll);
@@ -24,7 +24,7 @@ class GastoFijoAvailabilityTest {
     @Test
     void disabledFeatureRejectsAllMutationsBeforeUseCases() {
         var servicio = org.mockito.Mockito.mock(GastoFijoService.class);
-        ProductionFeaturePolicy policy = new ProductionFeaturePolicy(new MockEnvironment(), false, false, false, false);
+        ProductionFeaturePolicy policy = new ProductionFeaturePolicy(new MockEnvironment(), false, false, false);
         GastoFijoController controller = new GastoFijoController(servicio, policy);
 
         assertThrows(FeatureUnavailableException.class, () -> controller.create(null));

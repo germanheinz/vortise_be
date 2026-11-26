@@ -63,8 +63,6 @@ class PasswordResetHttpTest {
     @Autowired PasswordResetTransactions resets;
     @Autowired JwtService jwt;
     @MockitoBean PasswordMailGateway mail;
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder demoSeeder;
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @MockitoBean SuperAdminSeeder adminSeeder;
     private Long userId;

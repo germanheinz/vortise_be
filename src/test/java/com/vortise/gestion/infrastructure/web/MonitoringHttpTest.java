@@ -42,8 +42,6 @@ class MonitoringHttpTest {
     @Autowired JwtService jwt;
     @Autowired PlatformTransactionManager tm;
     @jakarta.persistence.PersistenceContext jakarta.persistence.EntityManager em;
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder demoSeeder;
     @MockitoBean SuperAdminSeeder adminSeeder;
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @Autowired org.springframework.boot.health.registry.HealthContributorRegistry healthRegistry;

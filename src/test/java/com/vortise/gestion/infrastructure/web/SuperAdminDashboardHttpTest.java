@@ -5,10 +5,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.vortise.gestion.application.service.JwtService;
-import com.vortise.gestion.infrastructure.config.DataSeeder;
 import com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder;
 import com.vortise.gestion.infrastructure.config.SuperAdminSeeder;
-import com.vortise.gestion.infrastructure.config.UsuarioDemoSeeder;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
@@ -37,8 +35,6 @@ class SuperAdminDashboardHttpTest {
     @Autowired private JwtService jwtService;
     @jakarta.persistence.PersistenceContext private jakarta.persistence.EntityManager em;
     @Autowired private org.springframework.transaction.PlatformTransactionManager tm;
-    @MockitoBean private DataSeeder dataSeeder;
-    @MockitoBean private UsuarioDemoSeeder usuarioDemoSeeder;
     @MockitoBean private PlanSuscripcionSeeder planSuscripcionSeeder;
     @MockitoBean private SuperAdminSeeder superAdminSeeder;
 

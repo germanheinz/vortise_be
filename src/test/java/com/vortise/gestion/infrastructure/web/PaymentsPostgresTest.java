@@ -26,8 +26,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @EnabledIfSystemProperty(named = "payments.pg.enabled", matches = "true")
 class PaymentsPostgresTest {
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder usuarioDemoSeeder;
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @MockitoBean SuperAdminSeeder superSeeder;
     @Autowired EntityManager em;

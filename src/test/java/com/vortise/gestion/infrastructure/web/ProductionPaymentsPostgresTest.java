@@ -25,8 +25,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 @org.springframework.test.context.ActiveProfiles("production")
 @org.springframework.test.annotation.DirtiesContext(classMode = org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_CLASS)
 class ProductionPaymentsPostgresTest {
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder usuarioDemoSeeder;
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @MockitoBean SuperAdminSeeder superSeeder;
     @Autowired EntityManager em;

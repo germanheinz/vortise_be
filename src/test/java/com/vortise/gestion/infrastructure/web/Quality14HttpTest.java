@@ -39,8 +39,6 @@ class Quality14HttpTest {
         r.add("app.password-mail.enabled", () -> false); r.add("app.superadmin.email", () -> ""); r.add("app.superadmin.password", () -> "");
         for (String suffix : List.of("secret-key", "webhook-secret", "price-basic", "price-pro")) r.add("app.stripe." + suffix, () -> "");
     }
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder demoSeeder;
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @MockitoBean SuperAdminSeeder adminSeeder;
     @MockitoBean com.vortise.gestion.application.port.FotoPerfilStorage photos;

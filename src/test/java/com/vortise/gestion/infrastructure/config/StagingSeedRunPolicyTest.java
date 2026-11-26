@@ -4,8 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,7 +13,7 @@ import org.springframework.context.annotation.Profile;
 
 class StagingSeedRunPolicyTest {
     @Test
-    void stagingNeverEnablesDatabaseEmptyDemoSeeders() {
+    void stagingNeverUsesEmptyDatabaseBootstrap() {
         assertFalse(new StagingSeedRunPolicy().shouldRunSeeders());
     }
 
@@ -23,26 +21,11 @@ class StagingSeedRunPolicyTest {
     void stagingPolicyAndH2DatabasePolicyAreMutuallyProfileGated() {
         Profile staging = StagingSeedRunPolicy.class.getAnnotation(Profile.class);
         Profile h2 = DatabaseInitializationPolicy.class.getAnnotation(Profile.class);
-        Profile demoRunner = DataSeederRunner.class.getAnnotation(Profile.class);
-        Profile demoUserSeeder = UsuarioDemoSeeder.class.getAnnotation(Profile.class);
 
         assertNotNull(staging);
         assertNotNull(h2);
-        assertNotNull(demoRunner);
-        assertNotNull(demoUserSeeder);
-        assertEquals("staging", staging.value()[0]);
+        assertEquals(java.util.Set.of("staging", "prod", "production", "e2e-local"), java.util.Set.of(staging.value()));
         assertEquals("!staging & !prod & !production & !e2e-local", h2.value()[0]);
-        assertEquals(SeedProfiles.DEMO_ONLY, demoRunner.value()[0]);
-        assertEquals(SeedProfiles.DEMO_ONLY, demoUserSeeder.value()[0]);
-    }
-
-    @Test
-    void stagingSeedPolicyDoesNotInvokeDemoDataSeeder() {
-        DataSeeder dataSeeder = mock(DataSeeder.class);
-
-        new DataSeederRunner(dataSeeder, new StagingSeedRunPolicy()).run();
-
-        verifyNoInteractions(dataSeeder);
     }
 
     @Test

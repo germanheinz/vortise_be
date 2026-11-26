@@ -72,8 +72,6 @@ class H2LogicalBackupHttpTest {
     @Autowired private EmpresaRepository empresas;
 
     @MockitoSpyBean private JdbcTemplate observedJdbc;
-    @MockitoBean private com.vortise.gestion.infrastructure.config.DataSeeder dataSeeder;
-    @MockitoBean private com.vortise.gestion.infrastructure.config.UsuarioDemoSeeder usuarioDemoSeeder;
     @MockitoBean private com.vortise.gestion.infrastructure.config.SuperAdminSeeder superAdminSeeder;
     @MockitoBean private com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
 

@@ -3,8 +3,6 @@ package com.vortise.gestion.infrastructure.web;
 import tools.jackson.databind.ObjectMapper;
 import com.vortise.gestion.application.service.JwtService;
 import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.infrastructure.config.DataSeeder;
-import com.vortise.gestion.infrastructure.config.UsuarioDemoSeeder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.security.SecureRandom;
@@ -40,8 +38,6 @@ class PrevistoRealHttpTest {
     @Autowired JwtService jwt;
     @Autowired DataSource source;
     @PersistenceContext EntityManager em;
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder usuarioDemoSeeder;
     @MockitoBean com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
     private Proyecto own, other;
     private RubroObra activity, foreignActivity;

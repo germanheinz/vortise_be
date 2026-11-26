@@ -29,11 +29,9 @@ import com.vortise.gestion.domain.repository.IngresoRepository;
 import com.vortise.gestion.domain.repository.PresupuestoLineaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.TareaRepository;
-import com.vortise.gestion.infrastructure.config.DataSeeder;
 import com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder;
 import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
 import com.vortise.gestion.infrastructure.config.SuperAdminSeeder;
-import com.vortise.gestion.infrastructure.config.UsuarioDemoSeeder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.security.SecureRandom;
@@ -93,8 +91,6 @@ class PrP0SecurityHttpTest {
     @MockitoSpyBean private GastoFijoRepository gastoFijoRepository;
     @MockitoSpyBean private IngresoRepository ingresoRepository;
 
-    @MockitoBean private DataSeeder dataSeeder;
-    @MockitoBean private UsuarioDemoSeeder usuarioDemoSeeder;
     @MockitoBean private PlanSuscripcionSeeder planSuscripcionSeeder;
     @MockitoBean private SuperAdminSeeder superAdminSeeder;
 
@@ -110,13 +106,12 @@ class PrP0SecurityHttpTest {
         registry.add("app.environment.synthetic-data", () -> false);
         registry.add("app.environment.storage-isolated", () -> false);
         registry.add("app.features.gastos-fijos-enabled", () -> false);
-        registry.add("app.demo.reset-enabled", () -> false);
+
     }
 
     @BeforeEach
     void createCommittedFixtures() {
         assertFalse(featurePolicy.gastosFijosEnabled());
-        assertFalse(featurePolicy.demoResetEnabled());
         fixtures = transaction().execute(status -> {
             Empresa ownCompany = persistFixture(new Empresa("P0 own " + UUID.randomUUID(), "P0-A-" + UUID.randomUUID()));
             Empresa foreignCompany = persistFixture(new Empresa("P0 foreign " + UUID.randomUUID(), "P0-B-" + UUID.randomUUID()));
@@ -162,13 +157,6 @@ class PrP0SecurityHttpTest {
         verify(gastoFijoRepository, never()).findById(any());
         verify(gastoFijoRepository, never()).save(any());
         verify(gastoFijoRepository, never()).deleteById(any());
-    }
-
-    @Test
-    void demoResetReturns503AndNeverCallsSeeder() throws Exception {
-        assertFeatureUnavailable(mockMvc.perform(post("/api/proyectos/reset-demo")
-            .header("Authorization", bearer(fixtures.ownCompanyId(), RolEmpresa.ADMINISTRADOR))));
-        verify(dataSeeder, never()).resetDemoData();
     }
 
     private void assertFeatureUnavailable(ResultActions result) throws Exception {

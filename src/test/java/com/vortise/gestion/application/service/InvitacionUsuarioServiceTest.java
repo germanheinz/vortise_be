@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import com.vortise.gestion.service.ClerkUserSyncService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -50,7 +51,7 @@ class InvitacionUsuarioServiceTest {
     private final List<InvitacionUsuario> stored = new ArrayList<>();
     private final InvitacionUsuarioRepository invitaciones = new FakeInvitaciones(stored);
     private final InvitacionUsuarioService useCase = new InvitacionUsuarioService(empresas, usuarios, invitaciones, proyectos,
-        identity, encoder, autenticacion, "https://app.example.invalid/");
+        identity, encoder, autenticacion, mock(ClerkUserSyncService.class), "https://app.example.invalid/");
     private Empresa empresa;
 
     @BeforeEach

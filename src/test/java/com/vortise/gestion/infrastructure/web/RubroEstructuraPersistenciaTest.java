@@ -10,8 +10,6 @@ import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RolEmpresa;
 import com.vortise.gestion.domain.model.RubroObra;
-import com.vortise.gestion.infrastructure.config.DataSeeder;
-import com.vortise.gestion.infrastructure.config.UsuarioDemoSeeder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.security.SecureRandom;
@@ -55,8 +53,6 @@ class RubroEstructuraPersistenciaTest {
     @Autowired DataSource source;
     @Autowired PlatformTransactionManager transactions;
     @PersistenceContext EntityManager em;
-    @MockitoBean DataSeeder dataSeeder;
-    @MockitoBean UsuarioDemoSeeder usuarioDemoSeeder;
     @MockitoBean com.vortise.gestion.infrastructure.config.PlanSuscripcionSeeder planSuscripcionSeeder;
     private Long proyectoId;
     private Long subcontratistaId;

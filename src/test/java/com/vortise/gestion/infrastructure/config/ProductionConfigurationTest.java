@@ -19,8 +19,7 @@ class ProductionConfigurationTest {
         for (String profile : List.of("staging", "prod", "production")) {
             var environment = new MockEnvironment();
             environment.setActiveProfiles(profile, "demo", "local");
-            for (Class<?> type : List.of(DatabaseInitializationPolicy.class, DataSeederRunner.class,
-                    UsuarioDemoSeeder.class, H2LogicalBackupService.class, AdminBackupController.class)) {
+            for (Class<?> type : List.of(DatabaseInitializationPolicy.class, H2LogicalBackupService.class, AdminBackupController.class)) {
                 assertFalse(environment.acceptsProfiles(Profiles.of(type.getAnnotation(Profile.class).value())), type.getName());
             }
             for (Class<?> type : List.of(StagingSeedRunPolicy.class, StagingPostgresConfiguration.class,
