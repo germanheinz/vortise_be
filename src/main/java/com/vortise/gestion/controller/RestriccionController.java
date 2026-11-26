@@ -5,10 +5,8 @@ import com.vortise.gestion.application.dto.RestriccionComentarioDto;
 import com.vortise.gestion.application.dto.RestriccionCreateDto;
 import com.vortise.gestion.application.dto.RestriccionDto;
 import com.vortise.gestion.application.dto.RestriccionUpdateDto;
-import com.vortise.gestion.service.RestriccionObraConsultaService;
-import com.vortise.gestion.service.RestriccionObraConsultaService.Filtro;
-import com.vortise.gestion.service.RestriccionObraConsultaService.Respuesta;
-import com.vortise.gestion.service.ComentarioRestriccionService;
+import com.vortise.gestion.application.helper.RestriccionResumenGerencial.Filtro;
+import com.vortise.gestion.application.helper.RestriccionResumenGerencial.Respuesta;
 import com.vortise.gestion.infrastructure.security.Guards;
 import com.vortise.gestion.service.RestriccionService;
 import jakarta.validation.Valid;
@@ -32,17 +30,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class RestriccionController {
     private final RestriccionService restricciones;
-    private final RestriccionObraConsultaService consultaObra;
-    private final ComentarioRestriccionService comentarios;
-
-    public RestriccionController(
-        RestriccionService restricciones,
-        RestriccionObraConsultaService consultaObra,
-        ComentarioRestriccionService comentarios
-    ) {
+    public RestriccionController(RestriccionService restricciones) {
         this.restricciones = restricciones;
-        this.consultaObra = consultaObra;
-        this.comentarios = comentarios;
     }
 
     @GetMapping("/proyectos/{proyectoId}/restricciones")
@@ -56,7 +45,7 @@ public class RestriccionController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate corte,
             @RequestParam(defaultValue = "ABIERTAS") Filtro filtro,
             @RequestParam(required = false) String prioridad) {
-        return consultaObra.execute(proyectoId, corte, filtro, prioridad);
+        return restricciones.consultarParaGerencia(proyectoId, corte, filtro, prioridad);
     }
 
     @GetMapping("/restricciones")
@@ -70,20 +59,20 @@ public class RestriccionController {
     }
 
     @PostMapping("/proyectos/{proyectoId}/restricciones")
-    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
+    @PreAuthorize(Guards.OBRA)
     public ResponseEntity<RestriccionDto> create(@PathVariable Long proyectoId, @Valid @RequestBody RestriccionCreateDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(restricciones.crear(proyectoId, dto));
     }
 
     // A JEFE_DE_OBRA may only release a restriction once; RestriccionService enforces it.
     @PatchMapping("/restricciones/{id}")
-    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
+    @PreAuthorize(Guards.OBRA)
     public ResponseEntity<RestriccionDto> update(@PathVariable Long id, @RequestBody RestriccionUpdateDto dto) {
         return ResponseEntity.ok(restricciones.actualizar(id, dto));
     }
 
     @DeleteMapping("/restricciones/{id}")
-    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.GERENTE)
+    @PreAuthorize(Guards.GERENTE)
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         restricciones.eliminar(id);
         return ResponseEntity.noContent().build();
@@ -91,12 +80,12 @@ public class RestriccionController {
 
     @GetMapping("/restricciones/{id}/comentarios")
     public ResponseEntity<List<RestriccionComentarioDto>> getComentarios(@PathVariable Long id) {
-        return ResponseEntity.ok(comentarios.listar(id));
+        return ResponseEntity.ok(restricciones.listarComentarios(id));
     }
 
     @PostMapping("/restricciones/{id}/comentarios")
-    @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.OBRA)
+    @PreAuthorize(Guards.OBRA)
     public ResponseEntity<RestriccionComentarioDto> createComentario(@PathVariable Long id, @Valid @RequestBody RestriccionComentarioCreateDto dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(comentarios.crear(id, dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(restricciones.crearComentario(id, dto));
     }
 }

@@ -125,3 +125,18 @@ El respaldo H2 descubre tablas por el metamodelo JPA. Incluir explícitamente am
 - Retirar rutas de foto, almacenamiento de avatar, configuración y excepciones específicas de autorización. Extraer TipoImagen de FotoPerfilStorage para los reportes. Conservar sus formatos y validación. No borrar los archivos de avatar existentes.
 - Quitar del frontend los controles de foto y sus peticiones e invalidaciones específicas. Conservar la consulta de cuenta y las iniciales. Revisar los consumidores de la configuración E2E en ambos repositorios antes de quitar la variable de subida.
 - Actualizar pruebas para usar escrituras vigentes al verificar seguridad. Ejecutar pruebas focalizadas de cada repositorio. Verificar HTTP con contexto Spring únicamente bajo aprobación de ejecución aislada.
+
+### Consolidación de restricciones
+
+Mover los comentarios y las lecturas requeridas por la consulta gerencial a RestriccionService. Extraer el cálculo gerencial a RestriccionResumenGerencial sin repositorios ni dependencias de Spring. Adaptar las pruebas de cálculo y de reglas existentes.
+
+La revisión de servicios deja estos candidatos para cambios separados:
+
+| Candidato | Consolidación | Qué preservar |
+| --- | --- | --- |
+| EmpresaRestriccionesService | Mover su lectura a RestriccionService y compartirlo entre ambos controllers. | Guarda de empresa, validación de existencia, orden por ID y transacción de solo lectura. |
+| ProyectoBajaService | Incorporar la baja a un servicio de proyecto existente. | Guarda del controller, mensaje de ausencia y límites transaccionales. Evaluar por separado la consolidación de alta y edición. |
+| EmpresaResumenService y EmpresaDashboardObrasService | Revisar una consulta común de empresa y obra. | Mantener separados sus cálculos y contratos actuales, y medir las lecturas por obra antes de compartir repositorios o resultados. |
+| ObraTareaService y PrevistoRealService | Considerar compartir consultas de cargas. | El cálculo también alimenta el dashboard de empresa. Mantener su transacción de lectura y la separación de validaciones de escritura. |
+| PasswordResetTransactions | Mantener el bean dedicado. | Los límites de emisión y confirmación dependen del proxy transaccional, y el envío de correo ocurre fuera de esa frontera. |
+| Servicios de facturación e invitaciones | Mantener los servicios actuales. | Preservar los consumidores compartidos de lectura, el tratamiento de webhooks y las reglas distintas por tipo de invitación. |

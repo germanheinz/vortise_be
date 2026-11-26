@@ -146,3 +146,10 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] Backend: `mvn -Dtest=AutenticacionServiceTest,ReporteObraServiceTest,CloudinaryImagenReporteStorageTest,SoloLecturaWriteGuardTest,WriteEndpointsGuardTest,E2eLocalConfigurationTest clean test` pasó 47 pruebas.
 - [x] Frontend: `node --test tests/context-queries.test.cjs` pasó 16 pruebas. `git diff --check` pasó en backend y en los archivos editados de frontend.
 - [ ] El chequeo TypeScript del frontend devuelve el TS2339 preexistente de Clerk en `app/invitacion-usuario/page.tsx`. La verificación HTTP con Spring y la revisión independiente siguen pendientes.
+
+### Consolidación de restricciones
+
+- [x] «implementalo» autorizó consolidar los tres servicios de restricciones en el backend. La revisión de los demás servicios quedó documentada en el plan.
+- [x] RestriccionController depende de RestriccionService. El cálculo gerencial se prueba como función sin Spring.
+- [x] Pasaron 49 pruebas con `mvn -Dtest=RestriccionAltaTest,RestriccionEdicionTest,UpdateRestriccionJefeRulesTest,RestriccionResumenGerencialTest,RubroEstructuraUseCasesTest,WriteEndpointsGuardTest test`. Pasó `git diff --check`.
+- [ ] Verificación HTTP con Spring y revisión independiente pendientes.

@@ -27,7 +27,7 @@ class RestriccionAltaTest {
         restricciones = mock(RestriccionObraRepository.class);
         proyectos = mock(ProyectoRepository.class);
         rubros = mock(RubroObraRepository.class);
-        useCase = new RestriccionService(restricciones, proyectos, rubros, null);
+        useCase = new RestriccionService(restricciones, proyectos, rubros, null, null);
         proyecto = new Proyecto();
         proyecto.setId(10L);
         proyecto.setNombre("Obra de prueba");

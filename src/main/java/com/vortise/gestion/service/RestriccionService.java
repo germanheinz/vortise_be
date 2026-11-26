@@ -1,22 +1,30 @@
 package com.vortise.gestion.service;
 
 import com.vortise.gestion.application.helper.RestriccionPlanning;
+import com.vortise.gestion.application.helper.RestriccionResumenGerencial;
+import com.vortise.gestion.application.helper.RestriccionResumenGerencial.Filtro;
+import com.vortise.gestion.application.helper.RestriccionResumenGerencial.Respuesta;
 import com.vortise.gestion.application.helper.RestriccionVinculoEstructura;
 import com.vortise.gestion.application.mapper.RestriccionMapper;
 import com.vortise.gestion.application.dto.RestriccionCreateDto;
+import com.vortise.gestion.application.dto.RestriccionComentarioCreateDto;
+import com.vortise.gestion.application.dto.RestriccionComentarioDto;
 import com.vortise.gestion.application.dto.RestriccionDto;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.domain.model.Proyecto;
+import com.vortise.gestion.domain.model.RestriccionComentario;
 import com.vortise.gestion.domain.model.RestriccionObra;
 import com.vortise.gestion.domain.model.RubroObra;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
+import com.vortise.gestion.domain.repository.RestriccionComentarioRepository;
 import com.vortise.gestion.domain.repository.RestriccionObraRepository;
 import com.vortise.gestion.domain.repository.RubroObraRepository;
 import com.vortise.gestion.application.dto.RestriccionUpdateDto;
 import com.vortise.gestion.application.exception.ReglaDeEstadoException;
 import com.vortise.gestion.application.port.CurrentIdentity;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import org.springframework.security.access.AccessDeniedException;
@@ -25,17 +33,21 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RestriccionService {
+    private static final ZoneId ZONA_OBRA = ZoneId.of("America/Argentina/Buenos_Aires");
+
     private final RestriccionObraRepository restriccionRepository;
     private final ProyectoRepository proyectoRepository;
     private final RubroObraRepository rubroRepository;
-
+    private final RestriccionComentarioRepository comentarioRepository;
     private final CurrentIdentity identity;
 
-    public RestriccionService(RestriccionObraRepository restriccionRepository, ProyectoRepository proyectoRepository, RubroObraRepository rubroRepository, CurrentIdentity identity) {
+    public RestriccionService(RestriccionObraRepository restriccionRepository, ProyectoRepository proyectoRepository,
+            RubroObraRepository rubroRepository, CurrentIdentity identity, RestriccionComentarioRepository comentarioRepository) {
         this.restriccionRepository = restriccionRepository;
         this.proyectoRepository = proyectoRepository;
         this.rubroRepository = rubroRepository;
         this.identity = identity;
+        this.comentarioRepository = comentarioRepository;
     }
 
     public RestriccionDto crear(Long proyectoId, RestriccionCreateDto dto) {
@@ -69,7 +81,7 @@ public class RestriccionService {
     private static void requireWithinUploadDeadline(Proyecto proyecto) {
         if (proyecto.getFechaInicio() == null || proyecto.getPedidosDeObraDias() == null) return;
         var deadline = proyecto.getFechaInicio().plusDays(proyecto.getPedidosDeObraDias());
-        if (java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")).isAfter(deadline)) {
+        if (LocalDate.now(ZONA_OBRA).isAfter(deadline)) {
             throw new SolicitudInvalidaException("Venció el plazo para cargar restricciones de esta obra (" + deadline + ").");
         }
     }
@@ -134,7 +146,7 @@ public class RestriccionService {
             return;
         }
         if (restriccion.getFechaRealEntrega() != null) return;
-        LocalDate today = LocalDate.now(ZoneId.of("America/Argentina/Buenos_Aires"));
+        LocalDate today = LocalDate.now(ZONA_OBRA);
         LocalDate requested = restriccion.getFechaSolicitud();
         restriccion.setFechaRealEntrega(requested != null && requested.isAfter(today) ? requested : today);
     }
@@ -164,5 +176,32 @@ public class RestriccionService {
         }
 
         restriccionRepository.deleteById(restriccionId);
+    }
+
+    public Respuesta consultarParaGerencia(Long proyectoId, LocalDate corte, Filtro filtro, String prioridad) {
+        String obra = proyectoRepository.findById(proyectoId)
+            .orElseThrow(() -> new RecursoNoEncontradoException("Obra no encontrada")).getNombre();
+        LocalDate fecha = corte == null ? LocalDate.now(ZONA_OBRA) : corte;
+        return RestriccionResumenGerencial.calcular(proyectoId, obra, fecha, filtro, prioridad, listarPorProyecto(proyectoId));
+    }
+
+    public RestriccionComentarioDto crearComentario(Long restriccionId, RestriccionComentarioCreateDto dto) {
+        RestriccionObra restriccion = restriccionRepository.findById(restriccionId)
+            .orElseThrow(() -> new RecursoNoEncontradoException("Restriccion no encontrada"));
+
+        RestriccionComentario comentario = new RestriccionComentario();
+        comentario.setRestriccion(restriccion);
+        comentario.setAutor(dto.autor());
+        comentario.setMensaje(dto.mensaje());
+        comentario.setCreadoEn(LocalDateTime.now());
+
+        return RestriccionMapper.toComentarioDto(comentarioRepository.save(comentario));
+    }
+
+    public List<RestriccionComentarioDto> listarComentarios(Long restriccionId) {
+        return comentarioRepository.findByRestriccionIdOrderByCreadoEnAsc(restriccionId)
+            .stream()
+            .map(RestriccionMapper::toComentarioDto)
+            .toList();
     }
 }

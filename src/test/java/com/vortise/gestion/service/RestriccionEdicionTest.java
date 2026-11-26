@@ -25,7 +25,7 @@ class RestriccionEdicionTest {
     @BeforeEach void setup() {
         repository = mock(RestriccionObraRepository.class);
         rubros = mock(RubroObraRepository.class);
-        useCase = new RestriccionService(repository, null, rubros, null);
+        useCase = new RestriccionService(repository, null, rubros, null, null);
         project = new Proyecto(); project.setId(1L); project.setNombre("Obra");
         restriction = new RestriccionObra(); restriction.setId(2L); restriction.setProyecto(project);
         restriction.setArea("Compras"); restriction.setResponsable("Ana");

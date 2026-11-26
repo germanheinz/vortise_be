@@ -1,38 +1,25 @@
-package com.vortise.gestion.service;
+package com.vortise.gestion.application.helper;
 
 import com.vortise.gestion.application.dto.RestriccionDto;
-import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
-import com.vortise.gestion.domain.repository.ProyectoRepository;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import org.springframework.stereotype.Service;
 
-@Service
-public class RestriccionObraConsultaService {
+public final class RestriccionResumenGerencial {
     public enum Filtro { TODAS, ABIERTAS, VENCIDAS }
     private enum Estado { ABIERTA, VENCIDA, CERRADA }
     private static final Set<String> RESUELTAS = Set.of("RESUELTO", "RESUELTA", "LIBERADO");
-    private static final ZoneId ZONA_OBRA = ZoneId.of("America/Argentina/Buenos_Aires");
     private static final int LIMITE_LISTADO = 10;
 
-    private final RestriccionService restricciones;
-    private final ProyectoRepository proyectos;
-
-    public RestriccionObraConsultaService(RestriccionService restricciones, ProyectoRepository proyectos) {
-        this.restricciones = restricciones;
-        this.proyectos = proyectos;
+    private RestriccionResumenGerencial() {
     }
 
-    public Respuesta execute(Long proyectoId, LocalDate corte, Filtro filtro, String prioridad) {
-        String obra = proyectos.findById(proyectoId)
-            .orElseThrow(() -> new RecursoNoEncontradoException("Obra no encontrada")).getNombre();
-        LocalDate fecha = corte == null ? LocalDate.now(ZONA_OBRA) : corte;
+    public static Respuesta calcular(Long proyectoId, String obra, LocalDate fecha, Filtro filtro,
+            String prioridad, List<RestriccionDto> restricciones) {
         String prioridadFiltro = normalizar(prioridad);
-        var filas = restricciones.listarPorProyecto(proyectoId).stream()
+        var filas = restricciones.stream()
             .filter(dto -> dto.fechaSolicitud() == null || !dto.fechaSolicitud().isAfter(fecha))
             .map(dto -> new Fila(dto, estado(dto, fecha)))
             .toList();

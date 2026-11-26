@@ -88,3 +88,7 @@ El modelo JPA deja de registrar las dos entidades de funciones retiradas. Los re
 ### Retiro de PerfilController y fotos de perfil
 
 Eliminar la carga, consulta y eliminación de la foto de perfil propia. Mantener `GET /api/me` como contrato de datos de la cuenta autenticada para navegación, planes y administración. El frontend muestra las iniciales en el avatar. Los reportes de obra conservan la gestión de imágenes.
+
+### Consolidación de restricciones
+
+Unificar los servicios de restricciones, comentarios y consulta gerencial detrás de RestriccionService. Preservar las nueve rutas HTTP, sus guardas, datos, orden y transacciones. El resumen conserva el corte, la zona horaria y el límite de detalle vigente.
