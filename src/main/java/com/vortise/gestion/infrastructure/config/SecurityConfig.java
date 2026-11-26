@@ -53,8 +53,9 @@ public class SecurityConfig {
                 // Authenticated by the Stripe-Signature header instead of a JWT.
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/stripe/webhook").permitAll()
                 .anyRequest().authenticated())
-            .addFilterBefore(clerkInterceptor, JwtAuthenticationFilter.class)
+            // jwtFilter must be registered first: filters positioned relative to JwtAuthenticationFilter need its order.
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(clerkInterceptor, JwtAuthenticationFilter.class)
             .addFilterBefore(new com.vortise.gestion.infrastructure.security.CookieOriginGuard(webEnvironment.allowedOrigins()), JwtAuthenticationFilter.class)
             .addFilterAfter(new com.vortise.gestion.infrastructure.security.SoloLecturaWriteGuard(readOnlyWriteGuardEnabled), JwtAuthenticationFilter.class)
             .build();
