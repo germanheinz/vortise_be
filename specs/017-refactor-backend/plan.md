@@ -63,3 +63,10 @@ Extraer las dos búsquedas comunes de catálogo a una clase de paquete que recib
 ### Cálculo común de horas reales
 
 Compartir la consulta de suma, la normalización del agregado nulo y el redondeo en `RegistroHorasRules`. Mantener en cada llamador la decisión de calcular, el bloqueo, la sincronización de JPA y el guardado. Conservar el esquema y el contrato HTTP.
+
+## Migración por módulos a Controller → Service → Repository
+
+1. En Registro de horas, conectar los tres endpoints de escritura de `RegistroHorasController` con `RegistroHorasService`. Retirar las tres clases que solo delegan, comprobando sus referencias en todo el backend. Mantener las dos consultas en sus entradas existentes durante este corte.
+2. Evaluar consolidar las consultas de Registro de horas y después los CRUD de tareas, restricciones y gastos fijos. Para cada módulo, revisar qué lectores y escritores comparten permisos, transacciones y respuestas. Mover mappers y reglas al paquete del módulo cuando ayude a seguir el flujo y no rompa consumidores.
+3. Revisar Proyectos y Empresa por separado. Mantener servicios con responsabilidades propias, como certificados, reportes y Previsto vs. Real. Conservar interfaces de repositorio, adaptadores y modelo de datos.
+4. Verificar cada corte con pruebas focalizadas y revisar HTTP al aprobarse el arranque de Spring. La revisión independiente y el cierre documentan resultados y limitaciones por módulo.

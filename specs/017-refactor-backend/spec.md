@@ -46,3 +46,9 @@ Alta y edición comparten la resolución de subcontratistas por empresa, tipo y 
 ### Total de horas reales
 
 La edición de proyecto conserva el valor manual cuando no hay registros. Si hay registros, usa la suma redondeada a dos decimales y un agregado nulo equivale a cero. Las mutaciones de registros mantienen el bloqueo del proyecto y sincronizan los cambios antes de calcular el total, incluido el cero al borrar el último registro.
+
+## Arquitectura Controller → Service → Repository
+
+Organizar las operaciones relacionadas en servicios por módulo. Los controllers mantienen rutas, validación HTTP y permisos existentes. Los servicios coordinan reglas y transacciones y usan los repositorios actuales. Los auxiliares compartidos se mantienen junto al módulo que los usa y se reutilizan si tienen el mismo contrato.
+
+El primer corte cubre alta, edición y baja de registros horarios. Conserva rutas, DTO, códigos de respuesta, guardas, bloqueo de proyecto, orden de persistencia y cálculo de totales.

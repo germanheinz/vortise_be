@@ -59,3 +59,10 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] Aprobado mediante «IMPLEMENTEMOS» el 26 de noviembre de 2026. Alcance local en `RegistroHorasRules.java`, `RegistroHorasService.java`, `UpdateProyectoUseCase.java` y `Quality14RulesTest.java`. Se conservaron bloqueo, sincronización, guardado, esquema y contrato de API.
 - [x] Ejecutado `mvn -Dtest=Quality14RulesTest,RubroEstructuraUseCasesTest test` desde `gestion_be` con Java 21 y objetivo Java 17. Pasaron 38 pruebas antes y después, sin fallos, errores ni omisiones. Se comprobaron entrada manual, normalización de agregado nulo, redondeo, sincronización antes de sumar y baja del último registro. `git diff --check` pasó.
 - [ ] Verificación de integración y revisión independiente pendientes.
+
+## Migración de arquitectura
+
+- [x] Rama local `refactor` creada desde `main`. La solicitud de implementar la arquitectura se tomó como aprobación del primer corte de escritura de Registro de horas, propuesto inmediatamente antes. Alcance de código: controller, tres delegadores y pruebas focalizadas sin contexto. Los cortes posteriores quedan sujetos a su alcance aprobado.
+- [x] `RegistroHorasController` llama directamente a `RegistroHorasService` en alta, edición y baja. Eliminadas las tres clases delegadoras y comprobada la ausencia de referencias. Rutas, DTO, anotaciones de acceso, lógica y demarcación transaccional conservados.
+- [x] Antes del cambio, `mvn -Dtest=Quality14RulesTest,RubroEstructuraUseCasesTest test` pasó 38 pruebas. Después, `mvn -Dtest=RegistroHorasControllerTest,Quality14RulesTest,RubroEstructuraUseCasesTest test` pasó 39 pruebas, sin fallos, errores ni omisiones. La prueba del controller verificó delegación, cuerpo y códigos 201, 200 y 204 sin arrancar Spring. `git diff --check` pasó.
+- [ ] Aprobar los cortes de consultas y módulos siguientes descritos en el plan. La verificación de integración y la revisión independiente siguen pendientes.
