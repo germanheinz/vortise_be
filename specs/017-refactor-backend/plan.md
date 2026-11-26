@@ -108,3 +108,7 @@ Mover las clases anotadas con RestController fuera de infrastructure.web. Manten
 ### Unificar servicios y separar Clerk por responsabilidad
 
 Elevar `application.service` a `service` y mantener los servicios de pagos en su subpaquete. Mover `ClerkUserSyncService` a `service.usuario`, su configuración y filtros a `infrastructure.security.clerk`, el advice a `controller.advice` y el filtro de observación a `infrastructure.observability`. Actualizar las referencias, mover en paralelo las pruebas del paquete de servicios y verificar compilación, equivalencia estática y pruebas focalizadas sin contexto.
+
+### Consolidación de controllers de invitación
+
+Mover los handlers a `controller.invitacion`. Aplicar a cada método administrativo la guarda de su controller original. Mantener los servicios de equipo y usuario, y actualizar la excepción de la prueba de guardas para los handlers públicos. El frontend y el esquema de datos quedan fuera del alcance.

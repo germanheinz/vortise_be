@@ -121,3 +121,10 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] Se movieron 43 clases productivas y se actualizaron paquetes, imports y pruebas afectadas. La sincronización de usuarios está en service/usuario, la autenticación de Clerk en infrastructure/security/clerk, el manejador de errores en controller/advice y el filtro en infrastructure/observability.
 - [x] `mvn -Dtest=WriteEndpointsGuardTest,StripeWebhookServiceTest,SuscripcionServiceTest,AutenticacionServiceTest,UsuarioObrasAsignadasTest,RequestObservationFilterTest,FeatureUnavailableResponseTest,JwtAuthenticationFilterTest,ProductionConfigurationTest,RegistroHorasControllerTest clean test` pasó 56 pruebas. `git diff --check` pasó.
 - [ ] Integración con contexto de Spring y revisión independiente pendientes.
+
+### Consolidación de controllers de invitación
+
+- [x] «apruebo» autorizó consolidar los cuatro controllers activos del backend. El retiro de la API legada depende de confirmar su uso en producción.
+- [x] Creado un controller administrativo y uno público. Actualizada la prueba de guardas para reconocer el controller público.
+- [x] La comparación estática con HEAD confirmó los once contratos de verbo, ruta y guarda. Pasaron `mvn -Dtest=WriteEndpointsGuardTest clean test` y `git diff --check`.
+- [ ] Integración con contexto de Spring, revisión independiente y verificación de tráfico legado pendientes.

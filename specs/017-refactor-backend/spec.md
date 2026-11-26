@@ -76,3 +76,7 @@ Los controllers HTTP quedan en `controller` y los tres de pagos y suscripciones 
 ### Servicios, identidad y componentes web transversales
 
 Los servicios se concentran en el paquete raíz `service`. Clerk se divide entre la sincronización local de usuarios y la adaptación de autenticación externa. El advice HTTP y el filtro de observación tienen paquetes propios. Se preservan el orden de los filtros, las rutas, las respuestas, las transacciones y el contenido de las clases.
+
+### Consolidación de controllers de invitación
+
+Agrupar la administración y la aceptación pública de invitaciones de equipo y usuario en dos controllers. Conservar los once contratos HTTP, permisos, validaciones, DTO y cookies. El endpoint legado sigue disponible mientras se verifica su uso.
