@@ -1,4 +1,4 @@
-package com.vortise.gestion.controller;
+package com.vortise.gestion.controller.authentication;
 
 import com.vortise.gestion.dto.InvitacionAceptarDto;
 import com.vortise.gestion.dto.InvitacionValidaDto;

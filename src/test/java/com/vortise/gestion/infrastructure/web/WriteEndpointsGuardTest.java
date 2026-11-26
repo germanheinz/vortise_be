@@ -2,6 +2,7 @@ package com.vortise.gestion.infrastructure.web;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.vortise.gestion.controller.authentication.InvitacionController;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,7 @@ class WriteEndpointsGuardTest {
             boolean classGuard = AnnotatedElementUtils.hasAnnotation(controller, PreAuthorize.class);
             for (Method method : controller.getDeclaredMethods()) {
                 // The existing public invitation endpoint validates its invitation code before accepting it.
-                if (controller == com.vortise.gestion.controller.InvitacionController.class
+                if (controller == InvitacionController.class
                         && method.getName().equals("aceptarInvitacion")) continue;
                 if (isWrite(method) && !classGuard && !AnnotatedElementUtils.hasAnnotation(method, PreAuthorize.class)) {
                     unguarded.add(controller.getSimpleName() + "." + method.getName());
