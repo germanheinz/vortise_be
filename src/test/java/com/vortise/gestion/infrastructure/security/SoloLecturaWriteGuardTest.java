@@ -73,8 +73,7 @@ class SoloLecturaWriteGuardTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"POST,/api/auth/login", "POST,/api/auth/password-reset/confirm", "PUT,/api/me/foto",
-        "DELETE,/api/me/foto", "POST,/api/stripe/webhook"})
+    @CsvSource({"POST,/api/auth/login", "POST,/api/auth/password-reset/confirm", "POST,/api/stripe/webhook"})
     void exemptPathsStayAvailable(String method, String path) throws Exception {
         assertContinued(run(true, method, path, "ROLE_CONSULTA"));
     }

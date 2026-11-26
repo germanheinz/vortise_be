@@ -13,7 +13,7 @@ import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.RolEmpresa;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
-import com.vortise.gestion.application.port.FotoPerfilStorage;
+import com.vortise.gestion.application.port.CurrentIdentity;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ class AutenticacionServiceTest {
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtService jwtService;
     @Mock private SuscripcionConsultaService suscripciones;
-    @Mock private FotoPerfilStorage fotos;
+    @Mock private CurrentIdentity identidad;
     @Mock private LoginThrottle throttle;
     private static final String IP = "203.0.113.1";
     private AutenticacionService autenticacion;
@@ -36,7 +36,7 @@ class AutenticacionServiceTest {
 
     @BeforeEach
     void setUp() {
-        autenticacion = new AutenticacionService(usuarios, passwordEncoder, jwtService, suscripciones, fotos, org.mockito.Mockito.mock(EquipoAccessPolicy.class), throttle);
+        autenticacion = new AutenticacionService(usuarios, passwordEncoder, jwtService, suscripciones, identidad, org.mockito.Mockito.mock(EquipoAccessPolicy.class), throttle);
         Empresa empresa = new Empresa("Empresa", null);
         usuario = new UsuarioEmpresa(empresa, "user@example.invalid", "Usuario", "hash", RolEmpresa.CONSULTA);
         org.mockito.Mockito.lenient().when(usuarios.findByEmail("user@example.invalid")).thenReturn(Optional.of(usuario));
@@ -46,7 +46,6 @@ class AutenticacionServiceTest {
     void successfulActiveLoginStoresTimestampBeforeReturningSession() {
         when(passwordEncoder.matches("correcta", "hash")).thenReturn(true);
         when(suscripciones.planEfectivo(usuario)).thenReturn(Optional.empty());
-        when(fotos.existe(null)).thenReturn(false);
 
         autenticacion.login(new LoginRequestDto("user@example.invalid", "correcta"), IP);
 

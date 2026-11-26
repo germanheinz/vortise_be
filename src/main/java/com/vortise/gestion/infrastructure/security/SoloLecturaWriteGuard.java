@@ -23,8 +23,8 @@ public class SoloLecturaWriteGuard extends OncePerRequestFilter {
     private static final String SUPER_ADMIN = "ROLE_SUPER_ADMIN";
     private static final String API_PREFIX = "/api/";
     private static final String AUTH_PREFIX = "/api/auth/";
-    // Own-profile actions and the Stripe webhook (authenticated by signature, not by user).
-    private static final Set<String> EXEMPT_PATHS = Set.of("/api/me/foto", "/api/stripe/webhook");
+    // The Stripe webhook (authenticated by signature, not by user).
+    private static final Set<String> EXEMPT_PATHS = Set.of("/api/stripe/webhook");
 
     private final boolean enabled;
 

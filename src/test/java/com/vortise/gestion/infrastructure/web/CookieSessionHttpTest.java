@@ -108,11 +108,11 @@ class CookieSessionHttpTest {
     @Test void cookieWritesNeedAnAllowedOrigin() throws Exception {
         var access = new Cookie("gestion_at", value(cookie(login(), "gestion_at")));
 
-        mvc.perform(delete("/api/me/foto").cookie(access)).andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("ORIGEN_NO_PERMITIDO"));
+        mvc.perform(post("/api/empresas/" + companyId + "/usuarios/invitaciones").contentType("application/json").content("{}").cookie(access)).andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("ORIGEN_NO_PERMITIDO"));
         // A foreign Origin is already refused by the CORS layer (plain-text 403) before it reaches the origin guard.
-        mvc.perform(delete("/api/me/foto").cookie(access).header("Origin", "https://attacker.example.invalid"))
+        mvc.perform(post("/api/empresas/" + companyId + "/usuarios/invitaciones").contentType("application/json").content("{}").cookie(access).header("Origin", "https://attacker.example.invalid"))
             .andExpect(status().isForbidden());
-        mvc.perform(delete("/api/me/foto").cookie(access).header("Origin", ORIGIN)).andExpect(status().is2xxSuccessful());
+        mvc.perform(post("/api/empresas/" + companyId + "/usuarios/invitaciones").contentType("application/json").content("{}").cookie(access).header("Origin", ORIGIN)).andExpect(status().isBadRequest());
     }
 
     @Test void refreshRotatesTheTokenAndIssuesANewAccessCookie() throws Exception {
@@ -226,6 +226,6 @@ class CookieSessionHttpTest {
         var jwt = value(cookie(login(), "gestion_at"));
 
         mvc.perform(get("/api/me").header("Authorization", "Bearer " + jwt)).andExpect(status().isOk());
-        mvc.perform(delete("/api/me/foto").header("Authorization", "Bearer " + jwt)).andExpect(status().is2xxSuccessful());
+        mvc.perform(post("/api/empresas/" + companyId + "/usuarios/invitaciones").contentType("application/json").content("{}").header("Authorization", "Bearer " + jwt)).andExpect(status().isBadRequest());
     }
 }

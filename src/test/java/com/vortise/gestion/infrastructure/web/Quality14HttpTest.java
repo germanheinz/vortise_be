@@ -41,7 +41,6 @@ class Quality14HttpTest {
     }
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @MockitoBean SuperAdminSeeder adminSeeder;
-    @MockitoBean com.vortise.gestion.application.port.FotoPerfilStorage photos;
     @Autowired DataSource source;
     @Autowired EntityManager em;
     @Autowired PlatformTransactionManager tm;

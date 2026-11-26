@@ -28,7 +28,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 abstract class TeamInvitationsContract {
     @MockitoBean PlanSuscripcionSeeder planSeeder;
     @MockitoBean SuperAdminSeeder adminSeeder;
-    @MockitoBean com.vortise.gestion.application.port.FotoPerfilStorage photos;
     @Autowired DataSource source;
     @Autowired EntityManager em;
     @Autowired PlatformTransactionManager tm;

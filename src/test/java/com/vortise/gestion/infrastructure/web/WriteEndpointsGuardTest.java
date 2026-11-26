@@ -25,8 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 class WriteEndpointsGuardTest {
     // Authenticated by something other than a role: credentials, a signed link or a signature.
     private static final Set<String> PUBLIC_OR_SELF = Set.of(
-        "AuthController", "PasswordResetController", "InvitacionPublicaController", "StripeWebhookController",
-        "PerfilController");
+        "AuthController", "PasswordResetController", "InvitacionPublicaController", "StripeWebhookController");
 
     private static boolean isWrite(Method method) {
         return AnnotatedElementUtils.hasAnnotation(method, PostMapping.class)

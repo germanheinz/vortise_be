@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.storage;
 
 import com.vortise.gestion.application.exception.FeatureUnavailableException;
-import com.vortise.gestion.application.port.FotoPerfilStorage.TipoImagen;
+import com.vortise.gestion.application.port.TipoImagen;
 import com.vortise.gestion.application.port.ImagenReporteStorage;
 import java.io.ByteArrayOutputStream;
 import java.net.URI;

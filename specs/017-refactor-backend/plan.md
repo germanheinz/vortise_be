@@ -118,3 +118,10 @@ Mover los handlers a `controller.invitacion`. Aplicar a cada método administrat
 Eliminar `AltaRestriccionChat` y `VinculoTelegram` del código productivo. Conservar V26 y V27 y la estructura física creada por esas migraciones. Verificar referencias y ejecutar las pruebas de restricciones sin contexto Spring.
 
 El respaldo H2 descubre tablas por el metamodelo JPA. Incluir explícitamente ambas tablas históricas cuando existen en JDBC para conservar su cobertura y su huella.
+
+### Retiro de PerfilController y fotos de perfil
+
+- Mover la consulta `GET /api/me` a AuthController mediante un mapping que conserve la ruta pública de la API y su requisito de autenticación. Separar la consulta de cuenta de las operaciones de foto y reevaluar reutilización con el servicio de autenticación. Mantener `tieneFoto: false` como campo de compatibilidad en las respuestas.
+- Retirar rutas de foto, almacenamiento de avatar, configuración y excepciones específicas de autorización. Extraer TipoImagen de FotoPerfilStorage para los reportes. Conservar sus formatos y validación. No borrar los archivos de avatar existentes.
+- Quitar del frontend los controles de foto y sus peticiones e invalidaciones específicas. Conservar la consulta de cuenta y las iniciales. Revisar los consumidores de la configuración E2E en ambos repositorios antes de quitar la variable de subida.
+- Actualizar pruebas para usar escrituras vigentes al verificar seguridad. Ejecutar pruebas focalizadas de cada repositorio. Verificar HTTP con contexto Spring únicamente bajo aprobación de ejecución aislada.

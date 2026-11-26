@@ -135,3 +135,14 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] Eliminadas las dos entidades y revisadas las referencias. El respaldo H2 incluye ambas tablas históricas cuando existen.
 - [x] Pasaron `mvn -Dtest=RestriccionAltaTest,RestriccionEdicionTest,RestriccionObraConsultaServiceTest,WriteEndpointsGuardTest clean test` y `git diff --check`.
 - [ ] Pendientes la prueba de exportación y restauración con Spring y la revisión independiente.
+
+### Retiro de PerfilController y fotos de perfil
+
+- [x] Identificados consumidores de `/api/me` en avatar, planes y administración. FotoPerfilStorage se comparte con autenticación y su TipoImagen con reportes.
+- [ ] Aprobación del corte coordinado backend/frontend y del contrato de compatibilidad.
+- [ ] Implementación, pruebas focalizadas y revisión.
+
+- [x] «apruebo» autorizó el corte local en ambos repositorios. Se eliminó el almacenamiento de fotos de perfil, se mantuvo GET /api/me autenticado en AuthController y se extrajo TipoImagen para reportes.
+- [x] Backend: `mvn -Dtest=AutenticacionServiceTest,ReporteObraServiceTest,CloudinaryImagenReporteStorageTest,SoloLecturaWriteGuardTest,WriteEndpointsGuardTest,E2eLocalConfigurationTest clean test` pasó 47 pruebas.
+- [x] Frontend: `node --test tests/context-queries.test.cjs` pasó 16 pruebas. `git diff --check` pasó en backend y en los archivos editados de frontend.
+- [ ] El chequeo TypeScript del frontend devuelve el TS2339 preexistente de Clerk en `app/invitacion-usuario/page.tsx`. La verificación HTTP con Spring y la revisión independiente siguen pendientes.

@@ -25,8 +25,6 @@ app:
   security:
     cookie:
       secure: false
-  uploads:
-    dir: ${APP_E2E_UPLOADS_DIR}
   password-mail:
     enabled: false
   superadmin:

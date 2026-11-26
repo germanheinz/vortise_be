@@ -8,7 +8,7 @@ import com.vortise.gestion.application.exception.FeatureUnavailableException;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.port.CurrentIdentity;
-import com.vortise.gestion.application.port.FotoPerfilStorage.TipoImagen;
+import com.vortise.gestion.application.port.TipoImagen;
 import com.vortise.gestion.application.port.ImagenReporteStorage;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.ReporteEmitido;

@@ -84,3 +84,7 @@ Agrupar la administración y la aceptación pública de invitaciones de equipo y
 ### Retiro de entidades residuales de Telegram y alta por chat
 
 El modelo JPA deja de registrar las dos entidades de funciones retiradas. Los respaldos conservan las tablas históricas y el asistente web mantiene las consultas.
+
+### Retiro de PerfilController y fotos de perfil
+
+Eliminar la carga, consulta y eliminación de la foto de perfil propia. Mantener `GET /api/me` como contrato de datos de la cuenta autenticada para navegación, planes y administración. El frontend muestra las iniciales en el avatar. Los reportes de obra conservan la gestión de imágenes.
