@@ -1,0 +1,9 @@
+# Estado y evidencia
+
+- [x] Descubrimiento por lectura estática de casos de uso, consumidores, pruebas y configuración Maven.
+- [x] Aprobación de implementación mediante «implementalo» el 26 de noviembre de 2026. Se interpretó que la aprobación cubre el piloto propuesto y la línea base del árbol de trabajo. Alcance local en `gestion_be`: caso de uso, clase de paquete, pruebas de caracterización y documentación de seguimiento.
+- [x] Piloto implementado. Pruebas de caracterización y regresión ejecutadas desde `gestion_be` con `mvn -Dtest=PrevistoRealUseCaseTest,PrevistoRealCalculatorTest,EmpresaDashboardObrasUseCaseTest,RubroEstructuraUseCasesTest test`. Las clases seleccionadas no arrancan Spring ni H2. En Java 21, con compilación objetivo Java 17, pasaron 49 pruebas sin fallos, errores ni omisiones tanto antes como después del refactor. `git diff --check` pasó.
+- [ ] Revisar aislamiento y aprobar en conjunto `mvn -Dtest=PrevistoRealHttpTest test` y `mvn verify`, con reintentos dentro del mismo alcance. Aplicar el [checklist de pruebas](../../docs/testing-checklist.md) a todos los contextos incluidos y verificar H2 efímera antes de ejecutar. Prohibidos H2 persistente, operaciones destructivas y escrituras remotas.
+- [ ] Completar revisión independiente y registrar comandos ejecutados, resultados, veredicto y limitaciones aceptadas.
+
+Durante el descubrimiento se observó un diff local en el cálculo de horas previstas a fecha y días del anexo. Se conservó como línea base. Las nuevas pruebas cubren precedencia y desbordamiento de horas previstas a fecha, conservación de días, orden y ausencia de agregado sin cargas. No se inició Spring. La prueba HTTP focalizada usa un perfil con H2 en memoria identificada por UUID, validación previa a la creación del datasource y comprobación JDBC antes de cargar sus fixtures. La aprobación de ejecución sigue pendiente. La revisión de los contextos adicionales de `mvn verify` también sigue pendiente.

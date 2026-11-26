@@ -69,6 +69,56 @@ class PrevistoRealUseCaseTest {
         assertEquals(1, service.execute(1L).actividades().get(0).cargas().size());
     }
 
+    @Test
+    void annexPreservesDaysAndFallsBackWhenElapsedHoursOverflow() {
+        var company = mock(Empresa.class);
+        when(company.getId()).thenReturn(20L);
+        project.setEmpresaRelacionada(company);
+        var calendario = mock(CalendarioLaboralEmpresa.class);
+        when(calendario.getHorasLunesAViernes()).thenReturn(8.);
+        when(calendars.findByEmpresaId(20L)).thenReturn(Optional.of(calendario));
+        activity.setCantidadPersonas(1);
+        activity.setFechaInicioPlanificada(LocalDate.now().minusDays(3));
+        var carga = task(1, 10L, 0);
+        carga.setDias(1);
+        when(tasks.findByProyectoId(1L)).thenReturn(List.of(carga));
+        var service = new GetPrevistoRealUseCase(projects, tasks, categories, calendars);
+
+        var anexo = service.execute(1L).actividades().get(0).cargas().get(0).baseAnexo();
+        assertTrue(anexo.dias() >= 3);
+        assertEquals(8. * anexo.dias(), anexo.hhPrevistasFecha());
+
+        when(calendario.getHorasLunesAViernes()).thenReturn(Double.MAX_VALUE);
+        anexo = service.execute(1L).actividades().get(0).cargas().get(0).baseAnexo();
+        assertEquals(1, anexo.dias());
+        assertEquals(Double.MAX_VALUE, anexo.hhPrevistasFecha());
+
+        carga.setDias(2);
+        anexo = service.execute(1L).actividades().get(0).cargas().get(0).baseAnexo();
+        assertEquals(2, anexo.dias());
+        assertEquals(5881.5, anexo.hhPrevistasFecha());
+
+        when(calendario.getHorasLunesAViernes()).thenReturn(Double.POSITIVE_INFINITY);
+        anexo = service.execute(1L).actividades().get(0).cargas().get(0).baseAnexo();
+        assertNull(anexo.dias());
+        assertEquals(5881.5, anexo.hhPrevistasFecha());
+    }
+
+    @Test
+    void preservesRubroAndCargaOrder() {
+        var otroRubro = new RubroObra();
+        otroRubro.setId(5L);
+        otroRubro.setRubro("Otro");
+        project.setRubros(List.of(activity, otroRubro));
+        when(tasks.findByProyectoId(1L)).thenReturn(List.of(task(3, 10L, 2), task(1, 10L, 1)));
+        var service = new GetPrevistoRealUseCase(projects, tasks, categories, calendars);
+
+        var actividades = service.execute(1L).actividades();
+        assertEquals(List.of(10L, 5L), actividades.stream().map(GetPrevistoRealUseCase.Activity::rubroId).toList());
+        assertEquals(List.of(3L, 1L), actividades.get(0).cargas().stream().map(GetPrevistoRealUseCase.Load::tareaId).toList());
+        assertNull(actividades.get(1).baseAnexoAgregado());
+    }
+
     private ObraTareaCreateDto dto(Long rubroId) {
         return new ObraTareaCreateDto("Carga",null,null,"kg","wrong",null,null,null,null,100.,80.,null,6.,null,null,LocalDate.of(2026,10,14),rubroId);
     }
