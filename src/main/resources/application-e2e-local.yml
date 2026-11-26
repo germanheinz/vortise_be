@@ -22,6 +22,10 @@ server:
   address: 127.0.0.1
   port: 18081
 app:
+  auth:
+    # Fixtures sign in with local passwords; production keeps this off.
+    password-login:
+      enabled: true
   security:
     cookie:
       secure: false

@@ -28,7 +28,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter, 
-            com.vortise.gestion.infrastructure.security.clerk.ClerkJwtInterceptor clerkInterceptor,
             WebEnvironmentConfiguration webEnvironment,
             @org.springframework.beans.factory.annotation.Value("${app.security.read-only-write-guard.enabled:true}") boolean readOnlyWriteGuardEnabled) throws Exception {
         return http.csrf(csrf -> csrf.disable())
@@ -45,7 +44,6 @@ public class SecurityConfig {
                 }))
             .authorizeHttpRequests(auth -> auth.requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/invitacion/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
                 .requestMatchers(EndpointRequest.to("metrics").withHttpMethod(org.springframework.http.HttpMethod.GET)).hasAuthority("ROLE_SUPER_ADMIN")
                 .requestMatchers(EndpointRequest.toAnyEndpoint()).denyAll()
@@ -53,9 +51,7 @@ public class SecurityConfig {
                 // Authenticated by the Stripe-Signature header instead of a JWT.
                 .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/stripe/webhook").permitAll()
                 .anyRequest().authenticated())
-            // jwtFilter must be registered first: filters positioned relative to JwtAuthenticationFilter need its order.
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(clerkInterceptor, JwtAuthenticationFilter.class)
             .addFilterBefore(new com.vortise.gestion.infrastructure.security.CookieOriginGuard(webEnvironment.allowedOrigins()), JwtAuthenticationFilter.class)
             .addFilterAfter(new com.vortise.gestion.infrastructure.security.SoloLecturaWriteGuard(readOnlyWriteGuardEnabled), JwtAuthenticationFilter.class)
             .build();

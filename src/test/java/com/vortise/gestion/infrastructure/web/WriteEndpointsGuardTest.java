@@ -2,7 +2,6 @@ package com.vortise.gestion.infrastructure.web;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.vortise.gestion.controller.authentication.InvitacionController;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,9 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
  * deliberate exceptions below. Reads carry no role guard. Context-free: scans the classpath only.
  */
 class WriteEndpointsGuardTest {
-    // Authenticated by something other than a role: credentials, a signed link or a signature.
+    // Authenticated by something other than a role: credentials, a verified identity, a signed link or a signature.
     private static final Set<String> PUBLIC_OR_SELF = Set.of(
-        "AuthController", "PasswordResetController", "InvitacionPublicaController", "StripeWebhookController");
+        "AuthController", "ClerkAuthController", "PasswordResetController", "InvitacionPublicaController", "StripeWebhookController");
 
     private static boolean isWrite(Method method) {
         return AnnotatedElementUtils.hasAnnotation(method, PostMapping.class)
@@ -47,9 +46,6 @@ class WriteEndpointsGuardTest {
             if (PUBLIC_OR_SELF.contains(controller.getSimpleName())) continue;
             boolean classGuard = AnnotatedElementUtils.hasAnnotation(controller, PreAuthorize.class);
             for (Method method : controller.getDeclaredMethods()) {
-                // The existing public invitation endpoint validates its invitation code before accepting it.
-                if (controller == InvitacionController.class
-                        && method.getName().equals("aceptarInvitacion")) continue;
                 if (isWrite(method) && !classGuard && !AnnotatedElementUtils.hasAnnotation(method, PreAuthorize.class)) {
                     unguarded.add(controller.getSimpleName() + "." + method.getName());
                 }

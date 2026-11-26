@@ -1,5 +1,6 @@
 package com.vortise.gestion.controller.authentication;
 
+import com.vortise.gestion.service.authentication.LoginConContrasenaPolicy;
 import com.vortise.gestion.service.authentication.PasswordResetService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -12,7 +13,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth/password-reset")
 public class PasswordResetController {
     private final PasswordResetService useCase;
-    public PasswordResetController(PasswordResetService useCase) { this.useCase = useCase; }
+    private final LoginConContrasenaPolicy contrasena;
+    public PasswordResetController(PasswordResetService useCase, LoginConContrasenaPolicy contrasena) {
+        this.useCase = useCase;
+        this.contrasena = contrasena;
+    }
     public record Request(@Email @NotBlank @Size(max = 254) String email) {
         @Override public String toString() { return "PasswordResetRequest[redacted]"; }
     }
@@ -21,11 +26,13 @@ public class PasswordResetController {
     }
     @PostMapping("/request")
     public ResponseEntity<Map<String, String>> request(@Valid @RequestBody Request body, HttpServletRequest request) {
+        contrasena.requireEnabled();
         useCase.request(body.email(), request.getRemoteAddr());
         return ResponseEntity.accepted().header("Cache-Control", "no-store").body(Map.of("message", "Si la cuenta está disponible, recibirás un enlace para recuperar tu contraseña."));
     }
     @PostMapping("/confirm")
     public ResponseEntity<Void> confirm(@Valid @RequestBody Confirm body) {
+        contrasena.requireEnabled();
         useCase.confirm(body.token(), body.newPassword());
         return ResponseEntity.noContent().header("Cache-Control", "no-store").build();
     }

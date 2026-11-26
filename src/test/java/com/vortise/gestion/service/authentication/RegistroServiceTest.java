@@ -2,7 +2,9 @@ package com.vortise.gestion.service.authentication;
 
 import com.vortise.gestion.service.EmpresaConfiguracionService;
 import com.vortise.gestion.application.dto.LoginResponseDto;
+import com.vortise.gestion.application.dto.RegistroConIdentidadDto;
 import com.vortise.gestion.application.dto.RegistroRequestDto;
+import com.vortise.gestion.application.port.IdentidadExternaVerificador.IdentidadVerificada;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.model.Empresa;
 import com.vortise.gestion.model.RolEmpresa;
@@ -77,5 +79,28 @@ class RegistroServiceTest {
         assertEquals(emailTaken.getMessage(), companyTaken.getMessage());
         verify(empresas, never()).save(any());
         verify(usuarios, never()).save(any());
+    }
+
+    @Test
+    void registeringWithAnIdentityUsesTheVerifiedEmailAndNoLocalPassword() {
+        var identidad = new IdentidadVerificada("user_ana", " Ana@Example.invalid ");
+
+        useCase.registrarConIdentidad(new RegistroConIdentidadDto(" Nueva Constructora ", " Ana "), identidad);
+
+        verify(usuarios).save(org.mockito.ArgumentMatchers.argThat(u -> "ana@example.invalid".equals(u.getEmail())
+            && "Ana".equals(u.getNombre()) && "user_ana".equals(u.getClerkUserId())
+            && UsuarioEmpresa.SIN_CONTRASENA_LOCAL.equals(u.getPasswordHash()) && u.getRol() == RolEmpresa.ADMINISTRADOR));
+        org.mockito.Mockito.verifyNoInteractions(encoder);
+    }
+
+    @Test
+    void anIdentityAlreadyLinkedOrAnExistingEmailCannotRegisterAgain() {
+        when(usuarios.findByClerkUserId("user_linked")).thenReturn(Optional.of(mock(UsuarioEmpresa.class)));
+        when(usuarios.findByEmail("taken@example.invalid")).thenReturn(Optional.of(mock(UsuarioEmpresa.class)));
+        var dto = new RegistroConIdentidadDto("Otra", "Ana");
+
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.registrarConIdentidad(dto, new IdentidadVerificada("user_linked", "new@example.invalid")));
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.registrarConIdentidad(dto, new IdentidadVerificada("user_new", "taken@example.invalid")));
+        verify(empresas, never()).save(any());
     }
 }

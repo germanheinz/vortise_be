@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.vortise.gestion.application.exception.FeatureUnavailableException;
+import com.vortise.gestion.application.exception.IdentidadNoVerificadaException;
 import io.jsonwebtoken.Jwts;
 import java.math.BigInteger;
 import java.security.KeyPair;
@@ -51,13 +52,13 @@ class ClerkTokenVerifierTest {
         Instant later = NOW.plus(Duration.ofMinutes(1));
 
         assertEquals("user_1", verifier.verifySession(token(clerkKeys, "kid-1", "user_1", "http://localhost:3000", later)));
-        assertThrows(ClerkVerificationException.class, () -> verifier.verifySession(token(otherKeys, "kid-1", "user_1", null, later)));
-        assertThrows(ClerkVerificationException.class, () -> verifier.verifySession(token(clerkKeys, "kid-1", "user_1", null, NOW.minusSeconds(60))));
-        assertThrows(ClerkVerificationException.class, () -> verifier.verifySession(token(clerkKeys, "kid-1", "user_1", "https://evil.example", later)));
-        assertThrows(ClerkVerificationException.class, () -> verifier.verifySession(token(clerkKeys, "unknown", "user_1", null, later)));
-        assertThrows(ClerkVerificationException.class, () -> verifier.verifySession(token(clerkKeys, "kid-1", "org_1", null, later)));
-        assertThrows(ClerkVerificationException.class, () -> verifier.verifySession(Jwts.builder().subject("user_1").compact()));
-        assertThrows(ClerkVerificationException.class, () -> verifier.verifySession(null));
+        assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(token(otherKeys, "kid-1", "user_1", null, later)));
+        assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(token(clerkKeys, "kid-1", "user_1", null, NOW.minusSeconds(60))));
+        assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(token(clerkKeys, "kid-1", "user_1", "https://evil.example", later)));
+        assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(token(clerkKeys, "unknown", "user_1", null, later)));
+        assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(token(clerkKeys, "kid-1", "org_1", null, later)));
+        assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(Jwts.builder().subject("user_1").compact()));
+        assertThrows(IdentidadNoVerificadaException.class, () -> verifier.verifySession(null));
     }
 
     @Test

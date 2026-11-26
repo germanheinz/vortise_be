@@ -21,7 +21,7 @@ public final class InvitacionUsuarioDto {
                           @NotBlank @Size(min = 8, max = 72) String password) {
         @Override public String toString() { return "UserInvitationAcceptance[redacted]"; }
     }
-    public record AceptarClerk(@NotBlank @Size(max = 128) String codigo, @NotBlank @Size(max = 160) String nombre) {
-        @Override public String toString() { return "UserInvitationAcceptanceClerk[redacted]"; }
+    public record AceptarConIdentidad(@NotBlank @Size(max = 128) String codigo, @NotBlank @Size(max = 160) String nombre) {
+        @Override public String toString() { return "UserInvitationAcceptanceWithIdentity[redacted]"; }
     }
 }

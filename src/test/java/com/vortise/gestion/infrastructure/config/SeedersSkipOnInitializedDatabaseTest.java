@@ -28,7 +28,7 @@ class SeedersSkipOnInitializedDatabaseTest {
             .thenAnswer(invocation -> invocation.getArgument(0));
         when(platformEncoder.encode("long-enough-password")).thenReturn("password-hash");
         new SuperAdminSeeder(platformEmpresas, platformUsuarios, platformEncoder,
-            "root@example.invalid", "long-enough-password", skipSeeders).run();
+            "root@example.invalid", "long-enough-password", skipSeeders, true).run();
         verify(platformUsuarios).save(argThat(user -> user.isSuperAdmin()
             && "root@example.invalid".equals(user.getEmail())
             && "password-hash".equals(user.getPasswordHash())));

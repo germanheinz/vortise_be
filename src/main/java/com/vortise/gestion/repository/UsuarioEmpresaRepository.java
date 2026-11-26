@@ -33,7 +33,6 @@ public interface UsuarioEmpresaRepository {
 
     Optional<UsuarioEmpresa> findByEmail(String email);
     Optional<UsuarioEmpresa> findByClerkUserId(String clerkUserId);
-    Optional<UsuarioEmpresa> findByCodigoInvitacion(String codigoInvitacion);
     @EntityGraph(attributePaths = "empresa")
     Optional<UsuarioEmpresa> findById(Long id);
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)

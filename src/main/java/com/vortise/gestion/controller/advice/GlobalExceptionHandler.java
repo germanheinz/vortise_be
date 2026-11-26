@@ -35,9 +35,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleAuthentication(org.springframework.security.core.AuthenticationException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDto(401, "Unauthorized", "Email o contraseña incorrectos"));
     }
-    @ExceptionHandler(com.vortise.gestion.infrastructure.security.clerk.ClerkVerificationException.class)
-    public ResponseEntity<ErrorResponseDto> handleClerkVerification(com.vortise.gestion.infrastructure.security.clerk.ClerkVerificationException ex) {
+    @ExceptionHandler(com.vortise.gestion.application.exception.IdentidadNoVerificadaException.class)
+    public ResponseEntity<ErrorResponseDto> handleIdentidadNoVerificada(com.vortise.gestion.application.exception.IdentidadNoVerificadaException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDto(401, "Unauthorized", ex.getMessage()));
+    }
+    @ExceptionHandler(com.vortise.gestion.application.exception.AccesoDenegadoException.class)
+    public ResponseEntity<java.util.Map<String, Object>> handleAccesoDenegado(com.vortise.gestion.application.exception.AccesoDenegadoException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(java.util.Map.of("status", 403, "error", "Forbidden",
+            "code", ex.getCode(), "message", ex.getMessage()));
+    }
+    @ExceptionHandler(com.vortise.gestion.application.exception.LoginConContrasenaDesactivadoException.class)
+    public ResponseEntity<java.util.Map<String, Object>> handleLoginConContrasenaDesactivado(com.vortise.gestion.application.exception.LoginConContrasenaDesactivadoException ex) {
+        return ResponseEntity.status(HttpStatus.GONE).body(java.util.Map.of("status", 410, "error", "Gone",
+            "code", com.vortise.gestion.application.exception.LoginConContrasenaDesactivadoException.CODE, "message", ex.getMessage()));
     }
     @ExceptionHandler(com.vortise.gestion.application.exception.ReglaDeEstadoException.class)
     public ResponseEntity<java.util.Map<String, Object>> handleReglaDeEstado(com.vortise.gestion.application.exception.ReglaDeEstadoException ex, jakarta.servlet.http.HttpServletRequest request) {

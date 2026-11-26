@@ -7,6 +7,7 @@ import com.vortise.gestion.application.dto.InvitacionesDto.*;
 import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.application.exception.*;
 import com.vortise.gestion.application.port.CurrentIdentity;
+import com.vortise.gestion.application.port.IdentidadExternaVerificador.IdentidadVerificada;
 import com.vortise.gestion.model.*;
 import com.vortise.gestion.repository.*;
 import java.time.Instant;
@@ -73,19 +74,33 @@ public class InvitacionesService {
     }
     @Transactional
     public LoginResponseDto aceptar(Aceptar dto) {
+        return aceptarComoColaborador(dto.token(), dto.email(), () -> PasswordPolicy.validate(dto.password()),
+            (empresa, email) -> new UsuarioEmpresa(empresa, email, dto.nombre().trim(), encoder.encode(dto.password()), RolEmpresa.COLABORADOR));
+    }
+    /** The email comes from the verified identity; the invitation is not bound to one, so any verified email may accept it. */
+    @Transactional
+    public LoginResponseDto aceptarConIdentidad(AceptarConIdentidad dto, IdentidadVerificada identidad) {
+        if (usuarios.findByClerkUserId(identidad.sujeto()).isPresent()) {
+            throw new ConflictoEstadoException("No se pudo crear la cuenta con ese email. Iniciá sesión con tu cuenta existente.");
+        }
+        return aceptarComoColaborador(dto.token(), identidad.email(), () -> { }, (empresa, email) ->
+            UsuarioEmpresa.conIdentidadExterna(empresa, email, dto.nombre().trim(), RolEmpresa.COLABORADOR, identidad.sujeto()));
+    }
+    private LoginResponseDto aceptarComoColaborador(String token, String emailIngresado, Runnable validarCredencial,
+            java.util.function.BiFunction<Empresa, String, UsuarioEmpresa> nuevoUsuario) {
         // Same global owner lock for all invitations and user reactivations, then invitation lock.
-        var candidato = invitaciones.buscarIdentidad(InvitacionToken.hash(dto.token())).orElseThrow(this::noDisponible);
+        var candidato = invitaciones.buscarIdentidad(InvitacionToken.hash(token)).orElseThrow(this::noDisponible);
         usuarios.bloquearPorId(candidato.getTitularId()).orElseThrow(this::noDisponible);
         InvitacionEquipo invitacion = invitaciones.bloquearPorId(candidato.getId()).orElseThrow(this::noDisponible);
         if (!invitacion.disponible(Instant.now())) throw noDisponible();
         verificarEmpresas(invitacion.getTitularId(), invitacion.getEmpresaIds());
         verificarCupo(invitacion.getTitularId());
-        PasswordPolicy.validate(dto.password());
-        String email = dto.email().trim().toLowerCase(Locale.ROOT);
+        validarCredencial.run();
+        String email = emailIngresado.trim().toLowerCase(Locale.ROOT);
         if (usuarios.findByEmail(email).isPresent()) throw new ConflictoEstadoException("No se pudo crear la cuenta con ese email. Iniciá sesión con tu cuenta existente.");
         Long primera = invitacion.getEmpresaIds().stream().min(Long::compareTo).orElseThrow(this::noDisponible);
         Empresa empresa = empresas.findById(primera).orElseThrow(this::noDisponible);
-        UsuarioEmpresa usuario = new UsuarioEmpresa(empresa, email, dto.nombre().trim(), encoder.encode(dto.password()), RolEmpresa.COLABORADOR);
+        UsuarioEmpresa usuario = nuevoUsuario.apply(empresa, email);
         usuario.asignarEquipo(invitacion.getTitularId(), invitacion.getEmpresaIds());
         usuario = usuarios.save(usuario);
         invitacion.consumir(Instant.now());

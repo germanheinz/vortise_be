@@ -7,6 +7,7 @@ import com.vortise.gestion.application.dto.MeDto;
 import com.vortise.gestion.application.dto.RegistroRequestDto;
 import com.vortise.gestion.application.exception.SesionInvalidaException;
 import com.vortise.gestion.service.authentication.AutenticacionService;
+import com.vortise.gestion.service.authentication.LoginConContrasenaPolicy;
 import com.vortise.gestion.service.authentication.RegistroService;
 import com.vortise.gestion.service.authentication.SesionService;
 import com.vortise.gestion.infrastructure.security.SessionCookies;
@@ -28,11 +29,12 @@ public class AuthController {
     private final RegistroService registro;
     private final SesionService sesiones;
     private final SessionCookies cookies;
+    private final LoginConContrasenaPolicy contrasena;
 
     public AuthController(AutenticacionService autenticacion, RegistroService registro,
-            SesionService sesiones, SessionCookies cookies) {
+            SesionService sesiones, SessionCookies cookies, LoginConContrasenaPolicy contrasena) {
         this.autenticacion = autenticacion; this.registro = registro;
-        this.sesiones = sesiones; this.cookies = cookies;
+        this.sesiones = sesiones; this.cookies = cookies; this.contrasena = contrasena;
     }
 
     @GetMapping("/me")
@@ -42,11 +44,13 @@ public class AuthController {
 
     @PostMapping("/auth/login")
     public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto request, HttpServletRequest http) {
+        contrasena.requireEnabled();
         return cookies.respond(HttpStatus.OK, sesiones.abrir(autenticacion.login(request, http.getRemoteAddr())));
     }
 
     @PostMapping("/auth/registro")
     public ResponseEntity<LoginResponseDto> registro(@Valid @RequestBody RegistroRequestDto request) {
+        contrasena.requireEnabled();
         return cookies.respond(HttpStatus.CREATED, sesiones.abrir(registro.registrar(request)));
     }
 

@@ -81,6 +81,10 @@ app:
     price-basic: ${STRIPE_PRICE_BASIC:}
     price-pro: ${STRIPE_PRICE_PRO:}
   frontend-url: ${APP_FRONTEND_URL:http://localhost:3000}
+  auth:
+    # Credentials live in Clerk; only test profiles re-enable the legacy password endpoints for their fixtures.
+    password-login:
+      enabled: false
   clerk:
     enabled: ${CLERK_ENABLED:false}
     secret-key: ${CLERK_SECRET_KEY:}

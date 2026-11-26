@@ -17,6 +17,10 @@ spring:
       ddl-auto: create-drop
     show-sql: false
 app:
+  auth:
+    # Fixtures sign in with local passwords; production keeps this off.
+    password-login:
+      enabled: true
   # Never inherit configured administrative accounts or external payment settings.
   superadmin:
     email: ""

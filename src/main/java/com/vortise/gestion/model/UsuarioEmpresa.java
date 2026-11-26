@@ -85,14 +85,6 @@ public class UsuarioEmpresa {
     public String getCodigoInvitacion() { return codigoInvitacion; }
     public Instant getInvitacionExpiraEn() { return invitacionExpiraEn; }
     public boolean isMigradoAClerk() { return migradoAClerk; }
-    public boolean esUsuarioConLogin() { return tieneLogin && clerkUserId != null; }
-    public boolean esInvitacionValida() {
-        return codigoInvitacion != null && invitacionExpiraEn != null && invitacionExpiraEn.isAfter(Instant.now());
-    }
-    public void generarCodigoInvitacion() {
-        this.codigoInvitacion = java.util.UUID.randomUUID().toString();
-        this.invitacionExpiraEn = Instant.now().plus(java.time.Duration.ofDays(7));
-    }
     /** New identity/restored identity must not reuse generations from previously signed JWTs. */
     public static long nuevaGeneracionSesion() { return SESSION_GENERATIONS.nextLong(1, Long.MAX_VALUE / 2); }
     public void setUltimoLoginExitosoEn(Instant value) { ultimoLoginExitosoEn = value; }
@@ -108,4 +100,19 @@ public class UsuarioEmpresa {
     public void setCodigoInvitacion(String value) { codigoInvitacion = value; }
     public void setInvitacionExpiraEn(Instant value) { invitacionExpiraEn = value; }
     public void setMigradoAClerk(boolean value) { migradoAClerk = value; }
+
+    /** Credentials live in the external identity provider; no password ever matches this value. */
+    public static final String SIN_CONTRASENA_LOCAL = "!identidad-externa";
+
+    public static UsuarioEmpresa conIdentidadExterna(Empresa empresa, String email, String nombre, RolEmpresa rol, String sujeto) {
+        UsuarioEmpresa usuario = new UsuarioEmpresa(empresa, email, nombre, SIN_CONTRASENA_LOCAL, rol);
+        usuario.vincularIdentidadExterna(sujeto);
+        return usuario;
+    }
+
+    public void vincularIdentidadExterna(String sujeto) {
+        clerkUserId = sujeto;
+        tieneLogin = true;
+        migradoAClerk = true;
+    }
 }

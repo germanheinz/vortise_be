@@ -13,7 +13,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.vortise.gestion.application.dto.InvitacionUsuarioDto.Aceptar;
-import com.vortise.gestion.application.dto.InvitacionUsuarioDto.AceptarClerk;
+import com.vortise.gestion.application.dto.InvitacionUsuarioDto.AceptarConIdentidad;
+import com.vortise.gestion.application.port.IdentidadExternaVerificador.IdentidadVerificada;
 import com.vortise.gestion.application.dto.InvitacionUsuarioDto.Crear;
 import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.application.exception.ConflictoEstadoException;
@@ -224,11 +225,11 @@ class InvitacionUsuarioServiceTest {
     }
 
     @Test
-    void clerkAcceptanceUsesTheInvitationCompanyRoleAndFormNameWithTheVerifiedAccount() {
+    void acceptingWithAnIdentityUsesTheInvitationCompanyRoleAndFormName() {
         site(7L, COMPANY);
         var created = useCase.crear(COMPANY, new Crear("jefe@example.invalid", RolEmpresa.JEFE_DE_OBRA, List.of(7L)));
 
-        useCase.aceptarClerk(new AceptarClerk(token(created.enlace()), "  Ana Pérez "), "user_abc", "JEFE@example.invalid");
+        useCase.aceptarConIdentidad(new AceptarConIdentidad(token(created.enlace()), "  Ana Pérez "), new IdentidadVerificada("user_abc", "JEFE@example.invalid"));
 
         var saved = org.mockito.ArgumentCaptor.forClass(UsuarioEmpresa.class);
         verify(usuarios).save(saved.capture());
@@ -242,14 +243,13 @@ class InvitacionUsuarioServiceTest {
     }
 
     @Test
-    void clerkAcceptanceRejectsAnotherEmailOrAnAlreadyLinkedAccountWithoutConsumingTheInvitation() {
+    void acceptingWithAnIdentityRejectsAnotherEmailOrALinkedAccountWithoutConsumingTheInvitation() {
         var created = useCase.crear(COMPANY, new Crear("ana@example.invalid", RolEmpresa.CONSULTA, null));
         String code = token(created.enlace());
         when(usuarios.findByClerkUserId("user_linked")).thenReturn(Optional.of(mock(UsuarioEmpresa.class)));
 
-        assertThrows(SolicitudInvalidaException.class, () -> useCase.aceptarClerk(new AceptarClerk(code, "Ana"), "user_abc", "other@example.invalid"));
-        assertThrows(SolicitudInvalidaException.class, () -> useCase.aceptarClerk(new AceptarClerk(code, "Ana"), "user_abc", null));
-        assertThrows(ConflictoEstadoException.class, () -> useCase.aceptarClerk(new AceptarClerk(code, "Ana"), "user_linked", "ana@example.invalid"));
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.aceptarConIdentidad(new AceptarConIdentidad(code, "Ana"), new IdentidadVerificada("user_abc", "other@example.invalid")));
+        assertThrows(ConflictoEstadoException.class, () -> useCase.aceptarConIdentidad(new AceptarConIdentidad(code, "Ana"), new IdentidadVerificada("user_linked", "ana@example.invalid")));
 
         verify(usuarios, never()).save(any());
         assertTrue(stored.get(0).disponible(java.time.Instant.now()));

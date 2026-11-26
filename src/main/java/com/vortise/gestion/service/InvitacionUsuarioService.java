@@ -10,6 +10,7 @@ import com.vortise.gestion.application.exception.ConflictoEstadoException;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.port.CurrentIdentity;
+import com.vortise.gestion.application.port.IdentidadExternaVerificador.IdentidadVerificada;
 import com.vortise.gestion.model.Empresa;
 import com.vortise.gestion.model.InvitacionUsuario;
 import com.vortise.gestion.model.RolEmpresa;
@@ -122,32 +123,28 @@ public class InvitacionUsuarioService {
     }
 
     /**
-     * Accepts an invitation for a Clerk account. The account id and email come from a verified Clerk session, never
-     * from the request body; the email must be the invited one, and the user lands in the invitation's company and role.
+     * Accepts an invitation with a verified external identity. The account and email come from the identity, never from
+     * the request body; the email must be the invited one, and the user lands in the invitation's company and role.
      */
     @Transactional
-    public LoginResponseDto aceptarClerk(AceptarClerk dto, String clerkUserId, String emailVerificado) {
+    public LoginResponseDto aceptarConIdentidad(AceptarConIdentidad dto, IdentidadVerificada identidad) {
         Long empresaId = disponible(dto.codigo()).getEmpresaId();
         // Same lock order as creation: company first, then the invitation.
         Empresa empresa = empresas.bloquearPorId(empresaId).orElseThrow(this::noDisponible);
         InvitacionUsuario invitacion = invitaciones.bloquearPorId(disponible(dto.codigo()).getId()).orElseThrow(this::noDisponible);
         Instant now = Instant.now();
         if (!invitacion.disponible(now)) throw noDisponible();
-        if (emailVerificado == null || !normalizar(emailVerificado).equals(invitacion.getEmail())) {
+        if (!normalizar(identidad.email()).equals(invitacion.getEmail())) {
             throw new SolicitudInvalidaException("Tu cuenta debe usar el email al que llegó la invitación.");
         }
-        if (usuarios.findByEmail(invitacion.getEmail()).isPresent() || usuarios.findByClerkUserId(clerkUserId).isPresent()) {
+        if (usuarios.findByEmail(invitacion.getEmail()).isPresent() || usuarios.findByClerkUserId(identidad.sujeto()).isPresent()) {
             throw new ConflictoEstadoException("No se pudo crear la cuenta con ese email. Iniciá sesión con tu cuenta existente.");
         }
         if (usuarios.countByEmpresaIdAndActivoTrue(empresaId) >= empresa.getLimiteUsuarios()) {
             throw new ConflictoEstadoException("La empresa alcanzó su límite de usuarios. Pedile al administrador que libere una plaza.");
         }
-        // Clerk owns the credentials; the local hash is random so password login can never match.
-        UsuarioEmpresa usuario = new UsuarioEmpresa(empresa, invitacion.getEmail(), dto.nombre().trim(),
-            encoder.encode(java.util.UUID.randomUUID().toString()), invitacion.getRol());
-        usuario.setClerkUserId(clerkUserId);
-        usuario.setMigradoAClerk(true);
-        usuario.setTieneLogin(true);
+        UsuarioEmpresa usuario = UsuarioEmpresa.conIdentidadExterna(empresa, invitacion.getEmail(), dto.nombre().trim(),
+            invitacion.getRol(), identidad.sujeto());
         if (invitacion.getRol() == RolEmpresa.JEFE_DE_OBRA) usuario.asignarObras(obrasDeLaEmpresa(empresaId, invitacion.getObraIds()));
         usuario = usuarios.save(usuario);
         invitacion.consumir(now);

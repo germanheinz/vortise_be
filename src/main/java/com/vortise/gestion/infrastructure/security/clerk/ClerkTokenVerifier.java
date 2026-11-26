@@ -1,6 +1,8 @@
 package com.vortise.gestion.infrastructure.security.clerk;
 
 import com.vortise.gestion.application.exception.FeatureUnavailableException;
+import com.vortise.gestion.application.exception.IdentidadNoVerificadaException;
+import com.vortise.gestion.application.port.IdentidadExternaVerificador;
 import com.vortise.gestion.infrastructure.config.WebEnvironmentConfiguration;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -34,18 +36,17 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Verifies Clerk session tokens (RS256, keys from the instance JWKS) and resolves the account's verified primary email
- * through the Clerk Backend API. Only the signed token is trusted for the user id; the email never comes from the client.
+ * Clerk adapter for {@link IdentidadExternaVerificador}: verifies session tokens (RS256, keys from the instance JWKS)
+ * and resolves the account's verified primary email through the Clerk Backend API. Only the signed token is trusted
+ * for the user id; the email never comes from the client.
  */
 @Component
-public class ClerkTokenVerifier {
+public class ClerkTokenVerifier implements IdentidadExternaVerificador {
     /** Fetches a Clerk Backend API path with the secret key and returns the JSON body. */
     @FunctionalInterface
-    public interface ClerkApi {
+    interface ClerkApi {
         String get(String path) throws IOException;
     }
-
-    public record VerifiedClerkUser(String userId, String email) { }
 
     private static final Duration KEY_REFRESH_INTERVAL = Duration.ofMinutes(1);
     private static final Duration CLOCK_SKEW = Duration.ofSeconds(5);
@@ -73,14 +74,17 @@ public class ClerkTokenVerifier {
         this.clock = clock;
     }
 
-    public boolean isEnabled() {
-        return enabled;
+    @Override
+    public IdentidadVerificada verificar(String token) {
+        String userId = verifySession(token);
+        return new IdentidadVerificada(userId, verifiedPrimaryEmail(userId)
+            .orElseThrow(() -> new IdentidadNoVerificadaException("Confirmá tu email antes de continuar.")));
     }
 
     /** Returns the Clerk user id ({@code sub}) of a valid, unexpired session token issued for an allowed origin. */
-    public String verifySession(String token) {
+    String verifySession(String token) {
         requireEnabled();
-        if (token == null || token.isBlank()) throw new ClerkVerificationException("Falta la sesión de la cuenta.");
+        if (token == null || token.isBlank()) throw new IdentidadNoVerificadaException("Falta la sesión de la cuenta.");
         Claims claims;
         try {
             claims = Jwts.parser()
@@ -91,25 +95,18 @@ public class ClerkTokenVerifier {
                 .clockSkewSeconds(CLOCK_SKEW.toSeconds())
                 .build().parseSignedClaims(token).getPayload();
         } catch (JwtException | IllegalArgumentException invalid) {
-            throw new ClerkVerificationException("La sesión de la cuenta no es válida.");
+            throw new IdentidadNoVerificadaException("La sesión de la cuenta no es válida.");
         }
         String userId = claims.getSubject();
-        if (userId == null || !userId.startsWith("user_")) throw new ClerkVerificationException("La sesión de la cuenta no es válida.");
+        if (userId == null || !userId.startsWith("user_")) throw new IdentidadNoVerificadaException("La sesión de la cuenta no es válida.");
         String azp = claims.get("azp", String.class);
         if (azp != null && !allowedOrigins.contains(azp.replaceAll("/+$", ""))) {
-            throw new ClerkVerificationException("La sesión de la cuenta no es válida.");
+            throw new IdentidadNoVerificadaException("La sesión de la cuenta no es válida.");
         }
         return userId;
     }
 
-    /** Verifies the token and resolves the account's primary email, which Clerk must report as verified. */
-    public VerifiedClerkUser verify(String token) {
-        String userId = verifySession(token);
-        return new VerifiedClerkUser(userId, verifiedPrimaryEmail(userId)
-            .orElseThrow(() -> new ClerkVerificationException("Confirmá tu email antes de continuar.")));
-    }
-
-    public Optional<String> verifiedPrimaryEmail(String userId) {
+    Optional<String> verifiedPrimaryEmail(String userId) {
         requireEnabled();
         JsonNode user;
         try {
@@ -141,7 +138,7 @@ public class ClerkTokenVerifier {
             }
             key = keyId == null ? null : keys.get(keyId);
         }
-        if (key == null) throw new ClerkVerificationException("La sesión de la cuenta no es válida.");
+        if (key == null) throw new IdentidadNoVerificadaException("La sesión de la cuenta no es válida.");
         return key;
     }
 

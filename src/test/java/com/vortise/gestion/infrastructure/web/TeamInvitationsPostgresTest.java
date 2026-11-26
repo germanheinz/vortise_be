@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, properties = "app.auth.password-login.enabled=true")
 @AutoConfigureMockMvc(print = MockMvcPrint.NONE)
 @ActiveProfiles("production")
 @org.junit.jupiter.api.condition.EnabledIfSystemProperty(named = "team15.pg.enabled", matches = "true")
