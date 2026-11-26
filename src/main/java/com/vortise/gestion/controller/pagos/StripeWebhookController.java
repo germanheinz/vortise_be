@@ -1,6 +1,6 @@
-package com.vortise.gestion.infrastructure.web;
+package com.vortise.gestion.controller.pagos;
 
-import com.vortise.gestion.application.service.StripeWebhookService;
+import com.vortise.gestion.service.pagos.StripeWebhookService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

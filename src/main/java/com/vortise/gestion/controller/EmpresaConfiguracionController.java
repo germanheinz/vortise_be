@@ -1,4 +1,4 @@
-package com.vortise.gestion.infrastructure.web;
+package com.vortise.gestion.controller;
 
 import com.vortise.gestion.application.dto.CalendarioLaboralEmpresaDto;
 import com.vortise.gestion.application.dto.CatalogoEmpresaDto;

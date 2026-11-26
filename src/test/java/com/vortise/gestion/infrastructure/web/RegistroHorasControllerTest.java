@@ -1,5 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
+import com.vortise.gestion.controller.RegistroHorasController;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;

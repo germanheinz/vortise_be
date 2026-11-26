@@ -1,4 +1,4 @@
-package com.vortise.gestion.infrastructure.web;
+package com.vortise.gestion.controller.pagos;
 
 import java.time.Instant;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,4 +1,4 @@
-package com.vortise.gestion.infrastructure.web;
+package com.vortise.gestion.controller;
 
 import com.vortise.gestion.application.dto.MeDto;
 import com.vortise.gestion.application.service.PerfilService;

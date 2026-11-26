@@ -1,4 +1,4 @@
-package com.vortise.gestion.infrastructure.web;
+package com.vortise.gestion.controller.pagos;
 
 import com.vortise.gestion.application.dto.CheckoutRequestDto;
 import com.vortise.gestion.application.dto.MisSuscripcionesDto;
@@ -6,8 +6,8 @@ import com.vortise.gestion.application.dto.PlanSuscripcionDto;
 import com.vortise.gestion.application.dto.PortalRequestDto;
 import com.vortise.gestion.application.dto.SuscripcionResumenDto;
 import com.vortise.gestion.application.dto.UrlDto;
-import com.vortise.gestion.application.service.SuscripcionConsultaService;
-import com.vortise.gestion.application.service.SuscripcionService;
+import com.vortise.gestion.service.pagos.SuscripcionConsultaService;
+import com.vortise.gestion.service.pagos.SuscripcionService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.ResponseEntity;

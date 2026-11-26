@@ -1,5 +1,6 @@
 package com.vortise.gestion.application.service;
 
+import com.vortise.gestion.service.pagos.SuscripcionConsultaService;
 import com.vortise.gestion.application.dto.*;
 import com.vortise.gestion.application.exception.*;
 import com.vortise.gestion.domain.model.*;

@@ -1,5 +1,6 @@
 package com.vortise.gestion.application.service;
 
+import com.vortise.gestion.service.pagos.SuscripcionConsultaService;
 import com.vortise.gestion.application.helper.PasswordPolicy;
 import com.vortise.gestion.application.dto.UsuarioEmpresaDto;
 import com.vortise.gestion.application.dto.UsuarioEmpresaUpdateDto;

@@ -9,7 +9,7 @@
  *  org.springframework.web.bind.annotation.RestController
  *  org.springframework.web.multipart.MultipartFile
  */
-package com.vortise.gestion.infrastructure.web;
+package com.vortise.gestion.controller;
 
 import com.vortise.gestion.infrastructure.excel.ExcelImportService;
 import java.util.Map;

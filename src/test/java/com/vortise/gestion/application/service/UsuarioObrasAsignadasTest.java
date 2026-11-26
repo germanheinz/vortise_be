@@ -1,5 +1,6 @@
 package com.vortise.gestion.application.service;
 
+import com.vortise.gestion.service.pagos.SuscripcionConsultaService;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

@@ -1,5 +1,6 @@
 package com.vortise.gestion.application.service;
 
+import com.vortise.gestion.service.pagos.SuscripcionConsultaService;
 import com.vortise.gestion.application.dto.LoginRequestDto;
 import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.application.port.FotoPerfilStorage;

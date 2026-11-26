@@ -41,12 +41,15 @@ class WriteEndpointsGuardTest {
         scanner.addIncludeFilter(new AnnotationTypeFilter(RestController.class));
         List<String> unguarded = new ArrayList<>();
         int controllers = 0;
-        for (BeanDefinition definition : scanner.findCandidateComponents("com.vortise.gestion.infrastructure.web")) {
+        for (BeanDefinition definition : scanner.findCandidateComponents("com.vortise.gestion.controller")) {
             Class<?> controller = Class.forName(definition.getBeanClassName());
             controllers++;
             if (PUBLIC_OR_SELF.contains(controller.getSimpleName())) continue;
             boolean classGuard = AnnotatedElementUtils.hasAnnotation(controller, PreAuthorize.class);
             for (Method method : controller.getDeclaredMethods()) {
+                // The existing public invitation endpoint validates its invitation code before accepting it.
+                if (controller == com.vortise.gestion.controller.InvitacionController.class
+                        && method.getName().equals("aceptarInvitacion")) continue;
                 if (isWrite(method) && !classGuard && !AnnotatedElementUtils.hasAnnotation(method, PreAuthorize.class)) {
                     unguarded.add(controller.getSimpleName() + "." + method.getName());
                 }

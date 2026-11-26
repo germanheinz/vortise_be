@@ -100,3 +100,7 @@ Normalizar el sufijo de los servicios y usar nombres específicos para altas, ed
 - Frontend: quitar el modo de alta del asistente, el POST y la invalidación de caché asociada. Conservar las acciones de lectura y las pantallas de restricciones normales. Retirar el workflow de Telegram versionado y sus pruebas exclusivas. Revisar los cambios de autenticación locales antes de editar archivos.
 - Mantener las migraciones aplicadas y los mappings históricos que necesita la huella de respaldos. No modificar filas existentes. No operar sobre workflows remotos de n8n ni Telegram; cualquier retiro remoto se coordina por separado.
 - Verificar contratos de lectura y alta regular, referencias obsoletas y resultados por repositorio. La ejecución de contextos Spring requiere autorización según las reglas del backend.
+
+### Ordenar controllers y pagos
+
+Mover las clases anotadas con RestController fuera de infrastructure.web. Mantener filtros y advice HTTP en ese paquete. Agrupar StripeWebhookController, SuscripcionController y PaymentConfigurationController en controller.pagos. Agrupar el servicio de webhook y los dos servicios de suscripción en service.pagos. Actualizar consumidores y ampliar el escaneo de guardas al paquete raíz de controllers. Documentar la ruta pública existente de aceptación de invitaciones al incorporarla a ese escaneo. Verificar con una compilación limpia, comparación estática de los controllers y pruebas sin contexto.

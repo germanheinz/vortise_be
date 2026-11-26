@@ -1,5 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
+import com.vortise.gestion.controller.PlantaController;
 import com.vortise.gestion.application.dto.PlantaDto;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.Planta;

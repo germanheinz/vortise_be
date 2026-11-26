@@ -1,8 +1,8 @@
 package com.vortise.gestion.infrastructure.config;
 
 import com.vortise.gestion.infrastructure.backup.H2LogicalBackupService;
-import com.vortise.gestion.infrastructure.web.AdminBackupController;
-import com.vortise.gestion.infrastructure.web.AdminBackupDisabledController;
+import com.vortise.gestion.controller.AdminBackupController;
+import com.vortise.gestion.controller.AdminBackupDisabledController;
 import com.vortise.gestion.infrastructure.web.GlobalExceptionHandler;
 import java.util.List;
 import org.junit.jupiter.api.Test;

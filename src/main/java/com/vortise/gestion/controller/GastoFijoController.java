@@ -15,7 +15,7 @@
  *  org.springframework.web.bind.annotation.RequestMapping
  *  org.springframework.web.bind.annotation.RestController
  */
-package com.vortise.gestion.infrastructure.web;
+package com.vortise.gestion.controller;
 
 import com.vortise.gestion.application.dto.GastoFijoDto;
 import com.vortise.gestion.application.exception.FeatureUnavailableException;

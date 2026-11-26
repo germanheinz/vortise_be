@@ -1,4 +1,4 @@
-package com.vortise.gestion.infrastructure.web;
+package com.vortise.gestion.controller;
 
 import com.vortise.gestion.application.dto.ErrorResponseDto;
 import com.vortise.gestion.application.dto.LoginRequestDto;

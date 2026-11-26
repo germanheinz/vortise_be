@@ -1,4 +1,4 @@
-package com.vortise.gestion.application.service;
+package com.vortise.gestion.service.pagos;
 
 import com.vortise.gestion.application.exception.ConflictoEstadoException;
 import com.vortise.gestion.application.exception.PagosNoConfiguradosException;

@@ -12,7 +12,7 @@
  *  org.springframework.web.bind.annotation.RequestMapping
  *  org.springframework.web.bind.annotation.RestController
  */
-package com.vortise.gestion.infrastructure.web;
+package com.vortise.gestion.controller;
 
 import com.vortise.gestion.application.dto.PaginaDto;
 import com.vortise.gestion.application.dto.ProyectoCreateDto;
