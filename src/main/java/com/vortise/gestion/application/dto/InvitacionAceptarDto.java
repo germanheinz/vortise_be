@@ -1,4 +1,4 @@
-package com.vortise.gestion.dto;
+package com.vortise.gestion.application.dto;
 
 public record InvitacionAceptarDto(
     String codigo,

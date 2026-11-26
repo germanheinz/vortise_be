@@ -1,7 +1,7 @@
 package com.vortise.gestion.controller.authentication;
 
-import com.vortise.gestion.dto.InvitacionAceptarDto;
-import com.vortise.gestion.dto.InvitacionValidaDto;
+import com.vortise.gestion.application.dto.InvitacionAceptarDto;
+import com.vortise.gestion.application.dto.InvitacionValidaDto;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import com.vortise.gestion.service.usuario.ClerkUserSyncService;
