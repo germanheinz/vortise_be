@@ -144,3 +144,7 @@ La revisión de servicios deja estos candidatos para cambios separados:
 ### Consolidación de servicios de empresa
 
 Integrar la baja en EmpresaService y la inicialización idempotente en EmpresaConfiguracionService. Reunir los dos informes en EmpresaConsultaService con la validación de empresa compartida. Mover el listado de restricciones con su guarda y transacción de lectura. Mantener los DTO y el esquema.
+
+### Retiro de gastos fijos globales
+
+Eliminar clases, configuración, cliente y pruebas exclusivos de la funcionalidad. Mantener la migración histórica y conservar la tabla en el respaldo H2 si existe. El catálogo de suscripción queda fuera de este corte.

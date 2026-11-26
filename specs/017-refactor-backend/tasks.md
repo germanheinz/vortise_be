@@ -160,3 +160,10 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] Retirados cinco servicios y creado EmpresaConsultaService. Las 27 rutas de ambos controllers conservan sus declaraciones HTTP y guardas, comparadas con HEAD.
 - [x] Pasaron 43 pruebas con `mvn -Dtest=CompanyInitializationTest,EmpresaTenantScopeTest,EmpresaResumenUseCasesTest,EmpresaDashboardObrasUseCaseTest,RegistroServiceTest,RestriccionAltaTest,RestriccionEdicionTest,UpdateRestriccionJefeRulesTest,WriteEndpointsGuardTest clean test`. Pasó `git diff --check`.
 - [ ] Integración con contexto de Spring y revisión independiente pendientes.
+
+### Retiro de gastos fijos globales
+
+- [x] «eliminalo» autorizó el cambio local de backend y frontend, con preservación de datos históricos.
+- [x] Retirados la pantalla, API, cliente, entidad, repositorios, DTO, política exclusiva y pruebas obsoletas. El respaldo H2 conserva la tabla física si existe.
+- [x] Backend: 15 pruebas con `mvn -Dtest=WriteEndpointsGuardTest,FeatureUnavailableResponseTest,AdminBackupDisabledControllerTest,PostgresMigrationSourceTest,E2eLocalConfigurationTest,ProductionConfigurationTest clean test`. Frontend: 17 pruebas con `node --test tests/asistente-contexto.test.cjs tests/context-queries.test.cjs`. Pasó `git diff --check` en el alcance.
+- [ ] Pendientes integración con Spring y revisión independiente. El catálogo histórico de planes y las migraciones aplicadas conservan sus textos.

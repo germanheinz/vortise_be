@@ -1,6 +1,6 @@
 # Modelo de datos de Gestión de Obras
 
-Inventario del backend a partir de las anotaciones JPA y las migraciones SQL del repositorio. El esquema versionado define **43 tablas**: 34 de entidades, 6 auxiliares y 3 históricas. El inventario describe el código y las migraciones, sin consultar una base desplegada.
+Inventario del backend a partir de las anotaciones JPA y las migraciones SQL del repositorio. El esquema versionado define **43 tablas**: 33 de entidades, 6 auxiliares y 4 históricas. El inventario describe el código y las migraciones, sin consultar una base desplegada.
 
 ## Cómo se conecta la obra
 
@@ -50,7 +50,6 @@ La columna **Relación** indica el vínculo principal de la entidad. Los identif
 | CertificadoObra | `certificados_obra` | Proyecto; subcontratista opcional | Certificaciones, estado y datos de emisión o cierre. |
 | CertificadoItemCompletado | `certificado_items_completados` | CertificadoObra y RubroObra | Ítems marcados como completados en un certificado. |
 | Rendimiento | `rendimientos` | Sin asociación JPA a Proyecto o Empresa | Referencias de rendimiento y costo de mano de obra. |
-| GastoFijo | `gastos_fijos` | Sin asociación JPA a Proyecto o Empresa | Concepto, monto, categoría y mes. La API está deshabilitada por defecto. |
 
 ### Facturación de la plataforma
 
@@ -72,6 +71,7 @@ La columna **Relación** indica el vínculo principal de la entidad. Los identif
 | `invitacion_usuario_obras` | InvitacionUsuario → obras | Guarda las obras que se asignarán al aceptar. |
 | `devoluciones_pago` | PagoSuscripcion → DevolucionPago | Guarda una colección de devoluciones. DevolucionPago es un @Embeddable. |
 | `calendarios_laborales_empresa` | Histórica desde V31 | Conserva las filas anteriores al corte. El calendario activo vive en `empresas`. |
+| `gastos_fijos` | Histórica | El módulo global se retiró. La tabla permanece en las migraciones y en el respaldo H2 cuando existe. |
 | `altas_restriccion_chat` | Histórica | Permanece en las migraciones y en el respaldo H2 cuando existe. |
 | `vinculos_telegram` | Histórica | Permanece en las migraciones y en el respaldo H2 cuando existe. |
 
@@ -80,7 +80,6 @@ La columna **Relación** indica el vínculo principal de la entidad. Los identif
 | Candidato | Evidencia en el modelo | Decisión pendiente |
 | --- | --- | --- |
 | ObraTarea y RegistroHoras | Comparten campos de cantidades, horas y cumplimiento, con distinta granularidad temporal. | Rastrear las escrituras y cálculos antes de elegir una fuente por dato. |
-| GastoFijo | Carece de vínculo con empresa u obra y la función está deshabilitada por defecto. | Confirmar su uso antes de decidir su alcance o retiro. |
 | Tablas históricas de Telegram y chat | Sus clases JPA ya se retiraron. | El retiro físico requiere una decisión explícita sobre los datos y la compatibilidad de los respaldos. |
 
 Fuentes del inventario: [modelos Java](../src/main/java/com/vortise/gestion/domain/model), [Proyecto.java](../src/main/java/com/vortise/gestion/domain/model/Proyecto.java) y [migraciones SQL](../src/main/resources/db/migration).

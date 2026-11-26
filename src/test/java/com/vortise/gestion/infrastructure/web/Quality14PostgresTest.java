@@ -73,7 +73,6 @@ class Quality14PostgresTest {
         r.add("spring.sql.init.mode", () -> "never"); r.add("spring.h2.console.enabled", () -> false);
         r.add("app.security.jwt-secret", () -> key); r.add("app.password-mail.enabled", () -> false);
         r.add("app.superadmin.email", () -> ""); r.add("app.superadmin.password", () -> "");
-        r.add("app.features.gastos-fijos-enabled", () -> false);
         r.add("APP_ALLOWED_ORIGINS", () -> "https://quality14.example.invalid");
         r.add("APP_FRONTEND_URL", () -> "https://quality14.example.invalid");
         for (String suffix : List.of("secret-key", "webhook-secret", "price-basic", "price-pro")) r.add("app.stripe." + suffix, () -> "");

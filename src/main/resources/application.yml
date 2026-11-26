@@ -72,11 +72,6 @@ app:
     # cloudinary://API_KEY:API_SECRET@CLOUD_NAME; leave empty to disable report image uploads.
     url: ${CLOUDINARY_URL:}
     folder: ${CLOUDINARY_FOLDER:gestion/reportes}
-  environment:
-    synthetic-data: ${APP_SYNTHETIC_DATA:false}
-    storage-isolated: ${APP_STORAGE_ISOLATED:false}
-  features:
-    gastos-fijos-enabled: ${APP_GASTOS_FIJOS_ENABLED:false}
   superadmin:
     email: ${APP_SUPERADMIN_EMAIL:}
     password: ${APP_SUPERADMIN_PASSWORD:}

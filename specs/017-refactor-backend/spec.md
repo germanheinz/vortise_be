@@ -96,3 +96,7 @@ Unificar los servicios de restricciones, comentarios y consulta gerencial detrá
 ### Consolidación de servicios de empresa
 
 Agrupar el ciclo de vida, la configuración y las consultas de empresa en tres servicios. La consulta de restricciones por empresa pertenece a RestriccionService. Mantener rutas, permisos, transacciones y respuestas existentes.
+
+### Retiro de gastos fijos globales
+
+Retirar la pantalla y la API global de gastos fijos. Los costos indirectos de cada obra, su modelo y sus datos mantienen su comportamiento.

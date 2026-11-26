@@ -35,8 +35,6 @@ app:
     webhook-secret: ""
     price-basic: ""
     price-pro: ""
-  features:
-    gastos-fijos-enabled: false
 logging:
   level:
     org.hibernate.SQL: OFF
