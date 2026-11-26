@@ -7,9 +7,22 @@
 - [x] Spec y plan aprobados por el usuario (2026-11-26). Alcance: implementación BE019/FE041 y tests unitarios sin contexto.
 - [ ] Tests HTTP y `mvn verify`: **no autorizados** (2026-11-26); pendientes de aprobación.
 - [x] Implementación (2026-11-26).
-- [x] Tests unitarios sin contexto: 50/50 (ver evidencia).
+- [x] Tests unitarios sin contexto: 51/51 (ver evidencia).
 - [ ] Tests HTTP y `mvn verify` (no autorizados).
-- [ ] Revisión independiente y cierre.
+- [x] Revisión independiente de seguridad (2026-11-26): sin hallazgos de severidad alta.
+- [ ] Cierre (pendiente de tests HTTP, `mvn verify` y prueba manual).
+
+## Revisión independiente
+
+| Hallazgo | Severidad | Estado |
+|---|---|---|
+| Refresco de JWKS sin límite si la API de Clerk falla; requests esperando el lock | Media | Corregido: un único intento por minuto (`AtomicReference`), sin bloqueo; test agregado |
+| `azp` opcional | Baja | Corregido: `azp` obligatorio; test agregado |
+| Super admin ligado a la seguridad del buzón/Google de `APP_SUPERADMIN_EMAIL` | Baja (diseño) | Aceptado; recomendación: exigir MFA en Clerk para esa cuenta o fijar su `clerkUserId` |
+| Intención de Google sin vencimiento y destino sin revalidar | Baja | Corregido en FE041: vence a los 10 minutos y `safeReturnPath` |
+| Configuración faltante bloquea todos los accesos sin aviso | Riesgo de despliegue | Mitigado: error explícito en el log al arrancar. No se hace fallar el arranque para no romper los tests Postgres con perfiles `production`/`staging`, que no pudieron ejecutarse |
+
+Riesgos residuales aceptados: un token de Clerk (≈60 s de vida) puede reutilizarse dentro de su vigencia; cerrar sesión en Clerk desde otra pestaña no cierra la sesión del backend; el alta directa de usuarios por el administrador todavía pide contraseña, que no se usa con el login por contraseña apagado.
 
 ## Tareas
 
@@ -29,7 +42,7 @@ Comando (sin Spring ni base de datos):
 
 `mvn -Dtest=ClerkTokenVerifierTest,IdentidadExternaServiceTest,RegistroServiceTest,InvitacionUsuarioServiceTest,InvitacionesServiceIdentidadTest,SuperAdminSeederTest,SeedersSkipOnInitializedDatabaseTest,WriteEndpointsGuardTest,CompanyInitializationTest,AutenticacionServiceTest test`
 
-Resultado: 50 tests, 0 fallos, 0 errores. `mvn test-compile` compila todo el árbol de tests.
+Resultado: 51 tests, 0 fallos, 0 errores. `mvn test-compile` compila todo el árbol de tests.
 
 Cambios relevantes:
 

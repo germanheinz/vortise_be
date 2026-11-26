@@ -124,10 +124,10 @@ public class ClerkTokenVerifier implements IdentidadExternaVerificador {
         } catch (IOException | RuntimeException unavailable) {
             throw new FeatureUnavailableException("No pudimos comprobar la cuenta. Intentá nuevamente en unos minutos.");
         }
-        String primaryId = user.path("primary_email_address_id").asText("");
+        String primaryId = user.path("primary_email_address_id").asString("");
         for (JsonNode address : user.path("email_addresses")) {
-            if (primaryId.equals(address.path("id").asText()) && "verified".equals(address.path("verification").path("status").asText())) {
-                String email = address.path("email_address").asText("").trim().toLowerCase(Locale.ROOT);
+            if (primaryId.equals(address.path("id").asString("")) && "verified".equals(address.path("verification").path("status").asString(""))) {
+                String email = address.path("email_address").asString("").trim().toLowerCase(Locale.ROOT);
                 return email.isEmpty() ? Optional.empty() : Optional.of(email);
             }
         }

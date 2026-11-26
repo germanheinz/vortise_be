@@ -43,7 +43,7 @@ Con el flag de contraseña desactivado, `POST /api/auth/login`, `/auth/registro`
 
 ## Criterios de aceptación
 
-1. Un token de Clerk ausente, malformado, vencido, firmado con otra clave, emitido para un origen no permitido o con sujeto distinto de `user_*` produce `401` y no abre sesión.
+1. Un token de Clerk ausente, malformado, vencido, firmado con otra clave, emitido sin origen (`azp`) o para un origen no permitido, o con sujeto distinto de `user_*` produce `401` y no abre sesión.
 2. Un usuario vinculado y activo obtiene cookies de sesión con su empresa, rol y `superAdmin` actuales.
 3. Una cuenta Clerk sin usuario local recibe `403 CUENTA_NO_REGISTRADA`; nunca se crea un usuario implícitamente.
 4. La vinculación por email requiere email principal verificado en Clerk y no reemplaza una vinculación existente con otra cuenta.
