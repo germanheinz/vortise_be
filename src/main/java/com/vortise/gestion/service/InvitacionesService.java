@@ -1,6 +1,7 @@
 package com.vortise.gestion.service;
 
 import com.vortise.gestion.service.authentication.AutenticacionService;
+import com.vortise.gestion.application.helper.Emails;
 import com.vortise.gestion.application.helper.InvitacionToken;
 import com.vortise.gestion.application.helper.PasswordPolicy;
 import com.vortise.gestion.application.dto.InvitacionesDto.*;
@@ -13,7 +14,6 @@ import com.vortise.gestion.repository.*;
 import java.time.Instant;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +33,7 @@ public class InvitacionesService {
             @Value("${app.frontend-url}") String frontend) {
         this.usuarios = usuarios; this.empresas = empresas; this.invitaciones = invitaciones;
         this.identity = identity; this.policy = policy; this.encoder = encoder; this.autenticacion = autenticacion;
-        this.frontend = frontend.replaceAll("/+$", "");
+        this.frontend = frontend;
     }
     @Transactional
     public Creada crear(Crear dto) {
@@ -43,11 +43,11 @@ public class InvitacionesService {
         verificarCupo(titular.getId());
         String token = InvitacionToken.nuevo();
         InvitacionEquipo invitacion = invitaciones.save(new InvitacionEquipo(InvitacionToken.hash(token), titular.getId(), ids, Instant.now()));
-        return new Creada(invitacion.getId(), frontend + "/invitacion#token=" + token, invitacion.getVenceEn(), nombres(ids));
+        return new Creada(invitacion.getId(), InvitacionToken.enlace(frontend, "/invitacion", "token", token), invitacion.getVenceEn(), nombres(ids));
     }
     @Transactional(readOnly = true)
     public Equipo listar() {
-        if (!identity.isAdministrator()) throw new AccessDeniedException("Solo el administrador gestiona invitaciones.");
+        if (!identity.isAdministrator()) throw new OperacionNoPermitidaException("Solo el administrador gestiona invitaciones.");
         Long titular = identity.usuarioId();
         var propias = empresas.findByCreadoPorUsuarioId(titular);
         var cubiertas = policy.coberturasPro(titular, propias.stream().map(Empresa::getId).toList());
@@ -63,7 +63,7 @@ public class InvitacionesService {
     public void revocar(Long id) {
         UsuarioEmpresa titular = titularBloqueado();
         InvitacionEquipo invitacion = invitaciones.bloquearPorId(id)
-            .filter(i -> titular.getId().equals(i.getTitularId())).orElseThrow(this::noDisponible);
+            .filter(i -> titular.getId().equals(i.getTitularId())).orElseThrow(InvitacionToken::noDisponible);
         if (invitacion.disponible(Instant.now())) invitacion.revocar(Instant.now());
     }
     @Transactional(readOnly = true)
@@ -81,7 +81,7 @@ public class InvitacionesService {
     @Transactional
     public LoginResponseDto aceptarConIdentidad(AceptarConIdentidad dto, IdentidadVerificada identidad) {
         if (usuarios.findByClerkUserId(identidad.sujeto()).isPresent()) {
-            throw new ConflictoEstadoException("No se pudo crear la cuenta con ese email. Iniciá sesión con tu cuenta existente.");
+            throw new ConflictoEstadoException(InvitacionToken.CUENTA_EXISTENTE);
         }
         return aceptarComoColaborador(dto.token(), identidad.email(), () -> { }, (empresa, email) ->
             UsuarioEmpresa.conIdentidadExterna(empresa, email, dto.nombre().trim(), RolEmpresa.COLABORADOR, identidad.sujeto()));
@@ -89,17 +89,17 @@ public class InvitacionesService {
     private LoginResponseDto aceptarComoColaborador(String token, String emailIngresado, Runnable validarCredencial,
             java.util.function.BiFunction<Empresa, String, UsuarioEmpresa> nuevoUsuario) {
         // Same global owner lock for all invitations and user reactivations, then invitation lock.
-        var candidato = invitaciones.buscarIdentidad(InvitacionToken.hash(token)).orElseThrow(this::noDisponible);
-        usuarios.bloquearPorId(candidato.getTitularId()).orElseThrow(this::noDisponible);
-        InvitacionEquipo invitacion = invitaciones.bloquearPorId(candidato.getId()).orElseThrow(this::noDisponible);
-        if (!invitacion.disponible(Instant.now())) throw noDisponible();
+        var candidato = invitaciones.buscarIdentidad(InvitacionToken.hash(token)).orElseThrow(InvitacionToken::noDisponible);
+        usuarios.bloquearPorId(candidato.getTitularId()).orElseThrow(InvitacionToken::noDisponible);
+        InvitacionEquipo invitacion = invitaciones.bloquearPorId(candidato.getId()).orElseThrow(InvitacionToken::noDisponible);
+        if (!invitacion.disponible(Instant.now())) throw InvitacionToken.noDisponible();
         verificarEmpresas(invitacion.getTitularId(), invitacion.getEmpresaIds());
         verificarCupo(invitacion.getTitularId());
         validarCredencial.run();
-        String email = emailIngresado.trim().toLowerCase(Locale.ROOT);
-        if (usuarios.findByEmail(email).isPresent()) throw new ConflictoEstadoException("No se pudo crear la cuenta con ese email. Iniciá sesión con tu cuenta existente.");
-        Long primera = invitacion.getEmpresaIds().stream().min(Long::compareTo).orElseThrow(this::noDisponible);
-        Empresa empresa = empresas.findById(primera).orElseThrow(this::noDisponible);
+        String email = Emails.normalizar(emailIngresado);
+        if (usuarios.findByEmail(email).isPresent()) throw new ConflictoEstadoException(InvitacionToken.CUENTA_EXISTENTE);
+        Long primera = invitacion.getEmpresaIds().stream().min(Long::compareTo).orElseThrow(InvitacionToken::noDisponible);
+        Empresa empresa = empresas.findById(primera).orElseThrow(InvitacionToken::noDisponible);
         UsuarioEmpresa usuario = nuevoUsuario.apply(empresa, email);
         usuario.asignarEquipo(invitacion.getTitularId(), invitacion.getEmpresaIds());
         usuario = usuarios.save(usuario);
@@ -107,17 +107,17 @@ public class InvitacionesService {
         return autenticacion.sesion(usuario);
     }
     private UsuarioEmpresa titularBloqueado() {
-        if (!identity.isAdministrator()) throw new AccessDeniedException("Solo el administrador gestiona invitaciones.");
+        if (!identity.isAdministrator()) throw new OperacionNoPermitidaException("Solo el administrador gestiona invitaciones.");
         return usuarios.bloquearPorId(identity.usuarioId())
-            .filter(u -> u.isActivo() && u.getRol() == RolEmpresa.ADMINISTRADOR).orElseThrow(this::noDisponible);
+            .filter(u -> u.isActivo() && u.getRol() == RolEmpresa.ADMINISTRADOR).orElseThrow(InvitacionToken::noDisponible);
     }
     private InvitacionEquipo buscarDisponible(String token) {
-        return invitaciones.findByTokenHash(InvitacionToken.hash(token)).filter(i -> i.disponible(Instant.now())).orElseThrow(this::noDisponible);
+        return invitaciones.findByTokenHash(InvitacionToken.hash(token)).filter(i -> i.disponible(Instant.now())).orElseThrow(InvitacionToken::noDisponible);
     }
     private void verificarEmpresas(Long titular, Set<Long> ids) {
         if (ids.isEmpty() || ids.size() > 100) throw new SolicitudInvalidaException("Seleccioná entre una y cien empresas.");
         if (ids.stream().anyMatch(Objects::isNull) || policy.coberturasPro(titular, ids).size() != ids.size()) {
-            throw new AccessDeniedException("La invitación requiere empresas propias con cobertura Pro activa.");
+            throw new OperacionNoPermitidaException("La invitación requiere empresas propias con cobertura Pro activa.");
         }
     }
     private void verificarCupo(Long titular) {
@@ -129,5 +129,4 @@ public class InvitacionesService {
         return ids.stream().sorted().flatMap(id -> empresas.findById(id).stream())
             .map(e -> new EmpresaAcceso(e.getId(), e.getNombre())).toList();
     }
-    private SolicitudInvalidaException noDisponible() { return new SolicitudInvalidaException("La invitación no está disponible."); }
 }

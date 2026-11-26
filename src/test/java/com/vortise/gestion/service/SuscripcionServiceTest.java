@@ -37,7 +37,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.security.access.AccessDeniedException;
+import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class SuscripcionServiceTest {
@@ -109,7 +109,7 @@ class SuscripcionServiceTest {
 
     @Test
     void companyCheckoutRequiresAdministrator() {
-        assertThrows(AccessDeniedException.class, () -> useCase.checkout(new CheckoutRequestDto("BASIC", TitularSuscripcion.EMPRESA)));
+        assertThrows(OperacionNoPermitidaException.class, () -> useCase.checkout(new CheckoutRequestDto("BASIC", TitularSuscripcion.EMPRESA)));
         verify(stripe, never()).crearCliente(anyString(), anyString(), any());
     }
 

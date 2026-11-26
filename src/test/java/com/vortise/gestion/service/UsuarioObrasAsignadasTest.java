@@ -26,7 +26,7 @@ import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.access.AccessDeniedException;
+import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -125,7 +125,7 @@ class UsuarioObrasAsignadasTest {
         jefe.setSuperAdmin(true);
         when(identity.isSuperAdmin()).thenReturn(false);
 
-        assertThrows(AccessDeniedException.class, () -> useCase.update(1L, 2L, update(RolEmpresa.JEFE_DE_OBRA, null)));
+        assertThrows(OperacionNoPermitidaException.class, () -> useCase.update(1L, 2L, update(RolEmpresa.JEFE_DE_OBRA, null)));
         verify(users, never()).save(any());
     }
 }

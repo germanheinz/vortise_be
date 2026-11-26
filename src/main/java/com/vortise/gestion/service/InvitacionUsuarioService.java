@@ -1,6 +1,7 @@
 package com.vortise.gestion.service;
 
 import com.vortise.gestion.service.authentication.AutenticacionService;
+import com.vortise.gestion.application.helper.Emails;
 import com.vortise.gestion.application.helper.InvitacionToken;
 import com.vortise.gestion.application.helper.PasswordPolicy;
 import com.vortise.gestion.application.audit.AuditLog;
@@ -22,10 +23,10 @@ import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,7 +54,7 @@ public class InvitacionUsuarioService {
             @Value("${app.frontend-url}") String frontend) {
         this.empresas = empresas; this.usuarios = usuarios; this.invitaciones = invitaciones; this.proyectos = proyectos;
         this.identity = identity; this.encoder = encoder; this.autenticacion = autenticacion;
-        this.frontend = frontend.replaceAll("/+$", "");
+        this.frontend = frontend;
     }
 
     @Transactional
@@ -61,7 +62,7 @@ public class InvitacionUsuarioService {
         identity.requireEmpresa(empresaId);
         Empresa empresa = empresas.bloquearPorId(empresaId).orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada"));
         if (!ROLES_INVITABLES.contains(dto.rol())) throw new SolicitudInvalidaException("Ese rol no se puede asignar por invitación.");
-        String email = normalizar(dto.email());
+        String email = Emails.normalizar(dto.email());
         if (usuarios.findByEmail(email).isPresent()) throw new ConflictoEstadoException("Ya existe un usuario con ese email.");
         Instant now = Instant.now();
         if (invitaciones.existePendiente(empresaId, email, now)) {
@@ -73,7 +74,8 @@ public class InvitacionUsuarioService {
         InvitacionUsuario invitacion = invitaciones.save(new InvitacionUsuario(InvitacionToken.hash(token), empresaId,
             identity.usuarioId(), email, dto.rol(), obras, now));
         AuditLog.userInvited(identity.usuarioId(), invitacion.getId(), dto.rol().name(), obras.size());
-        return new Creada(invitacion.getId(), frontend + "/invitacion-usuario#codigo=" + token, invitacion.getVenceEn(), email, dto.rol(), obras.size());
+        return new Creada(invitacion.getId(), InvitacionToken.enlace(frontend, "/invitacion-usuario", "codigo", token),
+            invitacion.getVenceEn(), email, dto.rol(), obras.size());
     }
 
     @Transactional(readOnly = true)
@@ -95,31 +97,15 @@ public class InvitacionUsuarioService {
     @Transactional(readOnly = true)
     public Consulta consultar(String token) {
         InvitacionUsuario invitacion = disponible(token);
-        Empresa empresa = empresas.findById(invitacion.getEmpresaId()).orElseThrow(this::noDisponible);
+        Empresa empresa = empresas.findById(invitacion.getEmpresaId()).orElseThrow(InvitacionToken::noDisponible);
         return new Consulta(empresa.getNombre(), invitacion.getEmail(), invitacion.getRol(), invitacion.getVenceEn());
     }
 
     @Transactional
     public LoginResponseDto aceptar(Aceptar dto) {
-        Long empresaId = disponible(dto.token()).getEmpresaId();
-        // Same lock order as creation: company first, then the invitation.
-        Empresa empresa = empresas.bloquearPorId(empresaId).orElseThrow(this::noDisponible);
-        InvitacionUsuario invitacion = invitaciones.bloquearPorId(disponible(dto.token()).getId()).orElseThrow(this::noDisponible);
-        Instant now = Instant.now();
-        if (!invitacion.disponible(now)) throw noDisponible();
-        PasswordPolicy.validate(dto.password());
-        if (usuarios.findByEmail(invitacion.getEmail()).isPresent()) {
-            throw new ConflictoEstadoException("No se pudo crear la cuenta con ese email. Iniciá sesión con tu cuenta existente.");
-        }
-        if (usuarios.countByEmpresaIdAndActivoTrue(empresaId) >= empresa.getLimiteUsuarios()) {
-            throw new ConflictoEstadoException("La empresa alcanzó su límite de usuarios. Pedile al administrador que libere una plaza.");
-        }
-        UsuarioEmpresa usuario = new UsuarioEmpresa(empresa, invitacion.getEmail(), dto.nombre().trim(), encoder.encode(dto.password()), invitacion.getRol());
-        if (invitacion.getRol() == RolEmpresa.JEFE_DE_OBRA) usuario.asignarObras(obrasDeLaEmpresa(empresaId, invitacion.getObraIds()));
-        usuario = usuarios.save(usuario);
-        invitacion.consumir(now);
-        AuditLog.userInvitationAccepted(usuario.getId(), invitacion.getId(), invitacion.getRol().name());
-        return autenticacion.sesion(usuario);
+        return aceptarConCuenta(dto.token(), invitacion -> PasswordPolicy.validate(dto.password()),
+            (empresa, invitacion) -> new UsuarioEmpresa(empresa, invitacion.getEmail(), dto.nombre().trim(),
+                encoder.encode(dto.password()), invitacion.getRol()));
     }
 
     /**
@@ -128,29 +114,36 @@ public class InvitacionUsuarioService {
      */
     @Transactional
     public LoginResponseDto aceptarConIdentidad(AceptarConIdentidad dto, IdentidadVerificada identidad) {
-        Long empresaId = disponible(dto.codigo()).getEmpresaId();
+        return aceptarConCuenta(dto.codigo(), invitacion -> {
+            if (!Emails.normalizar(identidad.email()).equals(invitacion.getEmail())) {
+                throw new SolicitudInvalidaException("Tu cuenta debe usar el email al que llegó la invitación.");
+            }
+            if (usuarios.findByClerkUserId(identidad.sujeto()).isPresent()) throw new ConflictoEstadoException(InvitacionToken.CUENTA_EXISTENTE);
+        }, (empresa, invitacion) -> UsuarioEmpresa.conIdentidadExterna(empresa, invitacion.getEmail(), dto.nombre().trim(),
+            invitacion.getRol(), identidad.sujeto()));
+    }
+
+    private LoginResponseDto aceptarConCuenta(String token, Consumer<InvitacionUsuario> validarCuenta,
+            BiFunction<Empresa, InvitacionUsuario, UsuarioEmpresa> nuevoUsuario) {
+        InvitacionUsuario candidata = disponible(token);
         // Same lock order as creation: company first, then the invitation.
-        Empresa empresa = empresas.bloquearPorId(empresaId).orElseThrow(this::noDisponible);
-        InvitacionUsuario invitacion = invitaciones.bloquearPorId(disponible(dto.codigo()).getId()).orElseThrow(this::noDisponible);
+        Empresa empresa = empresas.bloquearPorId(candidata.getEmpresaId()).orElseThrow(InvitacionToken::noDisponible);
+        InvitacionUsuario invitacion = invitaciones.bloquearPorId(candidata.getId()).orElseThrow(InvitacionToken::noDisponible);
         Instant now = Instant.now();
-        if (!invitacion.disponible(now)) throw noDisponible();
-        if (!normalizar(identidad.email()).equals(invitacion.getEmail())) {
-            throw new SolicitudInvalidaException("Tu cuenta debe usar el email al que llegó la invitación.");
-        }
-        if (usuarios.findByEmail(invitacion.getEmail()).isPresent() || usuarios.findByClerkUserId(identidad.sujeto()).isPresent()) {
-            throw new ConflictoEstadoException("No se pudo crear la cuenta con ese email. Iniciá sesión con tu cuenta existente.");
-        }
-        if (usuarios.countByEmpresaIdAndActivoTrue(empresaId) >= empresa.getLimiteUsuarios()) {
+        if (!invitacion.disponible(now)) throw InvitacionToken.noDisponible();
+        validarCuenta.accept(invitacion);
+        if (usuarios.findByEmail(invitacion.getEmail()).isPresent()) throw new ConflictoEstadoException(InvitacionToken.CUENTA_EXISTENTE);
+        if (usuarios.countByEmpresaIdAndActivoTrue(empresa.getId()) >= empresa.getLimiteUsuarios()) {
             throw new ConflictoEstadoException("La empresa alcanzó su límite de usuarios. Pedile al administrador que libere una plaza.");
         }
-        UsuarioEmpresa usuario = UsuarioEmpresa.conIdentidadExterna(empresa, invitacion.getEmail(), dto.nombre().trim(),
-            invitacion.getRol(), identidad.sujeto());
-        if (invitacion.getRol() == RolEmpresa.JEFE_DE_OBRA) usuario.asignarObras(obrasDeLaEmpresa(empresaId, invitacion.getObraIds()));
+        UsuarioEmpresa usuario = nuevoUsuario.apply(empresa, invitacion);
+        if (invitacion.getRol() == RolEmpresa.JEFE_DE_OBRA) usuario.asignarObras(obrasDeLaEmpresa(empresa.getId(), invitacion.getObraIds()));
         usuario = usuarios.save(usuario);
         invitacion.consumir(now);
         AuditLog.userInvitationAccepted(usuario.getId(), invitacion.getId(), invitacion.getRol().name());
         return autenticacion.sesion(usuario);
     }
+
     private void verificarCupo(Empresa empresa, Instant now) {
         long ocupadas = usuarios.countByEmpresaIdAndActivoTrue(empresa.getId()) + invitaciones.contarPendientes(empresa.getId(), now);
         if (ocupadas >= empresa.getLimiteUsuarios()) {
@@ -165,10 +158,8 @@ public class InvitacionUsuarioService {
             if (!pedidas.isEmpty()) throw new SolicitudInvalidaException("Solo un jefe de obra tiene obras asignadas.");
             return Set.of();
         }
-        for (Long obraId : pedidas) {
-            boolean propia = proyectos.findById(obraId)
-                .map(p -> p.getEmpresaRelacionada() != null && empresaId.equals(p.getEmpresaRelacionada().getId())).orElse(false);
-            if (!propia) throw new SolicitudInvalidaException("Una de las obras no pertenece a la empresa.");
+        if (obrasDeLaEmpresa(empresaId, pedidas).size() != pedidas.size()) {
+            throw new SolicitudInvalidaException("Una de las obras no pertenece a la empresa.");
         }
         return pedidas;
     }
@@ -185,10 +176,6 @@ public class InvitacionUsuarioService {
     }
 
     private InvitacionUsuario disponible(String token) {
-        return invitaciones.findByTokenHash(InvitacionToken.hash(token)).filter(i -> i.disponible(Instant.now())).orElseThrow(this::noDisponible);
+        return invitaciones.findByTokenHash(InvitacionToken.hash(token)).filter(i -> i.disponible(Instant.now())).orElseThrow(InvitacionToken::noDisponible);
     }
-
-    private static String normalizar(String email) { return email.trim().toLowerCase(Locale.ROOT); }
-
-    private SolicitudInvalidaException noDisponible() { return new SolicitudInvalidaException("La invitación no está disponible."); }
 }

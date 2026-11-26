@@ -165,7 +165,7 @@ class CookieSessionHttpTest {
         mvc.perform(post("/api/auth/refresh").cookie(refresh).header("Origin", ORIGIN)).andExpect(status().isUnauthorized());
     }
 
-    private static String tokenOf(String link) { return link.substring(link.indexOf("#token=") + 7); }
+    private static String tokenOf(String link) { return link.substring(link.indexOf("#codigo=") + 8); }
 
     @Test void anAdministratorInvitesAJefeWhoJoinsWithTheRoleAndSitesAndTheLinkWorksOnce() throws Exception {
         var admin = new Cookie("gestion_at", value(cookie(login(), "gestion_at")));

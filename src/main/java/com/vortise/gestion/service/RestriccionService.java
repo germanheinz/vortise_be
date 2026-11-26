@@ -1,5 +1,6 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import com.vortise.gestion.application.dto.RestriccionComentarioCreateDto;
 import com.vortise.gestion.application.dto.RestriccionComentarioDto;
 import com.vortise.gestion.application.dto.RestriccionCreateDto;
@@ -28,7 +29,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -136,7 +136,7 @@ public class RestriccionService {
             && dto.responsable() == null && dto.rubroId() == null && !dto.actualizarFechas()
             && dto.fechaSolicitud() == null && dto.fechaMaximaEntrega() == null && dto.fechaRealEntrega() == null;
         if (!onlyState) {
-            throw new AccessDeniedException("Solo Gerencia o Coordinación de obras puede editar los datos de la restricción.");
+            throw new OperacionNoPermitidaException("Solo Gerencia o Coordinación de obras puede editar los datos de la restricción.");
         }
         if ("RESUELTO".equalsIgnoreCase(restriccion.getEstado())) {
             throw new ReglaDeEstadoException("Una restricción resuelta solo puede modificarla Gerencia o Coordinación de obras.");

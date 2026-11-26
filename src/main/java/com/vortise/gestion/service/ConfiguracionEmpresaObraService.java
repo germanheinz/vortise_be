@@ -1,5 +1,6 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import com.vortise.gestion.application.dto.CategoriaManoObraCostoDto;
 import com.vortise.gestion.application.dto.SubcontratistaObraDto;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
@@ -17,7 +18,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +44,7 @@ public class ConfiguracionEmpresaObraService {
         List<SubcontratistaObraDto> cambiosContratistas = contratistas == null ? List.of() : contratistas;
         if (actualizacionesCosto.isEmpty() && cambiosContratistas.isEmpty()) return List.of();
         identity.requireEmpresa(empresaId);
-        if (!identity.isAdministrator()) throw new AccessDeniedException("Se requiere administración de la empresa para modificar sus catálogos");
+        if (!identity.isAdministrator()) throw new OperacionNoPermitidaException("Se requiere administración de la empresa para modificar sus catálogos");
         Empresa empresa = empresas.bloquearPorId(empresaId)
             .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada"));
         actualizarCostos(empresaId, actualizacionesCosto);

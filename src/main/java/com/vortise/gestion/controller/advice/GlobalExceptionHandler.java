@@ -88,8 +88,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status((HttpStatusCode)HttpStatus.CONFLICT).body(new ErrorResponseDto(409, "Conflict", "La operación no puede completarse en el estado actual."));
     }
 
-    @ExceptionHandler(value={AccessDeniedException.class})
-    public ResponseEntity<ErrorResponseDto> handleAccessDenied(AccessDeniedException ex, jakarta.servlet.http.HttpServletRequest request) {
+    @ExceptionHandler(value={AccessDeniedException.class, com.vortise.gestion.application.exception.OperacionNoPermitidaException.class})
+    public ResponseEntity<ErrorResponseDto> handleAccessDenied(RuntimeException ex, jakarta.servlet.http.HttpServletRequest request) {
         audit("CAPACIDAD_DENEGADA", request);
         return ResponseEntity.status((HttpStatusCode)HttpStatus.FORBIDDEN).body(new ErrorResponseDto(403, "Forbidden", ex.getMessage()));
     }
@@ -142,6 +142,13 @@ public class GlobalExceptionHandler {
             .addKeyValue("source_location", sourceLocation(ex)).log("persistence_conflict");
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponseDto(409, "Conflict",
             "Los datos cambiaron o ya existe un registro equivalente. Actualizá la página y volvé a intentar."));
+    }
+
+    @ExceptionHandler({org.springframework.http.converter.HttpMessageNotReadableException.class,
+        org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,
+        org.springframework.web.bind.MissingServletRequestParameterException.class})
+    public ResponseEntity<ErrorResponseDto> handleMalformedInput(Exception ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponseDto(400, "Bad Request", "El formato de la solicitud no es válido."));
     }
 
     @ExceptionHandler(value={Exception.class})

@@ -1,5 +1,6 @@
 package com.vortise.gestion.service.authentication;
 
+import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import com.vortise.gestion.service.EquipoAccessPolicy;
 import com.vortise.gestion.service.pagos.SuscripcionConsultaService;
 import com.vortise.gestion.application.dto.LoginRequestDto;
@@ -70,30 +71,33 @@ public class AutenticacionService {
     @Transactional(readOnly = true)
     public LoginResponseDto sesion(UsuarioEmpresa usuario) {
         equipo.requireAcceso(usuario);
-        Optional<Suscripcion> plan = suscripciones.planEfectivo(usuario);
-        var empresa = usuario.isColaborador() ? equipo.empresaInicial(usuario) : usuario.getEmpresa();
+        ContextoSesion contexto = contexto(usuario);
+        var empresa = contexto.empresa();
         // Only a JEFE_DE_OBRA carries sites in the token; the claim is the source the interceptor checks.
-        java.util.List<Long> obras = obrasAsignadas(usuario);
-        return new LoginResponseDto(jwtService.generate(usuario.getId(), empresa.getId(), usuario.getEmail(), usuario.getRol().name(), usuario.isSuperAdmin(), usuario.getSessionVersion(), obras),
+        return new LoginResponseDto(jwtService.generate(usuario.getId(), empresa.getId(), usuario.getEmail(), usuario.getRol().name(), usuario.isSuperAdmin(), usuario.getSessionVersion(), contexto.obras()),
             usuario.getId(), empresa.getId(), empresa.getNombre(), usuario.getNombre(), usuario.getEmail(), usuario.getRol().name(),
-            usuario.isSuperAdmin(), plan.isPresent(), plan.map(s -> s.getPlan().getCodigo()).orElse(null), false, obras);
+            usuario.isSuperAdmin(), contexto.plan().isPresent(), contexto.codigoPlan(), false, contexto.obras());
     }
 
     @Transactional(readOnly = true)
     public MeDto me() {
         var usuario = usuarioRepository.findById(identidad.usuarioId())
             .filter(UsuarioEmpresa::isActivo)
-            .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Usuario no disponible"));
-        var plan = suscripciones.planEfectivo(usuario);
-        var empresa = usuario.isColaborador() ? equipo.empresaInicial(usuario) : usuario.getEmpresa();
+            .orElseThrow(() -> new OperacionNoPermitidaException("Usuario no disponible"));
+        ContextoSesion contexto = contexto(usuario);
         return new MeDto(usuario.getId(), usuario.getNombre(), usuario.getEmail(), usuario.getRol().name(),
-            empresa.getId(), empresa.getNombre(), usuario.isSuperAdmin(), plan.isPresent(),
-            plan.map(s -> s.getPlan().getCodigo()).orElse(null), plan.map(Suscripcion::getTitular).orElse(null),
-            false, obrasAsignadas(usuario));
+            contexto.empresa().getId(), contexto.empresa().getNombre(), usuario.isSuperAdmin(), contexto.plan().isPresent(),
+            contexto.codigoPlan(), contexto.plan().map(Suscripcion::getTitular).orElse(null), false, contexto.obras());
     }
 
-    private java.util.List<Long> obrasAsignadas(UsuarioEmpresa usuario) {
-        return usuario.getRol() == RolEmpresa.JEFE_DE_OBRA
+    private record ContextoSesion(Empresa empresa, Optional<Suscripcion> plan, java.util.List<Long> obras) {
+        String codigoPlan() { return plan.map(s -> s.getPlan().getCodigo()).orElse(null); }
+    }
+
+    private ContextoSesion contexto(UsuarioEmpresa usuario) {
+        java.util.List<Long> obras = usuario.getRol() == RolEmpresa.JEFE_DE_OBRA
             ? usuario.getObrasAsignadas().stream().sorted().toList() : java.util.List.of();
+        return new ContextoSesion(usuario.isColaborador() ? equipo.empresaInicial(usuario) : usuario.getEmpresa(),
+            suscripciones.planEfectivo(usuario), obras);
     }
 }

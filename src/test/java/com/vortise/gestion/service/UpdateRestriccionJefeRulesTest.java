@@ -19,7 +19,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.access.AccessDeniedException;
+import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 
 class UpdateRestriccionJefeRulesTest {
     private final RestriccionObraRepository repository = mock(RestriccionObraRepository.class);
@@ -56,9 +56,9 @@ class UpdateRestriccionJefeRulesTest {
 
     @Test
     void jefeCannotEditRestrictionData() {
-        assertThrows(AccessDeniedException.class, () -> useCase.actualizar(2L, new RestriccionUpdateDto("ALTA", null, null)));
-        assertThrows(AccessDeniedException.class, () -> useCase.actualizar(2L, new RestriccionUpdateDto("ALTA", "RESUELTO", null)));
-        assertThrows(AccessDeniedException.class, () -> useCase.actualizar(2L, new RestriccionUpdateDto(null, null, null,
+        assertThrows(OperacionNoPermitidaException.class, () -> useCase.actualizar(2L, new RestriccionUpdateDto("ALTA", null, null)));
+        assertThrows(OperacionNoPermitidaException.class, () -> useCase.actualizar(2L, new RestriccionUpdateDto("ALTA", "RESUELTO", null)));
+        assertThrows(OperacionNoPermitidaException.class, () -> useCase.actualizar(2L, new RestriccionUpdateDto(null, null, null,
             "Compras", null, null, null, null, false, null)));
         verify(repository, never()).save(any());
     }

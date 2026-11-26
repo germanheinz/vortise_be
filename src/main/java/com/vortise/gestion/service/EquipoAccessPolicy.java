@@ -1,10 +1,10 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import com.vortise.gestion.model.*;
 import com.vortise.gestion.repository.*;
 import java.time.Instant;
 import java.util.*;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,11 +57,11 @@ public class EquipoAccessPolicy {
     public Empresa empresaInicial(UsuarioEmpresa usuario) {
         if (!usuario.isColaborador()) return usuario.getEmpresa();
         return empresasPermitidas(usuario).stream().sorted().flatMap(id -> empresas.findById(id).stream()).findFirst()
-            .orElseThrow(() -> new AccessDeniedException("El equipo no tiene cobertura Pro activa."));
+            .orElseThrow(() -> new OperacionNoPermitidaException("El equipo no tiene cobertura Pro activa."));
     }
     public void requireAcceso(UsuarioEmpresa usuario) {
         if (usuario.isColaborador() && empresasPermitidas(usuario).isEmpty()) {
-            throw new AccessDeniedException("El acceso del equipo está suspendido hasta que el administrador tenga Pro activo.");
+            throw new OperacionNoPermitidaException("El acceso del equipo está suspendido hasta que el administrador tenga Pro activo.");
         }
     }
 }

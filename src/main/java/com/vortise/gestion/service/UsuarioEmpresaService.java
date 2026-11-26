@@ -1,5 +1,6 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import com.vortise.gestion.service.pagos.SuscripcionConsultaService;
 import com.vortise.gestion.application.helper.PasswordPolicy;
 import com.vortise.gestion.application.dto.UsuarioEmpresaDto;
@@ -64,7 +65,7 @@ public class UsuarioEmpresaService {
             }
             if (dto.activo() && !usuario.isActivo()) {
                 if (usuario.getEmpresasAsignadas().stream().noneMatch(company -> equipo.coberturaPro(usuario.getInvitanteId(), company).isPresent())) {
-                    throw new org.springframework.security.access.AccessDeniedException("La reactivación requiere Pro activo.");
+                    throw new OperacionNoPermitidaException("La reactivación requiere Pro activo.");
                 }
                 if (usuarioRepository.countByInvitanteIdAndActivoTrue(usuario.getInvitanteId()) >= EquipoAccessPolicy.MAX_INVITADOS) {
                     throw new ConflictoEstadoException("Pro permite hasta cinco usuarios invitados activos.");
@@ -115,9 +116,9 @@ public class UsuarioEmpresaService {
         usuario.asignarObras(ids);
     }
     private Empresa requireEmpresa(Long id) { return empresaRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada")); }
-    private UsuarioEmpresa findOwned(Long empresaId, Long id) { UsuarioEmpresa usuario = usuarioRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado")); if (!usuario.getEmpresa().getId().equals(empresaId) && !usuario.getEmpresasAsignadas().contains(empresaId)) throw new SolicitudInvalidaException("El usuario no pertenece a la empresa"); if (usuario.isSuperAdmin() && !identity.isSuperAdmin()) throw new org.springframework.security.access.AccessDeniedException("No podés administrar a un administrador de la plataforma."); return usuario; }
+    private UsuarioEmpresa findOwned(Long empresaId, Long id) { UsuarioEmpresa usuario = usuarioRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado")); if (!usuario.getEmpresa().getId().equals(empresaId) && !usuario.getEmpresasAsignadas().contains(empresaId)) throw new SolicitudInvalidaException("El usuario no pertenece a la empresa"); if (usuario.isSuperAdmin() && !identity.isSuperAdmin()) throw new OperacionNoPermitidaException("No podés administrar a un administrador de la plataforma."); return usuario; }
     private void requireInvitante(UsuarioEmpresa usuario) {
-        if (!identity.usuarioId().equals(usuario.getInvitanteId())) throw new org.springframework.security.access.AccessDeniedException("Solo el titular puede gestionar este invitado.");
+        if (!identity.usuarioId().equals(usuario.getInvitanteId())) throw new OperacionNoPermitidaException("Solo el titular puede gestionar este invitado.");
     }
     private UsuarioEmpresaDto toDto(UsuarioEmpresa u) {
         java.util.List<Long> obras = u.getRol() == com.vortise.gestion.model.RolEmpresa.JEFE_DE_OBRA

@@ -1,5 +1,6 @@
 package com.vortise.gestion.service.pagos;
 
+import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import com.vortise.gestion.application.dto.CheckoutRequestDto;
 import com.vortise.gestion.application.dto.MisSuscripcionesDto;
 import com.vortise.gestion.application.dto.PlanSuscripcionDto;
@@ -22,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -94,7 +94,7 @@ public class SuscripcionService {
 
     private void requireTitularPermitido(TitularSuscripcion titular) {
         if (titular == TitularSuscripcion.EMPRESA && !tenant.isAdministrator()) {
-            throw new AccessDeniedException("Solo un administrador puede gestionar la suscripción de la empresa");
+            throw new OperacionNoPermitidaException("Solo un administrador puede gestionar la suscripción de la empresa");
         }
     }
 
@@ -118,6 +118,6 @@ public class SuscripcionService {
     private UsuarioEmpresa usuarioActual() {
         return usuarios.findById(tenant.usuarioId())
             .filter(UsuarioEmpresa::isActivo)
-            .orElseThrow(() -> new AccessDeniedException("Usuario no disponible"));
+            .orElseThrow(() -> new OperacionNoPermitidaException("Usuario no disponible"));
     }
 }

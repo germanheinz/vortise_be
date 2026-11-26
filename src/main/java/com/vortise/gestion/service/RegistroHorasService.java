@@ -1,5 +1,6 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import com.vortise.gestion.application.helper.RegistroHorasRules;
 import com.vortise.gestion.application.mapper.RegistroHorasMapper;
 import com.vortise.gestion.application.dto.*;
@@ -8,7 +9,6 @@ import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.model.*;
 import com.vortise.gestion.repository.*;
 import java.util.List;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,7 +72,7 @@ public class RegistroHorasService {
     private Proyecto lockProject(Long id) {
         Proyecto project = projects.bloquearPorId(id)
             .orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado"));
-        if (project.getEmpresaRelacionada() == null || project.getEmpresaRelacionada().getId() == null) throw new AccessDeniedException("Recurso sin empresa asignada");
+        if (project.getEmpresaRelacionada() == null || project.getEmpresaRelacionada().getId() == null) throw new OperacionNoPermitidaException("Recurso sin empresa asignada");
         identity.requireEmpresa(project.getEmpresaRelacionada().getId());
         return project;
     }

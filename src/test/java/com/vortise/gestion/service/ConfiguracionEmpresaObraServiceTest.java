@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.access.AccessDeniedException;
+import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -58,7 +58,7 @@ class ConfiguracionEmpresaObraServiceTest {
     void refusesConfigurationChangesFromNonAdministrators() {
         when(identity.isAdministrator()).thenReturn(false);
 
-        assertThrows(AccessDeniedException.class, () -> useCase.execute(EMPRESA_ID, null,
+        assertThrows(OperacionNoPermitidaException.class, () -> useCase.execute(EMPRESA_ID, null,
             List.of(new SubcontratistaObraDto(null, "Proveedor Uno"))));
 
         verifyNoInteractions(catalogos);

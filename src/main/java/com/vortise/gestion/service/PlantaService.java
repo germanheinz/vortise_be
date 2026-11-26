@@ -1,12 +1,12 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import com.vortise.gestion.application.dto.PlantaDto;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.model.*;
 import com.vortise.gestion.repository.*;
 import java.util.List;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,7 +47,7 @@ public class PlantaService {
     private Proyecto requireProject(Long id, boolean lock) {
         Proyecto proyecto = (lock ? proyectos.bloquearPorId(id) : proyectos.findById(id))
             .orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado"));
-        if (proyecto.getEmpresaRelacionada() == null || proyecto.getEmpresaRelacionada().getId() == null) throw new AccessDeniedException("Recurso sin empresa asignada");
+        if (proyecto.getEmpresaRelacionada() == null || proyecto.getEmpresaRelacionada().getId() == null) throw new OperacionNoPermitidaException("Recurso sin empresa asignada");
         identity.requireEmpresa(proyecto.getEmpresaRelacionada().getId());
         return proyecto;
     }

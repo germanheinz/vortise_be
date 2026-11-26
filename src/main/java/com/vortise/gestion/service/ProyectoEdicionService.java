@@ -1,5 +1,6 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import com.vortise.gestion.application.helper.ContratosObra;
 import com.vortise.gestion.application.helper.DatosProyecto;
 import com.vortise.gestion.application.helper.RegistroHorasRules;
@@ -27,7 +28,6 @@ import com.vortise.gestion.domain.rule.EstructuraRubros;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,7 +80,7 @@ public class ProyectoEdicionService {
         Proyecto proyecto = proyectoRepository.bloquearPorId(proyectoId)
             .orElseThrow(() -> new RecursoNoEncontradoException("Proyecto no encontrado"));
         if (proyecto.getEmpresaRelacionada() == null || proyecto.getEmpresaRelacionada().getId() == null) {
-            throw new AccessDeniedException("Recurso sin empresa asignada");
+            throw new OperacionNoPermitidaException("Recurso sin empresa asignada");
         }
         currentTenant.requireEmpresa(proyecto.getEmpresaRelacionada().getId());
         Long empresaAnteriorId = proyecto.getEmpresaRelacionada() == null ? null : proyecto.getEmpresaRelacionada().getId();
