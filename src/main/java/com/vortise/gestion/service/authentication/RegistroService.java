@@ -1,7 +1,7 @@
 package com.vortise.gestion.service.authentication;
 
 import com.vortise.gestion.application.helper.Emails;
-import com.vortise.gestion.service.EmpresaConfiguracionService;
+import com.vortise.gestion.service.empresa.EmpresaConfiguracionService;
 import com.vortise.gestion.application.helper.PasswordPolicy;
 import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.application.dto.RegistroConIdentidadDto;

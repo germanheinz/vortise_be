@@ -1,5 +1,7 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.service.proyecto.ProyectoEdicionService;
+import com.vortise.gestion.service.proyecto.RegistroHorasService;
 import com.vortise.gestion.application.helper.PasswordPolicy;
 import com.vortise.gestion.application.helper.RegistroHorasRules;
 import com.vortise.gestion.application.dto.*;

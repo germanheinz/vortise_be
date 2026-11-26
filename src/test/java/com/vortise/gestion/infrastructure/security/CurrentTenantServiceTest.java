@@ -27,7 +27,7 @@ class CurrentTenantServiceTest {
     private static final long FOREIGN_COMPANY = 2L;
 
     private final EmpresaRepository empresas = mock(EmpresaRepository.class);
-    private final CurrentTenantService service = new CurrentTenantService(empresas, org.mockito.Mockito.mock(com.vortise.gestion.repository.UsuarioEmpresaRepository.class), org.mockito.Mockito.mock(com.vortise.gestion.service.EquipoAccessPolicy.class));
+    private final CurrentTenantService service = new CurrentTenantService(empresas, org.mockito.Mockito.mock(com.vortise.gestion.repository.UsuarioEmpresaRepository.class), org.mockito.Mockito.mock(com.vortise.gestion.service.equipo.EquipoAccessPolicy.class));
 
     @AfterEach
     void clearContext() {

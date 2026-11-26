@@ -1,5 +1,12 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.service.certificado.CertificadoObraService;
+import com.vortise.gestion.service.empresa.ConfiguracionEmpresaObraService;
+import com.vortise.gestion.service.proyecto.ObraTareaService;
+import com.vortise.gestion.service.proyecto.PrevistoRealService;
+import com.vortise.gestion.service.proyecto.ProyectoEdicionService;
+import com.vortise.gestion.service.proyecto.ProyectoService;
+import com.vortise.gestion.service.restriccion.RestriccionService;
 import com.vortise.gestion.application.helper.RegistroHorasRules;
 import com.vortise.gestion.application.mapper.ProyectoMapper;
 import static org.junit.jupiter.api.Assertions.assertEquals;

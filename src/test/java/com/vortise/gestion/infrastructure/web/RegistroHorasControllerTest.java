@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.controller.RegistroHorasController;
+import com.vortise.gestion.controller.proyecto.RegistroHorasController;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -11,7 +11,7 @@ import static org.mockito.Mockito.when;
 import com.vortise.gestion.application.dto.RegistroHorasCreateDto;
 import com.vortise.gestion.application.dto.RegistroHorasDto;
 import com.vortise.gestion.application.dto.RegistroHorasUpdateDto;
-import com.vortise.gestion.service.RegistroHorasService;
+import com.vortise.gestion.service.proyecto.RegistroHorasService;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;

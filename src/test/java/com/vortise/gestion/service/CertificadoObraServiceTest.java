@@ -1,5 +1,7 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.service.certificado.CertificadoBloqueos;
+import com.vortise.gestion.service.certificado.CertificadoObraService;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 

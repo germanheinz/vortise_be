@@ -1,5 +1,8 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.service.certificado.CertificadoBloqueos;
+import com.vortise.gestion.service.proyecto.ObraTareaService;
+import com.vortise.gestion.service.proyecto.PrevistoRealService;
 import com.vortise.gestion.domain.rule.CalculoAnexoPrevistoReal.BaseAnexo;
 import com.vortise.gestion.model.*;
 import com.vortise.gestion.repository.*;

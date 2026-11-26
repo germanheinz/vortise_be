@@ -1,6 +1,6 @@
 package com.vortise.gestion.service.authentication;
 
-import com.vortise.gestion.service.EmpresaConfiguracionService;
+import com.vortise.gestion.service.empresa.EmpresaConfiguracionService;
 import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.application.dto.RegistroConIdentidadDto;
 import com.vortise.gestion.application.dto.RegistroRequestDto;

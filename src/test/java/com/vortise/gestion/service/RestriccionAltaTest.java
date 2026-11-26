@@ -1,5 +1,6 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.service.restriccion.RestriccionService;
 import com.vortise.gestion.application.dto.RestriccionCreateDto;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.model.Proyecto;

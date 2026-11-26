@@ -1,5 +1,7 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.service.empresa.EmpresaConsultaService;
+import com.vortise.gestion.service.restriccion.RestriccionService;
 import com.vortise.gestion.application.mapper.ObraTareaMapper;
 import com.vortise.gestion.application.mapper.RestriccionMapper;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;

@@ -1,5 +1,6 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.service.empresa.EmpresaConfiguracionService;
 import com.vortise.gestion.application.dto.UnidadMetricaEmpresaDto;
 import com.vortise.gestion.model.Empresa;
 import com.vortise.gestion.model.UnidadMetricaEmpresa;

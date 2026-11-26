@@ -1,6 +1,6 @@
 package com.vortise.gestion.service.pagos;
 
-import com.vortise.gestion.service.EquipoAccessPolicy;
+import com.vortise.gestion.service.equipo.EquipoAccessPolicy;
 import com.vortise.gestion.application.dto.SuscripcionResumenDto;
 import com.vortise.gestion.model.PagoSuscripcion;
 import com.vortise.gestion.model.Suscripcion;

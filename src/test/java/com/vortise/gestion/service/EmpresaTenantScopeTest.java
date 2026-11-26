@@ -1,5 +1,7 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.service.empresa.EmpresaConfiguracionService;
+import com.vortise.gestion.service.empresa.EmpresaService;
 import com.vortise.gestion.application.exception.ConflictoEstadoException;
 import com.vortise.gestion.application.dto.EmpresaCreateDto;
 import com.vortise.gestion.application.dto.EmpresaDto;

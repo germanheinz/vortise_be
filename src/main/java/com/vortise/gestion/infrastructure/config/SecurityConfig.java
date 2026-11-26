@@ -3,7 +3,7 @@ package com.vortise.gestion.infrastructure.config;
 import com.vortise.gestion.infrastructure.security.JwtAuthenticationFilter;
 import com.vortise.gestion.service.authentication.JwtService;
 import com.vortise.gestion.repository.UsuarioEmpresaRepository;
-import com.vortise.gestion.service.EquipoAccessPolicy;
+import com.vortise.gestion.service.equipo.EquipoAccessPolicy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;

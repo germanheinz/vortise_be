@@ -1,7 +1,7 @@
 package com.vortise.gestion.service.authentication;
 
 import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
-import com.vortise.gestion.service.EquipoAccessPolicy;
+import com.vortise.gestion.service.equipo.EquipoAccessPolicy;
 import com.vortise.gestion.service.pagos.SuscripcionConsultaService;
 import com.vortise.gestion.application.dto.LoginRequestDto;
 import com.vortise.gestion.application.dto.LoginResponseDto;

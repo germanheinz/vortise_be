@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.controller.PlantaController;
+import com.vortise.gestion.controller.proyecto.PlantaController;
 import com.vortise.gestion.application.dto.PlantaDto;
 import com.vortise.gestion.model.Empresa;
 import com.vortise.gestion.model.Planta;
@@ -42,7 +42,7 @@ class PlantaControllerTest {
             org.springframework.test.util.ReflectionTestUtils.setField(empresa, "id", 1L);
             return Optional.of(project(invocation.getArgument(0), empresa));
         });
-        controller = new PlantaController(new com.vortise.gestion.service.PlantaService(plantas, proyectos, identity));
+        controller = new PlantaController(new com.vortise.gestion.service.proyecto.PlantaService(plantas, proyectos, identity));
     }
 
     @Test

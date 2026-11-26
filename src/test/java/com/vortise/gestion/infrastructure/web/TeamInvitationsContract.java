@@ -36,7 +36,7 @@ abstract class TeamInvitationsContract {
     protected Long ownerId, firstId, secondId, excludedId, subscriptionId, invitedId;
     protected String admin;
     protected static final String PASSWORD = "Synthetic-invitation-only-26!";
-    @Autowired com.vortise.gestion.service.InvitacionesService invitations;
+    @Autowired com.vortise.gestion.service.invitacion.InvitacionesService invitations;
     @Autowired org.springframework.security.crypto.password.PasswordEncoder encoder;
     @Autowired tools.jackson.databind.ObjectMapper json;
 

@@ -1,5 +1,8 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.service.empresa.ConfiguracionEmpresaObraService;
+import com.vortise.gestion.service.proyecto.ProyectoEdicionService;
+import com.vortise.gestion.service.proyecto.ProyectoService;
 import com.vortise.gestion.application.dto.CalendarioObraDto;
 import com.vortise.gestion.application.dto.ProyectoCreateDto;
 import com.vortise.gestion.application.dto.ProyectoUpdateDto;

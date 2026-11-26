@@ -1,5 +1,6 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.service.restriccion.RestriccionService;
 import com.vortise.gestion.application.dto.RestriccionUpdateDto;
 import com.vortise.gestion.model.Proyecto;
 import com.vortise.gestion.model.RestriccionObra;
