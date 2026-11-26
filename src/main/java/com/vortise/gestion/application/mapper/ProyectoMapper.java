@@ -9,7 +9,7 @@ import com.vortise.gestion.domain.model.Planta;
 import com.vortise.gestion.domain.model.ContratoObra;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RubroObra;
-import com.vortise.gestion.domain.service.EstructuraRubros;
+import com.vortise.gestion.domain.rule.EstructuraRubros;
 import java.util.List;
 
 public final class ProyectoMapper {

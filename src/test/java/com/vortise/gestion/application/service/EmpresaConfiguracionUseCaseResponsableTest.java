@@ -26,7 +26,7 @@ class EmpresaConfiguracionUseCaseResponsableTest {
     private static final Long EMPRESA_ID = 7L;
     private Empresa empresa;
     private ResponsableEmpresaRepository responsables;
-    private EmpresaConfiguracionUseCase useCase;
+    private EmpresaConfiguracionService useCase;
 
     @BeforeEach
     void setUp() {
@@ -35,7 +35,7 @@ class EmpresaConfiguracionUseCaseResponsableTest {
         when(empresa.getId()).thenReturn(EMPRESA_ID);
         when(empresas.bloquearPorId(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         responsables = mock(ResponsableEmpresaRepository.class);
-        useCase = new EmpresaConfiguracionUseCase(
+        useCase = new EmpresaConfiguracionService(
             empresas,
             responsables,
             mock(UnidadMetricaEmpresaRepository.class),

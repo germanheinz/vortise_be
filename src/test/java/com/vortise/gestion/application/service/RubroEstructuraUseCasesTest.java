@@ -86,15 +86,15 @@ class RubroEstructuraUseCasesTest {
 
     private ProyectoRepository projects = mock(ProyectoRepository.class);
 
-    private CreateProyectoUseCase createUseCase() {
+    private ProyectoAltaService createUseCase() {
         EmpresaRepository companies = mock(EmpresaRepository.class);
         Empresa company = mock(Empresa.class);
         when(company.getId()).thenReturn(EMPRESA_ID);
         when(companies.bloquearPorId(EMPRESA_ID)).thenReturn(Optional.of(company));
-        var changes = mock(AplicarCambiosEmpresaObraUseCase.class);
+        var changes = mock(ConfiguracionEmpresaObraService.class);
         when(changes.execute(any(), any(), any())).thenReturn(List.of());
         when(projects.save(any(Proyecto.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        return new CreateProyectoUseCase(projects, companies, mock(CatalogoEmpresaRepository.class), mock(CurrentIdentity.class), changes);
+        return new ProyectoAltaService(projects, companies, mock(CatalogoEmpresaRepository.class), mock(CurrentIdentity.class), changes);
     }
 
     private ProyectoCreateDto createRequest(List<RubroCreateDto> rubros) {
@@ -193,7 +193,7 @@ class RubroEstructuraUseCasesTest {
     private Proyecto project;
     private RubroObra root;
     private RubroObra leaf;
-    private UpdateProyectoUseCase updateUseCase;
+    private ProyectoEdicionService updateUseCase;
     private final CatalogoEmpresaRepository catalogosEdicion = mock(CatalogoEmpresaRepository.class);
 
     @BeforeEach void setUpUpdate() {
@@ -210,7 +210,7 @@ class RubroEstructuraUseCasesTest {
         when(projects.bloquearPorId(1L)).thenReturn(Optional.of(project));
         when(projects.save(any(Proyecto.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(tasks.findByProyectoId(1L)).thenReturn(List.of());
-        updateUseCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class), catalogosEdicion,
+        updateUseCase = new ProyectoEdicionService(projects, mock(EmpresaRepository.class), catalogosEdicion,
             tasks, restrictions, mock(CurrentIdentity.class), mock(RegistroHorasRepository.class));
     }
 
@@ -504,7 +504,7 @@ class RubroEstructuraUseCasesTest {
         Proyecto p = threeLayerProject();
         var projectsMock = mock(ProyectoRepository.class);
         when(projectsMock.findById(1L)).thenReturn(Optional.of(p));
-        var summary = new GetPrevistoRealUseCase(projectsMock, mock(ObraTareaRepository.class),
+        var summary = new PrevistoRealService(projectsMock, mock(ObraTareaRepository.class),
             mock(CategoriaManoObraEmpresaRepository.class), mock(CalendarioLaboralEmpresaRepository.class)).execute(1L);
         assertEquals(1, summary.actividades().size());
         assertEquals(3L, summary.actividades().get(0).rubroId());
@@ -591,8 +591,8 @@ class RubroEstructuraUseCasesTest {
         var user = mock(UsuarioEmpresa.class);
         when(user.getNombre()).thenReturn("Ana");
         when(users.findById(5L)).thenReturn(Optional.of(user));
-        var useCase = new CertificadoObraUseCase(projectsMock, new CertificadoObraUseCaseTest.FakeCertificados(),
-            new CertificadoObraUseCaseTest.FakeCompletados(), new CertificadoObraUseCaseTest.FakeTareas(), identity, users);
+        var useCase = new CertificadoObraService(projectsMock, new CertificadoObraServiceTest.FakeCertificados(),
+            new CertificadoObraServiceTest.FakeCompletados(), new CertificadoObraServiceTest.FakeTareas(), identity, users);
 
         assertEquals(1, useCase.empresas(1L).get(0).actividades());
         var detail = useCase.crear(1L, new CertificadoCrearDto(null, "MENSUAL", LocalDate.parse("2026-03-31"), 1));

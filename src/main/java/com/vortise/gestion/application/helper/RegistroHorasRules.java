@@ -5,7 +5,7 @@ import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RegistroHoras;
 import com.vortise.gestion.domain.repository.RegistroHorasRepository;
-import com.vortise.gestion.domain.service.EstructuraRubros;
+import com.vortise.gestion.domain.rule.EstructuraRubros;
 import java.time.Duration;
 
 public final class RegistroHorasRules {

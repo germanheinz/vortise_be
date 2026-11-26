@@ -84,3 +84,5 @@ Compartir la consulta de suma, la normalización del agregado nulo y el redondeo
 Mover `EmpresaMapper` a `application.mapper` y `EmpresaService` a `application.service`. El mapper expone su método estático para permitir el acceso desde el servicio y mantiene privado su constructor. El servicio conserva sus consumidores y el wiring de Spring con los paquetes nuevos.
 
 Aplicar la organización a todo el antiguo paquete `application.usecase`. Mantener nombres de clase y agrupar las pruebas por el tipo principal que prueban. Cambiar visibilidad solo en las entradas necesarias entre paquetes. Comparar los cuerpos con la revisión previa y compilar desde cero para comprobar las referencias.
+
+Normalizar el sufijo de los servicios y usar nombres específicos para altas, ediciones, bajas y consultas que tengan responsabilidades distintas. Mover `EstructuraRubros` y su prueba a `domain.rule`. Retirar `CostoCalculadorService` tras comprobar referencias, configuración y consumidores. Actualizar imports y ejecutar compilación limpia y pruebas sin contexto.

@@ -29,7 +29,7 @@ class CalendarioLaboralObraTest {
     private ProyectoRepository proyectos;
     private CalendarioLaboralEmpresaRepository calendarios;
     private Empresa empresa;
-    private CreateProyectoUseCase create;
+    private ProyectoAltaService create;
 
     @BeforeEach
     void setUp() {
@@ -39,10 +39,10 @@ class CalendarioLaboralObraTest {
         ReflectionTestUtils.setField(empresa, "id", EMPRESA_ID);
         EmpresaRepository empresas = mock(EmpresaRepository.class);
         when(empresas.bloquearPorId(EMPRESA_ID)).thenReturn(Optional.of(empresa));
-        var cambios = mock(AplicarCambiosEmpresaObraUseCase.class);
+        var cambios = mock(ConfiguracionEmpresaObraService.class);
         when(cambios.execute(any(), any(), any())).thenReturn(List.of());
         when(proyectos.save(any(Proyecto.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        create = new CreateProyectoUseCase(proyectos, empresas, mock(CatalogoEmpresaRepository.class), mock(CurrentIdentity.class), cambios, calendarios);
+        create = new ProyectoAltaService(proyectos, empresas, mock(CatalogoEmpresaRepository.class), mock(CurrentIdentity.class), cambios, calendarios);
     }
 
     @Test
@@ -80,7 +80,7 @@ class CalendarioLaboralObraTest {
         project.setCalendarioLaboral(true, true, false, false);
         when(projects.bloquearPorId(7L)).thenReturn(Optional.of(project));
         when(projects.save(project)).thenReturn(project);
-        var update = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class),
+        var update = new ProyectoEdicionService(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class),
             mock(ObraTareaRepository.class), mock(RestriccionObraRepository.class), identity, mock(RegistroHorasRepository.class));
 
         assertEquals(new CalendarioObraDto(true, true, false, false), update.execute(7L,

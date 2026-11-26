@@ -86,3 +86,9 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] Comparados los cuerpos de las 60 clases con `HEAD` ignorando paquetes, imports, visibilidad y formato. No quedaron referencias al paquete anterior en fuentes ni configuración Maven. `git diff --check` pasó.
 - [x] `mvn '-Dtest=com/vortise/gestion/application/**/*Test,RegistroHorasControllerTest,GastoFijoAvailabilityTest,ProyectoDemoResetAvailabilityTest,DemoOperationalSeedTest' clean test` desde `gestion_be`. Pasaron 319 pruebas sin fallos, errores ni omisiones. La compilación limpia confirmó las referencias entre paquetes y corrigió los fallos intermedios de la migración.
 - [ ] Integración con Spring y revisión independiente pendientes.
+
+### Nombres de servicios y reglas de dominio
+
+- [x] Aprobado mediante «HACELO». Se renombraron 28 servicios y sus consumidores y se movió `EstructuraRubros` con su prueba a `domain.rule`. Se retiró `CostoCalculadorService` tras comprobar que no tenía referencias en el código ni configuración versionada. Se conservaron los puertos y las rutas, permisos y transacciones actuales.
+- [x] Ejecutado `mvn '-Dtest=com/vortise/gestion/application/**/*Test,EstructuraRubrosTest,RegistroHorasControllerTest,GastoFijoAvailabilityTest,ProyectoDemoResetAvailabilityTest,DemoOperationalSeedTest' clean test` y repetida la selección con `test` tras ajustar los nombres de variables en controllers. Pasaron 319 pruebas en ambas ejecuciones. `git diff --check` pasó y no quedaron referencias a nombres `UseCase` ni al paquete `domain.service` en producción.
+- [ ] Integración con Spring y revisión independiente pendientes. Alcance local.

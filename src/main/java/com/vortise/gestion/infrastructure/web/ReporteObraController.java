@@ -6,7 +6,7 @@ import com.vortise.gestion.application.dto.ReporteEmitirDto;
 import com.vortise.gestion.application.dto.ReporteImagenDto;
 import com.vortise.gestion.application.dto.ReporteImagenLeyendaDto;
 import com.vortise.gestion.application.dto.ReporteResumenDto;
-import com.vortise.gestion.application.service.ReporteObraUseCase;
+import com.vortise.gestion.application.service.ReporteObraService;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import java.util.List;
@@ -28,9 +28,9 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/proyectos/{proyectoId}/reportes")
 public class ReporteObraController {
-    private final ReporteObraUseCase useCase;
+    private final ReporteObraService useCase;
 
-    public ReporteObraController(ReporteObraUseCase useCase) { this.useCase = useCase; }
+    public ReporteObraController(ReporteObraService useCase) { this.useCase = useCase; }
 
     @GetMapping("/imagenes")
     public ReporteBorradorImagenesDto borrador(@PathVariable Long proyectoId) {

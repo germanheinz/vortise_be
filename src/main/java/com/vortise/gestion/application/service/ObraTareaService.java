@@ -11,7 +11,7 @@ import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.TipoNodoRubro;
 import com.vortise.gestion.domain.repository.ObraTareaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
-import com.vortise.gestion.domain.service.EstructuraRubros;
+import com.vortise.gestion.domain.rule.EstructuraRubros;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;

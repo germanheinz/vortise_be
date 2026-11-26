@@ -16,9 +16,9 @@ class EmpresaDashboardObrasUseCaseTest {
     private final EmpresaRepository empresas = mock(EmpresaRepository.class);
     private final ProyectoRepository proyectos = mock(ProyectoRepository.class);
     private final RestriccionObraRepository restricciones = mock(RestriccionObraRepository.class);
-    private final GetPrevistoRealUseCase previstoReal = mock(GetPrevistoRealUseCase.class);
+    private final PrevistoRealService previstoReal = mock(PrevistoRealService.class);
     private final CurrentIdentity identity = mock(CurrentIdentity.class);
-    private final GetEmpresaDashboardObrasUseCase useCase = new GetEmpresaDashboardObrasUseCase(empresas, proyectos, restricciones, previstoReal, identity);
+    private final EmpresaDashboardObrasService useCase = new EmpresaDashboardObrasService(empresas, proyectos, restricciones, previstoReal, identity);
 
     private final Proyecto obra = new Proyecto();
 
@@ -29,9 +29,9 @@ class EmpresaDashboardObrasUseCaseTest {
         return rubro;
     }
 
-    private static GetPrevistoRealUseCase.Activity activity(long rubroId, Double desvio, Double proyeccion) {
+    private static PrevistoRealService.Activity activity(long rubroId, Double desvio, Double proyeccion) {
         var metrics = new PrevistoRealCalculator.Metrics(null, null, null, null, null, null, desvio, proyeccion, null, null, null);
-        return new GetPrevistoRealUseCase.Activity(rubroId, "A" + rubroId, "m2", null, null, null, metrics, List.of());
+        return new PrevistoRealService.Activity(rubroId, "A" + rubroId, "m2", null, null, null, metrics, List.of());
     }
 
     private static RestriccionObra restriccion(Proyecto proyecto, String estado) {
@@ -39,11 +39,11 @@ class EmpresaDashboardObrasUseCaseTest {
         return item;
     }
 
-    private void givenObra(Double costoOficial, Double costoAyudante, GetPrevistoRealUseCase.Activity... actividades) {
+    private void givenObra(Double costoOficial, Double costoAyudante, PrevistoRealService.Activity... actividades) {
         obra.setId(5L); obra.setNombre("Obra A");
         when(empresas.findById(1L)).thenReturn(Optional.of(new Empresa("Sintética", null)));
         when(proyectos.findByEmpresaRelacionadaId(1L)).thenReturn(List.of(obra));
-        when(previstoReal.execute(5L)).thenReturn(new GetPrevistoRealUseCase.Summary(costoOficial, costoAyudante, 8., 0, List.of(actividades)));
+        when(previstoReal.execute(5L)).thenReturn(new PrevistoRealService.Summary(costoOficial, costoAyudante, 8., 0, List.of(actividades)));
     }
 
     @Test

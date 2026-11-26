@@ -4,7 +4,7 @@ import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.domain.model.RestriccionObra;
 import com.vortise.gestion.domain.model.RubroObra;
 import com.vortise.gestion.domain.repository.RubroObraRepository;
-import com.vortise.gestion.domain.service.EstructuraRubros;
+import com.vortise.gestion.domain.rule.EstructuraRubros;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

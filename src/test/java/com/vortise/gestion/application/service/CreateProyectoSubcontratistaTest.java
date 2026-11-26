@@ -20,7 +20,7 @@ class CreateProyectoSubcontratistaTest {
     private ProyectoRepository proyectos;
     private CatalogoEmpresaRepository catalogos;
     private Empresa empresa;
-    private CreateProyectoUseCase useCase;
+    private ProyectoAltaService useCase;
 
     @BeforeEach
     void setUp() {
@@ -31,9 +31,9 @@ class CreateProyectoSubcontratistaTest {
         when(empresa.getId()).thenReturn(EMPRESA_ID);
         when(empresas.bloquearPorId(EMPRESA_ID)).thenReturn(Optional.of(empresa));
         CurrentTenantService tenant = mock(CurrentTenantService.class);
-        AplicarCambiosEmpresaObraUseCase cambiosEmpresa = mock(AplicarCambiosEmpresaObraUseCase.class);
+        ConfiguracionEmpresaObraService cambiosEmpresa = mock(ConfiguracionEmpresaObraService.class);
         when(cambiosEmpresa.execute(any(), any(), any())).thenReturn(List.of());
-        useCase = new CreateProyectoUseCase(proyectos, empresas, catalogos, tenant, cambiosEmpresa);
+        useCase = new ProyectoAltaService(proyectos, empresas, catalogos, tenant, cambiosEmpresa);
     }
 
     @Test

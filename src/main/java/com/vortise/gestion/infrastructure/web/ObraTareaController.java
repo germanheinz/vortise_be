@@ -3,7 +3,7 @@ package com.vortise.gestion.infrastructure.web;
 import com.vortise.gestion.application.dto.ObraTareaCreateDto;
 import com.vortise.gestion.application.dto.ObraTareaDto;
 import com.vortise.gestion.application.service.ObraTareaService;
-import com.vortise.gestion.application.service.GetPrevistoRealUseCase;
+import com.vortise.gestion.application.service.PrevistoRealService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -21,15 +21,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/proyectos/{proyectoId}/obra-tareas")
 public class ObraTareaController {
     private final ObraTareaService obraTareaService;
-    private final GetPrevistoRealUseCase comparison;
+    private final PrevistoRealService comparison;
 
-    public ObraTareaController(ObraTareaService obraTareaService, GetPrevistoRealUseCase comparison) {
+    public ObraTareaController(ObraTareaService obraTareaService, PrevistoRealService comparison) {
         this.obraTareaService = obraTareaService;
         this.comparison = comparison;
     }
 
     @GetMapping("/indicadores")
-    public GetPrevistoRealUseCase.Summary indicadores(@PathVariable Long proyectoId) {
+    public PrevistoRealService.Summary indicadores(@PathVariable Long proyectoId) {
         return comparison.execute(proyectoId);
     }
 

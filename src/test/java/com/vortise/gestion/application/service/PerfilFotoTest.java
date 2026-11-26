@@ -35,13 +35,13 @@ class PerfilFotoTest {
     private FileSystemFotoPerfilStorage storage;
     private final UsuarioEmpresaRepository usuarios = mock(UsuarioEmpresaRepository.class);
     private final CurrentTenantService tenant = mock(CurrentTenantService.class);
-    private PerfilUseCase useCase;
+    private PerfilService useCase;
     private final UsuarioEmpresa usuario = new UsuarioEmpresa(new Empresa("E", null), "u@example.invalid", "U", "h", RolEmpresa.CONSULTA);
 
     @BeforeEach
     void setUp() {
         storage = new FileSystemFotoPerfilStorage(dir.toString());
-        useCase = new PerfilUseCase(usuarios, tenant, mock(SuscripcionConsultaService.class), storage, mock(EquipoAccessPolicy.class));
+        useCase = new PerfilService(usuarios, tenant, mock(SuscripcionConsultaService.class), storage, mock(EquipoAccessPolicy.class));
         ReflectionTestUtils.setField(usuario, "id", 7L);
         when(tenant.usuarioId()).thenReturn(7L);
         when(usuarios.findById(7L)).thenReturn(Optional.of(usuario));
@@ -85,7 +85,7 @@ class PerfilFotoTest {
     @Test
     void rejectsEmptyOversizedAndNonImageContent() {
         assertThrows(SolicitudInvalidaException.class, () -> useCase.subirFoto(new byte[0]));
-        byte[] grande = Arrays.copyOf(PNG, PerfilUseCase.MAX_FOTO_BYTES + 1);
+        byte[] grande = Arrays.copyOf(PNG, PerfilService.MAX_FOTO_BYTES + 1);
         assertThrows(SolicitudInvalidaException.class, () -> useCase.subirFoto(grande));
         assertThrows(SolicitudInvalidaException.class, () -> useCase.subirFoto("GIF89a....".getBytes()));
         assertFalse(storage.existe(7L));

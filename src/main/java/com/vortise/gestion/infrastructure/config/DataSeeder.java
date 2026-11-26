@@ -24,7 +24,7 @@ import com.vortise.gestion.domain.model.StatusTarea;
 import com.vortise.gestion.domain.model.Tarea;
 import com.vortise.gestion.domain.model.TipoNodoRubro;
 import com.vortise.gestion.domain.model.VarianteEstructura;
-import com.vortise.gestion.domain.service.EstructuraRubros;
+import com.vortise.gestion.domain.rule.EstructuraRubros;
 import com.vortise.gestion.domain.model.CalendarioLaboralEmpresa;
 import com.vortise.gestion.domain.model.CatalogoEmpresa;
 import com.vortise.gestion.domain.model.CategoriaManoObraEmpresa;

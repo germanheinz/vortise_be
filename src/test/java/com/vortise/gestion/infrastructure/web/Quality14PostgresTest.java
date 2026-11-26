@@ -1,9 +1,9 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.service.EmpresaConfiguracionUseCase;
-import com.vortise.gestion.application.service.InicializarEmpresaUseCase;
+import com.vortise.gestion.application.service.EmpresaConfiguracionService;
+import com.vortise.gestion.application.service.EmpresaInicializacionService;
 import com.vortise.gestion.application.service.RegistroHorasService;
-import com.vortise.gestion.application.service.UsuarioEmpresaUseCase;
+import com.vortise.gestion.application.service.UsuarioEmpresaService;
 import com.vortise.gestion.application.service.EmpresaService;
 import com.vortise.gestion.application.dto.*;
 import com.vortise.gestion.application.exception.ConflictoEstadoException;
@@ -53,10 +53,10 @@ class Quality14PostgresTest {
     @MockitoSpyBean ProyectoRepository projects;
     @Autowired RegistroHorasRepository records;
     @Autowired RegistroHorasService ledger;
-    @Autowired InicializarEmpresaUseCase initialize;
-    @Autowired EmpresaConfiguracionUseCase configuration;
+    @Autowired EmpresaInicializacionService initialize;
+    @Autowired EmpresaConfiguracionService configuration;
     @Autowired EmpresaService companyEditor;
-    @Autowired UsuarioEmpresaUseCase users;
+    @Autowired UsuarioEmpresaService users;
     @Autowired UsuarioEmpresaRepository userRepository;
     @Autowired UnidadMetricaEmpresaRepository units;
     @Autowired CategoriaManoObraEmpresaRepository categories;

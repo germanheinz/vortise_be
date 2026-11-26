@@ -19,10 +19,10 @@ import com.vortise.gestion.application.dto.ProyectoCreateDto;
 import com.vortise.gestion.application.dto.ProyectoDto;
 import com.vortise.gestion.application.dto.ProyectoUpdateDto;
 import com.vortise.gestion.application.exception.FeatureUnavailableException;
-import com.vortise.gestion.application.service.CreateProyectoUseCase;
-import com.vortise.gestion.application.service.DeleteProyectoUseCase;
+import com.vortise.gestion.application.service.ProyectoAltaService;
+import com.vortise.gestion.application.service.ProyectoBajaService;
 import com.vortise.gestion.application.service.ProyectoConsultaService;
-import com.vortise.gestion.application.service.UpdateProyectoUseCase;
+import com.vortise.gestion.application.service.ProyectoEdicionService;
 import com.vortise.gestion.infrastructure.config.DataSeeder;
 import com.vortise.gestion.infrastructure.config.ProductionFeaturePolicy;
 import jakarta.validation.Valid;
@@ -44,9 +44,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value={"/api/proyectos"})
 public class ProyectoController {
     private final ProyectoConsultaService proyectos;
-    private final CreateProyectoUseCase createProyectoUseCase;
-    private final UpdateProyectoUseCase updateProyectoUseCase;
-    private final DeleteProyectoUseCase deleteProyectoUseCase;
+    private final ProyectoAltaService altaProyecto;
+    private final ProyectoEdicionService edicionProyecto;
+    private final ProyectoBajaService bajaProyecto;
     private final DataSeeder dataSeeder;
     private final ProductionFeaturePolicy featurePolicy;
 
@@ -70,19 +70,19 @@ public class ProyectoController {
     @PostMapping
     @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.SOLO_ADMINISTRADOR)
     public ResponseEntity<ProyectoDto> create(@Valid @RequestBody ProyectoCreateDto dto) {
-        return ResponseEntity.status((HttpStatusCode)HttpStatus.CREATED).body(this.createProyectoUseCase.execute(dto));
+        return ResponseEntity.status((HttpStatusCode)HttpStatus.CREATED).body(this.altaProyecto.execute(dto));
     }
 
     @PutMapping(value="/{id}")
     @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.GERENTE)
     public ResponseEntity<ProyectoDto> update(@PathVariable Long id, @Valid @RequestBody ProyectoUpdateDto dto) {
-        return ResponseEntity.ok(this.updateProyectoUseCase.execute(id, dto));
+        return ResponseEntity.ok(this.edicionProyecto.execute(id, dto));
     }
 
     @DeleteMapping(value="/{id}")
     @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.GERENTE)
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        this.deleteProyectoUseCase.execute(id);
+        this.bajaProyecto.execute(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -97,17 +97,17 @@ public class ProyectoController {
     }
 
     public ProyectoController(
-        CreateProyectoUseCase createProyectoUseCase,
-        UpdateProyectoUseCase updateProyectoUseCase,
-        DeleteProyectoUseCase deleteProyectoUseCase,
+        ProyectoAltaService altaProyecto,
+        ProyectoEdicionService edicionProyecto,
+        ProyectoBajaService bajaProyecto,
         DataSeeder dataSeeder,
         ProductionFeaturePolicy featurePolicy,
         ProyectoConsultaService proyectos
     ) {
         this.proyectos = proyectos;
-        this.createProyectoUseCase = createProyectoUseCase;
-        this.updateProyectoUseCase = updateProyectoUseCase;
-        this.deleteProyectoUseCase = deleteProyectoUseCase;
+        this.altaProyecto = altaProyecto;
+        this.edicionProyecto = edicionProyecto;
+        this.bajaProyecto = bajaProyecto;
         this.dataSeeder = dataSeeder;
         this.featurePolicy = featurePolicy;
     }

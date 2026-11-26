@@ -2,7 +2,7 @@ package com.vortise.gestion.infrastructure.config;
 
 import com.vortise.gestion.application.helper.PrevistoRealCalculator;
 import com.vortise.gestion.domain.model.*;
-import com.vortise.gestion.domain.service.EstructuraRubros;
+import com.vortise.gestion.domain.rule.EstructuraRubros;
 import java.time.*;
 import java.util.*;
 

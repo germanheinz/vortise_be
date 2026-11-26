@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.service.PasswordResetUseCase;
+import com.vortise.gestion.application.service.PasswordResetService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth/password-reset")
 public class PasswordResetController {
-    private final PasswordResetUseCase useCase;
-    public PasswordResetController(PasswordResetUseCase useCase) { this.useCase = useCase; }
+    private final PasswordResetService useCase;
+    public PasswordResetController(PasswordResetService useCase) { this.useCase = useCase; }
     public record Request(@Email @NotBlank @Size(max = 254) String email) {
         @Override public String toString() { return "PasswordResetRequest[redacted]"; }
     }

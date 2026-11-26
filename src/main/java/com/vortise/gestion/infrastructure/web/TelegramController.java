@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.service.VincularTelegramUseCase;
+import com.vortise.gestion.application.service.VinculacionTelegramService;
 import com.vortise.gestion.infrastructure.security.Guards;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/integraciones/telegram")
 public class TelegramController {
-    private final VincularTelegramUseCase vincular;
+    private final VinculacionTelegramService vincular;
     private final String secreto;
     private final TelegramComandos comandos;
 
-    public TelegramController(VincularTelegramUseCase vincular, TelegramComandos comandos,
+    public TelegramController(VinculacionTelegramService vincular, TelegramComandos comandos,
             @Value("${app.integraciones.telegram.secreto:}") String secreto) {
         this.vincular = vincular;
         this.secreto = secreto;
@@ -30,19 +30,19 @@ public class TelegramController {
 
     @GetMapping("/vinculo")
     @PreAuthorize(Guards.GERENCIA_CHAT)
-    public VincularTelegramUseCase.Estado estado() {
+    public VinculacionTelegramService.Estado estado() {
         return vincular.estado();
     }
 
     @PostMapping("/vinculo")
     @PreAuthorize(Guards.GERENCIA_CHAT)
-    public VincularTelegramUseCase.Inicio iniciar() {
+    public VinculacionTelegramService.Inicio iniciar() {
         return vincular.iniciar();
     }
 
     @PostMapping("/vinculo/confirmar")
     @PreAuthorize(Guards.GERENCIA_CHAT)
-    public VincularTelegramUseCase.Estado confirmar(@Valid @RequestBody Confirmacion datos) {
+    public VinculacionTelegramService.Estado confirmar(@Valid @RequestBody Confirmacion datos) {
         return vincular.confirmar(datos.chatId());
     }
 

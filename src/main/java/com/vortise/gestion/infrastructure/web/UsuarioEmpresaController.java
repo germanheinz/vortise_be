@@ -2,7 +2,7 @@ package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.UsuarioEmpresaDto;
 import com.vortise.gestion.application.dto.UsuarioEmpresaUpdateDto;
-import com.vortise.gestion.application.service.UsuarioEmpresaUseCase;
+import com.vortise.gestion.application.service.UsuarioEmpresaService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/empresas/{empresaId}/usuarios")
 @PreAuthorize("hasRole('ADMINISTRADOR')")
 public class UsuarioEmpresaController {
-    private final UsuarioEmpresaUseCase useCase;
-    public UsuarioEmpresaController(UsuarioEmpresaUseCase useCase) { this.useCase = useCase; }
+    private final UsuarioEmpresaService useCase;
+    public UsuarioEmpresaController(UsuarioEmpresaService useCase) { this.useCase = useCase; }
     @GetMapping public ResponseEntity<List<UsuarioEmpresaDto>> getAll(@PathVariable Long empresaId) { return ResponseEntity.ok(useCase.getAll(empresaId)); }
     @PostMapping public ResponseEntity<UsuarioEmpresaDto> create(@PathVariable Long empresaId, @Valid @RequestBody UsuarioEmpresaDto dto) { throw new com.vortise.gestion.application.exception.ConflictoEstadoException("Creá un enlace de invitación para incorporar usuarios al equipo."); }
     @PutMapping("/{id}") public ResponseEntity<UsuarioEmpresaDto> update(@PathVariable Long empresaId, @PathVariable Long id, @Valid @RequestBody UsuarioEmpresaUpdateDto dto) { return ResponseEntity.ok(useCase.update(empresaId, id, dto)); }

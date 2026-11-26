@@ -24,7 +24,7 @@ class CompanyInitializationTest {
     }
     @Test void readsNeverWriteAndMissingCalendarIsExplicit() {
         company();
-        var service = new EmpresaConfiguracionUseCase(companies, mock(ResponsableEmpresaRepository.class), units,
+        var service = new EmpresaConfiguracionService(companies, mock(ResponsableEmpresaRepository.class), units,
             mock(CatalogoEmpresaRepository.class), calendars, categories);
         assertEquals(List.of(), service.getUnidades(1L));
         assertEquals(List.of(), service.getCategoriasManoObra(1L));
@@ -35,7 +35,7 @@ class CompanyInitializationTest {
         Empresa company = company();
         UnidadMetricaEmpresa custom = new UnidadMetricaEmpresa(company, "ML", "Custom name");
         when(units.findByEmpresaId(1L)).thenReturn(List.of(custom));
-        var useCase = new InicializarEmpresaUseCase(companies, units, categories, calendars);
+        var useCase = new EmpresaInicializacionService(companies, units, categories, calendars);
         useCase.execute(1L);
         assertTrue(company.isConfiguracionInicializada());
         assertEquals("Custom name", custom.getNombre());
@@ -55,7 +55,7 @@ class CompanyInitializationTest {
         ReflectionTestUtils.setField(user, "id", 2L);
         when(users.findById(2L)).thenReturn(Optional.of(user));
         when(users.save(user)).thenReturn(user);
-        var service = new UsuarioEmpresaUseCase(companies, users, encoder, plans, org.mockito.Mockito.mock(EquipoAccessPolicy.class), org.mockito.Mockito.mock(com.vortise.gestion.application.port.CurrentIdentity.class));
+        var service = new UsuarioEmpresaService(companies, users, encoder, plans, org.mockito.Mockito.mock(EquipoAccessPolicy.class), org.mockito.Mockito.mock(com.vortise.gestion.application.port.CurrentIdentity.class));
         assertThrows(SolicitudInvalidaException.class, () -> service.update(1L, 2L,
             new UsuarioEmpresaUpdateDto("Name", RolEmpresa.CONSULTA, true, "a")));
         verify(users, never()).save(any()); verifyNoInteractions(encoder);

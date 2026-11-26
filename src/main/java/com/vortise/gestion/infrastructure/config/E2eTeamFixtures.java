@@ -1,6 +1,6 @@
 package com.vortise.gestion.infrastructure.config;
 
-import com.vortise.gestion.application.service.InicializarEmpresaUseCase;
+import com.vortise.gestion.application.service.EmpresaInicializacionService;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.*;
 import java.time.Instant;
@@ -21,10 +21,10 @@ public class E2eTeamFixtures implements CommandLineRunner {
     private final PlanSuscripcionRepository planes;
     private final SuscripcionRepository suscripciones;
     private final PasswordEncoder encoder;
-    private final InicializarEmpresaUseCase inicializar;
+    private final EmpresaInicializacionService inicializar;
     private final String password;
     public E2eTeamFixtures(EmpresaRepository empresas, UsuarioEmpresaRepository usuarios, PlanSuscripcionRepository planes,
-            SuscripcionRepository suscripciones, PasswordEncoder encoder, InicializarEmpresaUseCase inicializar,
+            SuscripcionRepository suscripciones, PasswordEncoder encoder, EmpresaInicializacionService inicializar,
             @Value("${APP_E2E_TEAM_PASSWORD}") String password) {
         this.empresas = empresas; this.usuarios = usuarios; this.planes = planes; this.suscripciones = suscripciones;
         this.encoder = encoder; this.inicializar = inicializar; this.password = password;

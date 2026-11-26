@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
-import com.vortise.gestion.application.service.ConsultarRestriccionesObraUseCase;
-import com.vortise.gestion.application.service.CrearRestriccionChatUseCase;
+import com.vortise.gestion.application.service.RestriccionObraConsultaService;
+import com.vortise.gestion.application.service.RestriccionChatAltaService;
 import com.vortise.gestion.domain.model.RolEmpresa;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
@@ -25,8 +25,8 @@ public class TelegramComandos {
     private final UsuarioEmpresaRepository usuarios;
     private final ProyectoRepository proyectos;
     private final CurrentTenantService identidad;
-    private final ConsultarRestriccionesObraUseCase consultar;
-    private final CrearRestriccionChatUseCase crear;
+    private final RestriccionObraConsultaService consultar;
+    private final RestriccionChatAltaService crear;
     private final Validator validator;
     private final TelegramConversacion conversacion;
     static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("d/M/uuuu").withResolverStyle(ResolverStyle.STRICT);
@@ -38,7 +38,7 @@ public class TelegramComandos {
 
     public TelegramComandos(JpaVinculoTelegramRepository vinculos, UsuarioEmpresaRepository usuarios,
             ProyectoRepository proyectos, CurrentTenantService identidad,
-            ConsultarRestriccionesObraUseCase consultar, CrearRestriccionChatUseCase crear, Validator validator, TelegramConversacion conversacion) {
+            RestriccionObraConsultaService consultar, RestriccionChatAltaService crear, Validator validator, TelegramConversacion conversacion) {
         this.vinculos = vinculos;
         this.usuarios = usuarios;
         this.proyectos = proyectos;
@@ -93,7 +93,7 @@ public class TelegramComandos {
             return "No encontramos esa obra entre las que tenés autorizadas.";
         }
         if ("/restricciones".equals(comando)) {
-            var datos = consultar.execute(proyectoId, null, ConsultarRestriccionesObraUseCase.Filtro.ABIERTAS, null);
+            var datos = consultar.execute(proyectoId, null, RestriccionObraConsultaService.Filtro.ABIERTAS, null);
             return datos.obra() + "\nAbiertas: " + datos.abiertas() + "\nVencidas: " + datos.vencidas()
                 + "\nPrioridad alta: " + datos.altaPrioridad();
         }
@@ -104,7 +104,7 @@ public class TelegramComandos {
         } catch (DateTimeParseException ex) {
             return "Ingresá la fecha límite como DD/MM/AAAA.";
         }
-        var solicitud = new CrearRestriccionChatUseCase.Solicitud(partes[3], fecha);
+        var solicitud = new RestriccionChatAltaService.Solicitud(partes[3], fecha);
         if (!validator.validate(solicitud).isEmpty()) return "Ingresá una descripción de hasta 255 caracteres.";
         try {
             var resultado = crear.execute(proyectoId, "telegram:" + chatId + ":" + eventoId, solicitud);

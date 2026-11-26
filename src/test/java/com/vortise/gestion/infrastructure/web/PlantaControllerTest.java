@@ -41,7 +41,7 @@ class PlantaControllerTest {
             org.springframework.test.util.ReflectionTestUtils.setField(empresa, "id", 1L);
             return Optional.of(project(invocation.getArgument(0), empresa));
         });
-        controller = new PlantaController(new com.vortise.gestion.application.service.PlantaUseCase(plantas, proyectos, identity));
+        controller = new PlantaController(new com.vortise.gestion.application.service.PlantaService(plantas, proyectos, identity));
     }
 
     @Test

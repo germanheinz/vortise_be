@@ -34,7 +34,7 @@ class UsuarioObrasAsignadasTest {
     private final UsuarioEmpresaRepository users = mock(UsuarioEmpresaRepository.class);
     private final ProyectoRepository projects = mock(ProyectoRepository.class);
     private final CurrentIdentity identity = mock(CurrentIdentity.class);
-    private final UsuarioEmpresaUseCase useCase = new UsuarioEmpresaUseCase(companies, users, mock(PasswordEncoder.class),
+    private final UsuarioEmpresaService useCase = new UsuarioEmpresaService(companies, users, mock(PasswordEncoder.class),
         mock(SuscripcionConsultaService.class), mock(EquipoAccessPolicy.class), identity, projects);
     private Empresa company;
     private UsuarioEmpresa jefe;

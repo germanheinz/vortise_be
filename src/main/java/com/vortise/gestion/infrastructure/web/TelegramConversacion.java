@@ -1,9 +1,9 @@
 package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.EmpresaDashboardObrasDto;
-import com.vortise.gestion.application.service.ConsultarRestriccionesObraUseCase;
-import com.vortise.gestion.application.service.GetEmpresaDashboardObrasUseCase;
-import com.vortise.gestion.application.service.ReporteObraUseCase;
+import com.vortise.gestion.application.service.RestriccionObraConsultaService;
+import com.vortise.gestion.application.service.EmpresaDashboardObrasService;
+import com.vortise.gestion.application.service.ReporteObraService;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
@@ -47,13 +47,13 @@ class TelegramConversacion {
     private final ProyectoRepository proyectos;
     private final EmpresaRepository empresas;
     private final CurrentTenantService identidad;
-    private final ReporteObraUseCase reportes;
-    private final ConsultarRestriccionesObraUseCase restricciones;
-    private final GetEmpresaDashboardObrasUseCase dashboard;
+    private final ReporteObraService reportes;
+    private final RestriccionObraConsultaService restricciones;
+    private final EmpresaDashboardObrasService dashboard;
     private final String frontend;
 
     TelegramConversacion(ProyectoRepository proyectos, EmpresaRepository empresas, CurrentTenantService identidad,
-            ReporteObraUseCase reportes, ConsultarRestriccionesObraUseCase restricciones, GetEmpresaDashboardObrasUseCase dashboard,
+            ReporteObraService reportes, RestriccionObraConsultaService restricciones, EmpresaDashboardObrasService dashboard,
             @Value("${app.frontend-url:}") String frontend) {
         this.proyectos = proyectos;
         this.empresas = empresas;
@@ -171,7 +171,7 @@ class TelegramConversacion {
 
     /** Estado en vivo (mismos cálculos que el dashboard web) y, aparte, el avance del último reporte emitido con su corte. */
     private String estadoDeObra(Long id) {
-        var abiertas = restricciones.execute(id, null, ConsultarRestriccionesObraUseCase.Filtro.ABIERTAS, null);
+        var abiertas = restricciones.execute(id, null, RestriccionObraConsultaService.Filtro.ABIERTAS, null);
         EmpresaDashboardObrasDto.Obra vivo = dashboard.obra(id);
         StringBuilder texto = new StringBuilder(abiertas.obra())
             .append("\nEn vivo · mano de obra propia")

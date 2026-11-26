@@ -5,9 +5,9 @@ import com.vortise.gestion.application.dto.EmpresaDto;
 import com.vortise.gestion.application.dto.EmpresaResumenDto;
 import com.vortise.gestion.application.dto.RestriccionDto;
 import com.vortise.gestion.application.dto.PaginaDto;
-import com.vortise.gestion.application.service.DeleteEmpresaUseCase;
-import com.vortise.gestion.application.service.GetEmpresaResumenUseCase;
-import com.vortise.gestion.application.service.GetRestriccionesEmpresaUseCase;
+import com.vortise.gestion.application.service.EmpresaBajaService;
+import com.vortise.gestion.application.service.EmpresaResumenService;
+import com.vortise.gestion.application.service.EmpresaRestriccionesService;
 import com.vortise.gestion.application.service.ProyectoConsultaService;
 import com.vortise.gestion.application.service.EmpresaService;
 import jakarta.validation.Valid;
@@ -30,21 +30,21 @@ import org.springframework.web.bind.annotation.RestController;
 public class EmpresaController {
     private final ProyectoConsultaService proyectos;
     private final EmpresaService empresas;
-    private final DeleteEmpresaUseCase deleteEmpresaUseCase;
-    private final GetEmpresaResumenUseCase resumen;
-    private final GetRestriccionesEmpresaUseCase restriccionesEmpresa;
-    private final com.vortise.gestion.application.service.GetEmpresaDashboardObrasUseCase dashboardObras;
+    private final EmpresaBajaService bajaEmpresa;
+    private final EmpresaResumenService resumen;
+    private final EmpresaRestriccionesService restriccionesEmpresa;
+    private final com.vortise.gestion.application.service.EmpresaDashboardObrasService dashboardObras;
 
-    public EmpresaController(EmpresaService empresas, DeleteEmpresaUseCase deleteEmpresaUseCase,
+    public EmpresaController(EmpresaService empresas, EmpresaBajaService bajaEmpresa,
             ProyectoConsultaService proyectos,
-            GetEmpresaResumenUseCase resumen, GetRestriccionesEmpresaUseCase restriccionesEmpresa,
-            com.vortise.gestion.application.service.GetEmpresaDashboardObrasUseCase dashboardObras) {
+            EmpresaResumenService resumen, EmpresaRestriccionesService restriccionesEmpresa,
+            com.vortise.gestion.application.service.EmpresaDashboardObrasService dashboardObras) {
         this.dashboardObras = dashboardObras;
         this.proyectos = proyectos;
         this.resumen = resumen;
         this.restriccionesEmpresa = restriccionesEmpresa;
         this.empresas = empresas;
-        this.deleteEmpresaUseCase = deleteEmpresaUseCase;
+        this.bajaEmpresa = bajaEmpresa;
     }
 
     @GetMapping
@@ -99,7 +99,7 @@ public class EmpresaController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        deleteEmpresaUseCase.execute(id);
+        bajaEmpresa.execute(id);
         return ResponseEntity.noContent().build();
     }
 }

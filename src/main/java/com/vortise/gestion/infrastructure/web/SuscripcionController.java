@@ -7,7 +7,7 @@ import com.vortise.gestion.application.dto.PortalRequestDto;
 import com.vortise.gestion.application.dto.SuscripcionResumenDto;
 import com.vortise.gestion.application.dto.UrlDto;
 import com.vortise.gestion.application.service.SuscripcionConsultaService;
-import com.vortise.gestion.application.service.SuscripcionUseCase;
+import com.vortise.gestion.application.service.SuscripcionService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
@@ -22,10 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 public class SuscripcionController {
-    private final SuscripcionUseCase useCase;
+    private final SuscripcionService useCase;
     private final SuscripcionConsultaService consulta;
 
-    public SuscripcionController(SuscripcionUseCase useCase, SuscripcionConsultaService consulta) {
+    public SuscripcionController(SuscripcionService useCase, SuscripcionConsultaService consulta) {
         this.useCase = useCase;
         this.consulta = consulta;
     }

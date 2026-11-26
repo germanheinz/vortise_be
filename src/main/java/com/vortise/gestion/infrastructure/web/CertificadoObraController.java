@@ -8,7 +8,7 @@ import com.vortise.gestion.application.dto.CertificadoEmpresaDto;
 import com.vortise.gestion.application.dto.CertificadoExcedenteDto;
 import com.vortise.gestion.application.dto.CertificadoResumenDto;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
-import com.vortise.gestion.application.service.CertificadoObraUseCase;
+import com.vortise.gestion.application.service.CertificadoObraService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -28,9 +28,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/proyectos/{proyectoId}/certificados")
 public class CertificadoObraController {
     private static final String ESCRITURA = com.vortise.gestion.infrastructure.security.Guards.CERTIFICADOS;
-    private final CertificadoObraUseCase useCase;
+    private final CertificadoObraService useCase;
 
-    public CertificadoObraController(CertificadoObraUseCase useCase) { this.useCase = useCase; }
+    public CertificadoObraController(CertificadoObraService useCase) { this.useCase = useCase; }
 
     @GetMapping("/empresas")
     public List<CertificadoEmpresaDto> empresas(@PathVariable Long proyectoId) {

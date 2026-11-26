@@ -5,8 +5,8 @@ import com.vortise.gestion.application.dto.CatalogoEmpresaDto;
 import com.vortise.gestion.application.dto.CategoriaManoObraEmpresaDto;
 import com.vortise.gestion.application.dto.ResponsableEmpresaDto;
 import com.vortise.gestion.application.dto.UnidadMetricaEmpresaDto;
-import com.vortise.gestion.application.service.EmpresaConfiguracionUseCase;
-import com.vortise.gestion.application.service.InicializarEmpresaUseCase;
+import com.vortise.gestion.application.service.EmpresaConfiguracionService;
+import com.vortise.gestion.application.service.EmpresaInicializacionService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -26,11 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 // Reads are open to every role of the company (matrix: "Consulta"); each write method declares ADMINISTRADOR itself.
 @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'JEFE_DE_OBRA', 'CONSULTA', 'RESPONSABLE', 'COLABORADOR')")
 public class EmpresaConfiguracionController {
-    private final EmpresaConfiguracionUseCase useCase;
-    private final InicializarEmpresaUseCase inicializar;
+    private final EmpresaConfiguracionService useCase;
+    private final EmpresaInicializacionService inicializar;
 
-    public EmpresaConfiguracionController(EmpresaConfiguracionUseCase useCase,
-            InicializarEmpresaUseCase inicializar) {
+    public EmpresaConfiguracionController(EmpresaConfiguracionService useCase,
+            EmpresaInicializacionService inicializar) {
         this.useCase = useCase; this.inicializar = inicializar;
     }
 

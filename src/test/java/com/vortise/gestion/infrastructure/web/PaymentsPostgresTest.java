@@ -3,7 +3,7 @@ package com.vortise.gestion.infrastructure.web;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import com.vortise.gestion.application.port.StripeGateway;
-import com.vortise.gestion.application.service.StripeWebhookUseCase;
+import com.vortise.gestion.application.service.StripeWebhookService;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.*;
 import com.vortise.gestion.infrastructure.config.*;
@@ -36,7 +36,7 @@ class PaymentsPostgresTest {
     @Autowired SuscripcionRepository suscripciones;
     @Autowired UsuarioEmpresaRepository usuarios;
     @MockitoBean StripeGateway stripe;
-    @Autowired StripeWebhookUseCase webhook;
+    @Autowired StripeWebhookService webhook;
 
     @DynamicPropertySource
     static void isolated(DynamicPropertyRegistry r) throws Exception {

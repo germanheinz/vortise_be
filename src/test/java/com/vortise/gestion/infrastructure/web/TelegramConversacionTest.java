@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.vortise.gestion.application.dto.EmpresaDashboardObrasDto;
-import com.vortise.gestion.application.service.ConsultarRestriccionesObraUseCase;
-import com.vortise.gestion.application.service.GetEmpresaDashboardObrasUseCase;
-import com.vortise.gestion.application.service.ReporteObraUseCase;
+import com.vortise.gestion.application.service.RestriccionObraConsultaService;
+import com.vortise.gestion.application.service.EmpresaDashboardObrasService;
+import com.vortise.gestion.application.service.ReporteObraService;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
@@ -22,9 +22,9 @@ class TelegramConversacionTest {
     private final ProyectoRepository proyectos = mock(ProyectoRepository.class);
     private final EmpresaRepository empresas = mock(EmpresaRepository.class);
     private final CurrentTenantService identidad = mock(CurrentTenantService.class);
-    private final ReporteObraUseCase reportes = mock(ReporteObraUseCase.class);
-    private final ConsultarRestriccionesObraUseCase restricciones = mock(ConsultarRestriccionesObraUseCase.class);
-    private final GetEmpresaDashboardObrasUseCase dashboard = mock(GetEmpresaDashboardObrasUseCase.class);
+    private final ReporteObraService reportes = mock(ReporteObraService.class);
+    private final RestriccionObraConsultaService restricciones = mock(RestriccionObraConsultaService.class);
+    private final EmpresaDashboardObrasService dashboard = mock(EmpresaDashboardObrasService.class);
     private final TelegramConversacion flujo = new TelegramConversacion(proyectos, empresas, identidad, reportes, restricciones, dashboard, "https://app.vortise.test/");
     @SuppressWarnings("unchecked")
     private final UnaryOperator<String> ejecutar = mock(UnaryOperator.class);
@@ -97,7 +97,7 @@ class TelegramConversacionTest {
 
     @Test
     void elEstadoMuestraElDesvioEnVivoConElFormatoDeLasPantallasYEnlacesDeVortise() {
-        when(restricciones.execute(eq(5L), any(), any(), any())).thenReturn(new ConsultarRestriccionesObraUseCase.Respuesta(
+        when(restricciones.execute(eq(5L), any(), any(), any())).thenReturn(new RestriccionObraConsultaService.Respuesta(
             5L, "Obra Norte", null, 3, 3, 1, 0, "/x", List.of()));
         when(dashboard.obra(5L)).thenReturn(new EmpresaDashboardObrasDto.Obra(5L, "Obra Norte", null, -23346.4, 152198.0, -1.54, 3.04, 1500000.0, 5, 3, 3));
         when(reportes.listar(5L)).thenReturn(List.of());
@@ -119,7 +119,7 @@ class TelegramConversacionTest {
         assertThat(TelegramConversacion.desvio(-24160.0, null)).isEqualTo("−$ 24.160");
 
         var local = new TelegramConversacion(proyectos, empresas, identidad, reportes, restricciones, dashboard, "http://localhost:3000");
-        when(restricciones.execute(eq(5L), any(), any(), any())).thenReturn(new ConsultarRestriccionesObraUseCase.Respuesta(
+        when(restricciones.execute(eq(5L), any(), any(), any())).thenReturn(new RestriccionObraConsultaService.Respuesta(
             5L, "Obra Norte", null, 0, 0, 0, 0, "/x", List.of()));
         when(dashboard.obra(5L)).thenReturn(new EmpresaDashboardObrasDto.Obra(5L, "Obra Norte", null, null, null, null, null, null, 0, 0, 0));
         when(reportes.listar(5L)).thenReturn(List.of());

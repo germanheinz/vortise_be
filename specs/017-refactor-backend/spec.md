@@ -56,3 +56,7 @@ El primer corte cubre alta, edición y baja de registros horarios. Conserva ruta
 ### Organización de paquetes de aplicación
 
 Los servicios de aplicación quedan en `application.service`, los mappers en `application.mapper` y las reglas y cálculos auxiliares en `application.helper`. Se conservan los contratos, la lógica, las anotaciones Spring y los límites transaccionales.
+
+### Nombres y reglas de dominio
+
+Los componentes de aplicación llevan nombres de servicio según su responsabilidad. La jerarquía de rubros reside en `domain.rule` y conserva su comportamiento. Los puertos mantienen los contratos con infraestructura. Se preservan las rutas, DTO, permisos y transacciones.

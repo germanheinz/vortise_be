@@ -5,11 +5,11 @@ import com.vortise.gestion.application.dto.RestriccionComentarioDto;
 import com.vortise.gestion.application.dto.RestriccionCreateDto;
 import com.vortise.gestion.application.dto.RestriccionDto;
 import com.vortise.gestion.application.dto.RestriccionUpdateDto;
-import com.vortise.gestion.application.service.ConsultarRestriccionesObraUseCase;
-import com.vortise.gestion.application.service.ConsultarRestriccionesObraUseCase.Filtro;
-import com.vortise.gestion.application.service.ConsultarRestriccionesObraUseCase.Respuesta;
+import com.vortise.gestion.application.service.RestriccionObraConsultaService;
+import com.vortise.gestion.application.service.RestriccionObraConsultaService.Filtro;
+import com.vortise.gestion.application.service.RestriccionObraConsultaService.Respuesta;
 import com.vortise.gestion.application.service.ComentarioRestriccionService;
-import com.vortise.gestion.application.service.CrearRestriccionChatUseCase;
+import com.vortise.gestion.application.service.RestriccionChatAltaService;
 import com.vortise.gestion.infrastructure.security.Guards;
 import com.vortise.gestion.application.service.RestriccionService;
 import jakarta.validation.Valid;
@@ -34,19 +34,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class RestriccionController {
     private final RestriccionService restricciones;
-    private final CrearRestriccionChatUseCase crearRestriccionChatUseCase;
-    private final ConsultarRestriccionesObraUseCase consultarRestriccionesObraUseCase;
+    private final RestriccionChatAltaService altaPorChat;
+    private final RestriccionObraConsultaService consultaObra;
     private final ComentarioRestriccionService comentarios;
 
     public RestriccionController(
         RestriccionService restricciones,
-        CrearRestriccionChatUseCase crearRestriccionChatUseCase,
-        ConsultarRestriccionesObraUseCase consultarRestriccionesObraUseCase,
+        RestriccionChatAltaService altaPorChat,
+        RestriccionObraConsultaService consultaObra,
         ComentarioRestriccionService comentarios
     ) {
         this.restricciones = restricciones;
-        this.crearRestriccionChatUseCase = crearRestriccionChatUseCase;
-        this.consultarRestriccionesObraUseCase = consultarRestriccionesObraUseCase;
+        this.altaPorChat = altaPorChat;
+        this.consultaObra = consultaObra;
         this.comentarios = comentarios;
     }
 
@@ -61,15 +61,15 @@ public class RestriccionController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate corte,
             @RequestParam(defaultValue = "ABIERTAS") Filtro filtro,
             @RequestParam(required = false) String prioridad) {
-        return consultarRestriccionesObraUseCase.execute(proyectoId, corte, filtro, prioridad);
+        return consultaObra.execute(proyectoId, corte, filtro, prioridad);
     }
 
     @PostMapping("/proyectos/{proyectoId}/chat/restricciones")
     @PreAuthorize(Guards.GERENCIA_CHAT)
-    public ResponseEntity<CrearRestriccionChatUseCase.Resultado> crearParaGerencia(@PathVariable Long proyectoId,
+    public ResponseEntity<RestriccionChatAltaService.Resultado> crearParaGerencia(@PathVariable Long proyectoId,
             @RequestHeader(value = "Idempotency-Key", required = false) String clave,
-            @Valid @RequestBody CrearRestriccionChatUseCase.Solicitud solicitud) {
-        var resultado = crearRestriccionChatUseCase.execute(proyectoId, clave, solicitud);
+            @Valid @RequestBody RestriccionChatAltaService.Solicitud solicitud) {
+        var resultado = altaPorChat.execute(proyectoId, clave, solicitud);
         return ResponseEntity.status(resultado.repetida() ? HttpStatus.OK : HttpStatus.CREATED).body(resultado);
     }
 

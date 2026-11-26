@@ -32,7 +32,7 @@ class PrevistoRealUseCaseTest {
     @Test void aggregateUsesOnlyLinkedActivityAndRecomputesAfterEditAndDelete() {
         var a = task(1,10L,6); var b = task(2,10L,5);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(a,b,task(3,null,100),task(4,99L,100)));
-        var service = new GetPrevistoRealUseCase(projects,tasks,categories,calendars);
+        var service = new PrevistoRealService(projects,tasks,categories,calendars);
         var result = service.execute(1L);
         assertEquals(2,result.tareasSinVincular());
         assertEquals(11.,result.actividades().get(0).cantidadReal());
@@ -57,13 +57,13 @@ class PrevistoRealUseCaseTest {
         var segundo = task(2, 10L, 4);
         segundo.setDias(1); segundo.setHorasOficiales(15.); segundo.setHorasAyudantes(15.);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(primero, segundo));
-        var service = new GetPrevistoRealUseCase(projects, tasks, categories, calendars);
+        var service = new PrevistoRealService(projects, tasks, categories, calendars);
 
         var cargas = service.execute(1L).actividades().get(0).cargas();
-        assertEquals(new GetPrevistoRealUseCase.BaseAnexo(2, 2, 32., 30., 50.), cargas.get(0).baseAnexo());
-        assertEquals(new GetPrevistoRealUseCase.BaseAnexo(1, 2, 16., 20., 30.), cargas.get(1).baseAnexo());
+        assertEquals(new PrevistoRealService.BaseAnexo(2, 2, 32., 30., 50.), cargas.get(0).baseAnexo());
+        assertEquals(new PrevistoRealService.BaseAnexo(1, 2, 16., 20., 30.), cargas.get(1).baseAnexo());
         segundo.setDias(0); segundo.setCantidadReal(0.);
-        assertEquals(new GetPrevistoRealUseCase.BaseAnexo(0, 2, 0., 0., 30.),
+        assertEquals(new PrevistoRealService.BaseAnexo(0, 2, 0., 0., 30.),
             service.execute(1L).actividades().get(0).cargas().get(1).baseAnexo());
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(primero));
         assertEquals(1, service.execute(1L).actividades().get(0).cargas().size());
@@ -82,7 +82,7 @@ class PrevistoRealUseCaseTest {
         var carga = task(1, 10L, 0);
         carga.setDias(1);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(carga));
-        var service = new GetPrevistoRealUseCase(projects, tasks, categories, calendars);
+        var service = new PrevistoRealService(projects, tasks, categories, calendars);
 
         var anexo = service.execute(1L).actividades().get(0).cargas().get(0).baseAnexo();
         assertTrue(anexo.dias() >= 3);
@@ -111,11 +111,11 @@ class PrevistoRealUseCaseTest {
         otroRubro.setRubro("Otro");
         project.setRubros(List.of(activity, otroRubro));
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(task(3, 10L, 2), task(1, 10L, 1)));
-        var service = new GetPrevistoRealUseCase(projects, tasks, categories, calendars);
+        var service = new PrevistoRealService(projects, tasks, categories, calendars);
 
         var actividades = service.execute(1L).actividades();
-        assertEquals(List.of(10L, 5L), actividades.stream().map(GetPrevistoRealUseCase.Activity::rubroId).toList());
-        assertEquals(List.of(3L, 1L), actividades.get(0).cargas().stream().map(GetPrevistoRealUseCase.Load::tareaId).toList());
+        assertEquals(List.of(10L, 5L), actividades.stream().map(PrevistoRealService.Activity::rubroId).toList());
+        assertEquals(List.of(3L, 1L), actividades.get(0).cargas().stream().map(PrevistoRealService.Load::tareaId).toList());
         assertNull(actividades.get(1).baseAnexoAgregado());
     }
 
@@ -133,7 +133,7 @@ class PrevistoRealUseCaseTest {
     @Test void loadsWithoutQuantityAddNothingButDoNotErasePhysicalProgress() {
         var enProceso = task(2,10L,0); enProceso.setCantidadReal(null);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(task(1,10L,6),enProceso));
-        var service = new GetPrevistoRealUseCase(projects,tasks,categories,calendars);
+        var service = new PrevistoRealService(projects,tasks,categories,calendars);
         assertEquals(6.,service.execute(1L).actividades().get(0).cantidadReal());
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(enProceso));
         assertNull(service.execute(1L).actividades().get(0).cantidadReal());
@@ -147,7 +147,7 @@ class PrevistoRealUseCaseTest {
         var conCantidad = new ObraTareaCreateDto("Desencofrado",null,null,"kg","x",null,null,null,null,40.,40.,null,15.,null,null,LocalDate.of(2026,10,14),10L,1,true);
         assertThrows(SolicitudInvalidaException.class,() -> service.create(1L,conCantidad));
         var normal = task(1,10L,6); var desencofrado = task(2,10L,0); desencofrado.setCantidadReal(null); desencofrado.setDesencofrado(true);
-        var summary = new GetPrevistoRealUseCase(projects,tasks,categories,calendars);
+        var summary = new PrevistoRealService(projects,tasks,categories,calendars);
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(normal));
         assertFalse(summary.execute(1L).actividades().get(0).conDesencofrado());
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(normal,desencofrado));
@@ -317,7 +317,7 @@ class PrevistoRealUseCaseTest {
             new CategoriaManoObraEmpresa(company,"AYUDANTE",1000.,true)));
         when(calendars.findByEmpresaId(20L)).thenReturn(Optional.of(new CalendarioLaboralEmpresa(company)));
         when(tasks.findByProyectoId(1L)).thenReturn(List.of(task(1,10L,6)));
-        var result = new GetPrevistoRealUseCase(projects,tasks,categories,calendars).execute(1L);
+        var result = new PrevistoRealService(projects,tasks,categories,calendars).execute(1L);
         assertEquals(101525.096525,result.actividades().get(0).indicadores().desvio(),1e-5);
         assertEquals(8.,result.horasJornada());
         verify(categories,never()).save(any()); verify(calendars,never()).save(any());

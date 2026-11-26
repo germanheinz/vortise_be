@@ -6,7 +6,7 @@ import com.vortise.gestion.application.dto.SuperAdminDtos.PageDto;
 import com.vortise.gestion.application.dto.SuperAdminDtos.PagoDto;
 import com.vortise.gestion.application.dto.SuperAdminDtos.SuscripcionDto;
 import com.vortise.gestion.application.dto.SuperAdminDtos.UsuarioDto;
-import com.vortise.gestion.application.service.SuperAdminConsultaUseCase;
+import com.vortise.gestion.application.service.SuperAdminConsultaService;
 import java.time.LocalDate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/admin")
 @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
 public class SuperAdminController {
-    private final SuperAdminConsultaUseCase consulta;
+    private final SuperAdminConsultaService consulta;
 
-    public SuperAdminController(SuperAdminConsultaUseCase consulta) {
+    public SuperAdminController(SuperAdminConsultaService consulta) {
         this.consulta = consulta;
     }
 

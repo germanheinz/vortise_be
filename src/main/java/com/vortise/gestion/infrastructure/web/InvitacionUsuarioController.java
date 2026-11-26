@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.InvitacionUsuarioDto.*;
-import com.vortise.gestion.application.service.InvitacionUsuarioUseCase;
+import com.vortise.gestion.application.service.InvitacionUsuarioService;
 import com.vortise.gestion.infrastructure.security.Guards;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/empresas/{empresaId}/usuarios/invitaciones")
 @PreAuthorize(Guards.SOLO_ADMINISTRADOR)
 public class InvitacionUsuarioController {
-    private final InvitacionUsuarioUseCase useCase;
-    public InvitacionUsuarioController(InvitacionUsuarioUseCase useCase) { this.useCase = useCase; }
+    private final InvitacionUsuarioService useCase;
+    public InvitacionUsuarioController(InvitacionUsuarioService useCase) { this.useCase = useCase; }
     @GetMapping public List<Resumen> listar(@PathVariable Long empresaId) { return useCase.listar(empresaId); }
     @PostMapping public ResponseEntity<Creada> crear(@PathVariable Long empresaId, @Valid @RequestBody Crear dto) {
         return ResponseEntity.status(201).header("Cache-Control", "no-store").body(useCase.crear(empresaId, dto));

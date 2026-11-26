@@ -7,7 +7,7 @@ import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.mapper.EmpresaMapper;
 import com.vortise.gestion.application.port.CurrentIdentity;
-import com.vortise.gestion.application.service.InicializarEmpresaUseCase;
+import com.vortise.gestion.application.service.EmpresaInicializacionService;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import java.util.ArrayList;
@@ -20,9 +20,9 @@ public class EmpresaService {
     private final EmpresaRepository empresaRepository;
     private final CurrentIdentity currentTenant;
 
-    private final InicializarEmpresaUseCase inicializar;
+    private final EmpresaInicializacionService inicializar;
 
-    public EmpresaService(EmpresaRepository empresaRepository, CurrentIdentity currentTenant, InicializarEmpresaUseCase inicializar) {
+    public EmpresaService(EmpresaRepository empresaRepository, CurrentIdentity currentTenant, EmpresaInicializacionService inicializar) {
         this.empresaRepository = empresaRepository;
         this.currentTenant = currentTenant;
         this.inicializar = inicializar;

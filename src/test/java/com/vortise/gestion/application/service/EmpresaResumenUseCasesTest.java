@@ -23,8 +23,8 @@ class EmpresaResumenUseCasesTest {
     private final RegistroHorasRepository horas = mock(RegistroHorasRepository.class);
     private final ObraTareaRepository tareas = mock(ObraTareaRepository.class);
     private final CurrentIdentity identity = mock(CurrentIdentity.class);
-    private final GetEmpresaResumenUseCase resumen = new GetEmpresaResumenUseCase(empresas, proyectos, restricciones, horas, tareas, identity);
-    private final GetRestriccionesEmpresaUseCase listado = new GetRestriccionesEmpresaUseCase(empresas, restricciones, identity);
+    private final EmpresaResumenService resumen = new EmpresaResumenService(empresas, proyectos, restricciones, horas, tareas, identity);
+    private final EmpresaRestriccionesService listado = new EmpresaRestriccionesService(empresas, restricciones, identity);
 
     private static EmpresaConteoProjection row(long empresaId, long cantidad) {
         return new EmpresaConteoProjection() {

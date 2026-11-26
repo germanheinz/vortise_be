@@ -84,7 +84,7 @@ class Quality14RulesTest {
         when(projects.bloquearPorId(7L)).thenReturn(Optional.of(project));
         when(projects.save(project)).thenReturn(project);
         when(restrictions.countByRubroVinculadoId(8L)).thenReturn(1L);
-        var useCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class), tasks, restrictions, identity, hours);
+        var useCase = new ProyectoEdicionService(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class), tasks, restrictions, identity, hours);
         var input = new ProyectoUpdateDto("Name", null, null, "Address", "P1", null, null, null, null,
             null, null, null, null, 12.345, null, null, null);
         assertEquals(12.345, useCase.execute(7L, input).horasReales());
@@ -105,7 +105,7 @@ class Quality14RulesTest {
         Proyecto project = new Proyecto(); project.setId(7L); project.setEmpresaRelacionada(company);
         when(projects.bloquearPorId(7L)).thenReturn(Optional.of(project));
         when(projects.save(project)).thenReturn(project);
-        var useCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class), tasks,
+        var useCase = new ProyectoEdicionService(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class), tasks,
             mock(RestriccionObraRepository.class), identity, mock(RegistroHorasRepository.class));
         when(tasks.findByProyectoId(7L)).thenReturn(List.of());
         ProyectoUpdateDto input = new ProyectoUpdateDto("Name", null, null, "Address", "P1", null, null, null, null,
@@ -131,7 +131,7 @@ class Quality14RulesTest {
         when(tasks.findByProyectoId(7L)).thenReturn(List.of());
         when(hours.existsByProyectoId(7L)).thenReturn(true);
         when(hours.sumHorasByProyectoId(7L)).thenReturn(null);
-        UpdateProyectoUseCase useCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class),
+        ProyectoEdicionService useCase = new ProyectoEdicionService(projects, mock(EmpresaRepository.class),
             mock(CatalogoEmpresaRepository.class), tasks, restrictions, identity, hours);
         ProyectoUpdateDto input = new ProyectoUpdateDto("Name", null, null, "Address", "P1", null, null,
             null, null, null, null, null, null, null, null, null, null);

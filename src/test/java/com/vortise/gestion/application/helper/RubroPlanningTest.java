@@ -1,6 +1,6 @@
 package com.vortise.gestion.application.helper;
 
-import com.vortise.gestion.application.service.UpdateProyectoUseCase;
+import com.vortise.gestion.application.service.ProyectoEdicionService;
 import com.vortise.gestion.application.dto.*;
 import com.vortise.gestion.domain.model.*;
 import com.vortise.gestion.domain.repository.*;
@@ -126,7 +126,7 @@ class RubroPlanningTest {
     @Test void updateRetainsIdentityAndRejectsForeignIdsAndRemovalOfLinkedActivity() {
         var projects = mock(ProyectoRepository.class);
         var tasks = mock(ObraTareaRepository.class);
-        var service = new UpdateProyectoUseCase(projects,mock(EmpresaRepository.class),mock(CatalogoEmpresaRepository.class),tasks,
+        var service = new ProyectoEdicionService(projects,mock(EmpresaRepository.class),mock(CatalogoEmpresaRepository.class),tasks,
             mock(com.vortise.gestion.domain.repository.RestriccionObraRepository.class),mock(com.vortise.gestion.infrastructure.security.CurrentTenantService.class),
             mock(com.vortise.gestion.domain.repository.RegistroHorasRepository.class));
         var p = new Proyecto(); p.setId(1L);

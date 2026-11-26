@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.application.dto.MeDto;
-import com.vortise.gestion.application.service.PerfilUseCase;
+import com.vortise.gestion.application.service.PerfilService;
 import java.io.IOException;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
@@ -17,9 +17,9 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/me")
 public class PerfilController {
-    private final PerfilUseCase useCase;
+    private final PerfilService useCase;
 
-    public PerfilController(PerfilUseCase useCase) { this.useCase = useCase; }
+    public PerfilController(PerfilService useCase) { this.useCase = useCase; }
 
     @GetMapping
     public ResponseEntity<MeDto> me() { return ResponseEntity.ok(useCase.me()); }
