@@ -213,7 +213,14 @@ public class EmpresaConfiguracionService {
     @Transactional
     public void inicializar(Long empresaId) {
         Empresa empresa = lockEmpresa(empresaId);
-        if (empresa.isConfiguracionInicializada()) return;
+        if (empresa.isConfiguracionInicializada()) {
+            // Companies prepared before the calendar existed still need one; nothing else is re-created.
+            if (empresa.getCalendarioLaboral() == null) {
+                empresa.inicializarCalendarioLaboral();
+                empresaRepository.save(empresa);
+            }
+            return;
+        }
         Set<String> existentes = unidadRepository.findByEmpresaId(empresaId).stream()
             .map(UnidadMetricaEmpresa::getCodigo).collect(Collectors.toSet());
         UNIDADES.stream().filter(u -> !existentes.contains(u.codigo()))

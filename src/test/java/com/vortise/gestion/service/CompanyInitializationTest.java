@@ -46,6 +46,18 @@ class CompanyInitializationTest {
         useCase.inicializar(1L);
         verifyNoInteractions(units, categories);
     }
+    @Test void initializedCompanyWithoutCalendarGetsOnlyTheDefaultCalendar() {
+        Empresa company = company();
+        company.marcarConfiguracionInicializada();
+        var useCase = new EmpresaConfiguracionService(companies, mock(ResponsableEmpresaRepository.class), units, mock(CatalogoEmpresaRepository.class), categories);
+        assertThrows(RecursoNoEncontradoException.class, () -> useCase.getCalendario(1L));
+
+        useCase.inicializar(1L);
+
+        assertNotNull(useCase.getCalendario(1L));
+        verifyNoInteractions(units, categories);
+        verify(companies).save(company);
+    }
     @Test void editingCalendarKeepsItsIdAndUpdatesOnlyTheOwningCompany() {
         Empresa company = company();
         var service = new EmpresaConfiguracionService(companies, mock(ResponsableEmpresaRepository.class), units,
