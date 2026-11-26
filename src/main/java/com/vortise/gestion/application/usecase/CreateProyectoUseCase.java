@@ -14,7 +14,6 @@ import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.model.CalendarioLaboralEmpresa;
-import com.vortise.gestion.domain.model.CatalogoEmpresa;
 import com.vortise.gestion.domain.model.ContratoObra;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RubroObra;
@@ -33,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateProyectoUseCase {
     private final ProyectoRepository proyectoRepository;
     private final EmpresaRepository empresaRepository;
-    private final CatalogoEmpresaRepository catalogoRepository;
+    private final SubcontratistasProyecto subcontratistas;
     private final CurrentIdentity currentTenant;
     private final AplicarCambiosEmpresaObraUseCase cambiosEmpresa;
     private final CalendarioLaboralEmpresaRepository calendarios;
@@ -68,7 +67,7 @@ public class CreateProyectoUseCase {
         proyecto.setPlantas(DatosProyecto.mapearPlantas(dto.plantas(), proyecto));
         List<Long> selectedIds = new ArrayList<>(dto.subcontratistaIds() == null ? selectedContractorIds(dto) : dto.subcontratistaIds());
         addDistinct(selectedIds, cambiosEmpresa.execute(dto.empresaId(), dto.costosManoObraModificados(), dto.contratistasObra()));
-        proyecto.setSubcontratistas(resolveSelectedSubcontratistas(proyecto, selectedIds));
+        proyecto.setSubcontratistas(subcontratistas.resolverSeleccion(proyecto, selectedIds));
         List<ContratoObra> contratos = dto.contratos() == null ? new ArrayList<>() : ContratosObra.aplicar(proyecto, dto.contratos());
         proyecto.setContratos(contratos);
         proyecto.setRubros(mapRubros(dto.rubros(), proyecto));
@@ -93,7 +92,7 @@ public class CreateProyectoUseCase {
             rubro.setProyecto(proyecto);
             RubroEstructura.aplicarEstructura(rubro, rubroDto, nodo, java.util.Map.of());
             if (nodo.hoja()) {
-                RubroEstructura.aplicarHoja(rubro, rubroDto, resolveSubcontratista(proyecto, rubroDto.subcontratistaId()));
+                RubroEstructura.aplicarHoja(rubro, rubroDto, subcontratistas.resolverAsignado(proyecto, rubroDto.subcontratistaId()));
             } else {
                 RubroEstructura.limpiarAgrupador(rubro);
                 RubroEstructura.aplicarPlanificacionAgrupador(rubro, rubroDto);
@@ -104,40 +103,11 @@ public class CreateProyectoUseCase {
         return RubroEstructura.padresPrimero(result, nodos);
     }
 
-    private CatalogoEmpresa resolveSubcontratista(Proyecto proyecto, Long subcontratistaId) {
-        if (subcontratistaId == null) {
-            return null;
-        }
-        CatalogoEmpresa subcontratista = catalogoRepository.findById(subcontratistaId)
-            .orElseThrow(() -> new RecursoNoEncontradoException("Subcontratista no encontrado"));
-        Long empresaProyecto = proyecto.getEmpresaRelacionada() == null ? null : proyecto.getEmpresaRelacionada().getId();
-        if (empresaProyecto == null || !subcontratista.getEmpresa().getId().equals(empresaProyecto)
-            || !"SUBCONTRATISTA".equalsIgnoreCase(subcontratista.getTipo())) {
-            throw new SolicitudInvalidaException("El subcontratista no pertenece a la empresa de la obra");
-        }
-        if (proyecto.getSubcontratistas() == null || proyecto.getSubcontratistas().stream()
-                .noneMatch(selected -> subcontratistaId.equals(selected.getId()))) {
-            throw new SolicitudInvalidaException("El subcontratista no está seleccionado para esta obra");
-        }
-        return subcontratista;
-    }
-
     @SuppressWarnings("null")
     private List<Long> selectedContractorIds(ProyectoCreateDto dto) {
         if (dto.subcontratistaIds() != null) return dto.subcontratistaIds();
         if (dto.rubros() == null) return List.of();
         return dto.rubros().stream().map(RubroCreateDto::subcontratistaId).filter(java.util.Objects::nonNull).distinct().toList();
-    }
-
-    private java.util.Set<CatalogoEmpresa> resolveSelectedSubcontratistas(Proyecto proyecto, List<Long> ids) {
-        Long companyId = proyecto.getEmpresaRelacionada() == null ? null : proyecto.getEmpresaRelacionada().getId();
-        java.util.Set<Long> unique = new java.util.HashSet<>(ids);
-        if (unique.size() != ids.size()) throw new SolicitudInvalidaException("Hay subcontratistas duplicados");
-        return unique.stream().map(id -> catalogoRepository.findById(id)
-            .filter(item -> companyId != null && companyId.equals(item.getEmpresa().getId())
-                && "SUBCONTRATISTA".equalsIgnoreCase(item.getTipo()))
-            .orElseThrow(() -> new SolicitudInvalidaException("El subcontratista no pertenece a la empresa de la obra")))
-            .collect(java.util.stream.Collectors.toSet());
     }
 
     public CreateProyectoUseCase(ProyectoRepository proyectoRepository, EmpresaRepository empresaRepository, CatalogoEmpresaRepository catalogoRepository,
@@ -150,7 +120,7 @@ public class CreateProyectoUseCase {
             CurrentIdentity currentTenant, AplicarCambiosEmpresaObraUseCase cambiosEmpresa, CalendarioLaboralEmpresaRepository calendarios) {
         this.proyectoRepository = proyectoRepository;
         this.empresaRepository = empresaRepository;
-        this.catalogoRepository = catalogoRepository;
+        this.subcontratistas = new SubcontratistasProyecto(catalogoRepository);
         this.currentTenant = currentTenant;
         this.cambiosEmpresa = cambiosEmpresa;
         this.calendarios = calendarios;

@@ -36,3 +36,15 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] Corte aprobado mediante «IMPLEMENTALO» el 26 de noviembre de 2026. Implementado localmente en `CreateProyectoUseCase.java`, `UpdateProyectoUseCase.java`, `DatosProyecto.java` y `RubroEstructuraUseCasesTest.java`. El alcance excluye cambios de esquema, datos persistentes, contextos Spring y escrituras remotas.
 - [x] `mvn -Dtest=CreateProyectoSubcontratistaTest,RubroEstructuraUseCasesTest,ProyectoMapperTest test` ejecutado desde `gestion_be`, con Java 21 y objetivo Java 17. Pasaron 30 pruebas antes y después, sin fallos, errores ni omisiones. Las pruebas nuevas cubren la precedencia de validaciones y el tratamiento de plantas en alta y edición. `git diff --check` pasó.
 - [ ] Verificación de integración y revisión independiente pendientes.
+
+## Consolidación de ProyectoMapper
+
+- [x] «OK» interpretado como aprobación del siguiente punto del inventario. Implementación local en `ProyectoMapper.java` y caracterización en `ProyectoMapperTest.java`. Alcance limitado al mapper, las pruebas sin Spring y este registro.
+- [x] `mvn -Dtest=CreateProyectoSubcontratistaTest,RubroEstructuraUseCasesTest,ProyectoMapperTest test` desde `gestion_be` con Java 21 y objetivo Java 17. Pasaron 32 pruebas antes y después, sin fallos, errores ni omisiones. Se comprobó el formato de ambas respuestas, la ausencia de lecturas de colecciones en el resumen y el orden de rubros. `git diff --check` pasó.
+- [ ] Verificación de integración y revisión independiente pendientes.
+
+## Consolidación de subcontratistas de proyecto
+
+- [x] «HACELO» aprobó este punto del inventario. Se extrajo la resolución común en `SubcontratistasProyecto.java` y se conectó a los casos de uso de alta y edición con sus constructores existentes. Alcance local, sin cambios de datos, esquema o ejecución con Spring.
+- [x] `mvn -Dtest=CreateProyectoSubcontratistaTest,RubroEstructuraUseCasesTest,ProyectoMapperTest test` desde `gestion_be`. Pasaron 34 pruebas antes y después, sin fallos, errores ni omisiones. Un intento intermedio falló por una anotación duplicada y se corrigió. Las nuevas pruebas cubren duplicados antes de consultar el catálogo, selección implícita y protección contra retirar un subcontratista asignado. `git diff --check` pasó.
+- [ ] Verificación de integración y revisión independiente pendientes.

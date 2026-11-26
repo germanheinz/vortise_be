@@ -32,7 +32,7 @@ public class UpdateProyectoUseCase {
     private final CurrentIdentity currentTenant;
     private final ProyectoRepository proyectoRepository;
     private final EmpresaRepository empresaRepository;
-    private final CatalogoEmpresaRepository catalogoRepository;
+    private final SubcontratistasProyecto subcontratistas;
     private final RestriccionObraRepository restriccionRepository;
     private final RegistroHorasRepository horas;
     private final AplicarCambiosEmpresaObraUseCase cambiosEmpresa;
@@ -53,7 +53,7 @@ public class UpdateProyectoUseCase {
         this.currentTenant = currentTenant;
         this.proyectoRepository = proyectoRepository;
         this.empresaRepository = empresaRepository;
-        this.catalogoRepository = catalogoRepository;
+        this.subcontratistas = new SubcontratistasProyecto(catalogoRepository);
         this.restriccionRepository = restriccionRepository;
     }
 
@@ -123,7 +123,7 @@ public class UpdateProyectoUseCase {
         for (Long contractorId : contractorChanges) {
             if (!selectedContractorIds.contains(contractorId)) selectedContractorIds.add(contractorId);
         }
-        proyecto.setSubcontratistas(resolveSelectedSubcontratistas(proyecto, selectedContractorIds));
+        proyecto.setSubcontratistas(subcontratistas.resolverSeleccion(proyecto, selectedContractorIds));
 
         // Keep managed collection references to satisfy orphanRemoval semantics.
         if (proyecto.getPlantas() == null) {
@@ -231,7 +231,7 @@ public class UpdateProyectoUseCase {
             rubro.setProyecto(proyecto);
             RubroEstructura.aplicarEstructura(rubro, rubroDto, nodo, contratos);
             if (nodo.hoja()) {
-                RubroEstructura.aplicarHoja(rubro, rubroDto, resolveSubcontratista(proyecto, rubroDto.subcontratistaId()));
+                RubroEstructura.aplicarHoja(rubro, rubroDto, subcontratistas.resolverAsignado(proyecto, rubroDto.subcontratistaId()));
             } else if (existentes[i] == null || existentes[i].getId() == null || !linkedIds.contains(existentes[i].getId())) {
                 // Grouping nodes carry no activity data. A node that already has tasks keeps its data untouched.
                 RubroEstructura.limpiarAgrupador(rubro);
@@ -279,25 +279,6 @@ public class UpdateProyectoUseCase {
     }
 
     @SuppressWarnings("null")
-    private CatalogoEmpresa resolveSubcontratista(Proyecto proyecto, Long subcontratistaId) {
-        if (subcontratistaId == null) {
-            return null;
-        }
-        CatalogoEmpresa subcontratista = catalogoRepository.findById(subcontratistaId)
-            .orElseThrow(() -> new RecursoNoEncontradoException("Subcontratista no encontrado"));
-        Long empresaProyecto = proyecto.getEmpresaRelacionada() == null ? null : proyecto.getEmpresaRelacionada().getId();
-        if (empresaProyecto == null || !subcontratista.getEmpresa().getId().equals(empresaProyecto)
-            || !"SUBCONTRATISTA".equalsIgnoreCase(subcontratista.getTipo())) {
-            throw new SolicitudInvalidaException("El subcontratista no pertenece a la empresa de la obra");
-        }
-        if (proyecto.getSubcontratistas() == null || proyecto.getSubcontratistas().stream()
-                .noneMatch(selected -> subcontratistaId.equals(selected.getId()))) {
-            throw new SolicitudInvalidaException("El subcontratista no está seleccionado para esta obra");
-        }
-        return subcontratista;
-    }
-
-    @SuppressWarnings("null")
     private List<Long> existingContractorIds(Proyecto proyecto) {
         java.util.Set<Long> ids = new java.util.TreeSet<>();
         if (proyecto.getSubcontratistas() != null) proyecto.getSubcontratistas().stream()
@@ -315,17 +296,6 @@ public class UpdateProyectoUseCase {
                 .anyMatch(item -> item.getId().equals(contractor.getId()));
             if (!selected) throw new SolicitudInvalidaException("No se puede quitar un subcontratista que sigue asignado a un subrubro");
         }
-    }
-
-    private java.util.Set<CatalogoEmpresa> resolveSelectedSubcontratistas(Proyecto proyecto, List<Long> ids) {
-        java.util.Set<Long> unique = new java.util.HashSet<>(ids);
-        if (unique.size() != ids.size()) throw new SolicitudInvalidaException("Hay subcontratistas duplicados");
-        Long companyId = proyecto.getEmpresaRelacionada() == null ? null : proyecto.getEmpresaRelacionada().getId();
-        return unique.stream().map(id -> catalogoRepository.findById(id)
-            .filter(item -> companyId != null && companyId.equals(item.getEmpresa().getId())
-                && "SUBCONTRATISTA".equalsIgnoreCase(item.getTipo()))
-            .orElseThrow(() -> new SolicitudInvalidaException("El subcontratista no pertenece a la empresa de la obra")))
-            .collect(java.util.stream.Collectors.toSet());
     }
 
     @SuppressWarnings("null")

@@ -17,6 +17,14 @@ final class ProyectoMapper {
     }
 
     static ProyectoDto toSummaryDto(Proyecto proyecto) {
+        return toDto(proyecto, false);
+    }
+
+    static ProyectoDto toDetailDto(Proyecto proyecto) {
+        return toDto(proyecto, true);
+    }
+
+    private static ProyectoDto toDto(Proyecto proyecto, boolean incluirDetalle) {
         return new ProyectoDto(
             proyecto.getId(),
             proyecto.getNombre(),
@@ -34,14 +42,14 @@ final class ProyectoMapper {
             proyecto.getEmpresaRelacionada() == null ? proyecto.getEmpresa() : proyecto.getEmpresaRelacionada().getNombre(),
             proyecto.getHorasPrevistas(),
             proyecto.getHorasReales(),
-            null,
-            null,
-            null,
+            incluirDetalle ? plantasDe(proyecto) : null,
+            incluirDetalle ? rubrosDe(proyecto) : null,
+            incluirDetalle ? selectedContractorIds(proyecto) : null,
             proyecto.getSuperficieCubierta(),
             proyecto.getSuperficieSemicubierta(),
             proyecto.getSuperficieDescubierta(),
             proyecto.getPedidosDeObraDias(),
-            null,
+            incluirDetalle ? contratosDe(proyecto) : null,
             calendarioDe(proyecto)
         );
     }
@@ -51,36 +59,21 @@ final class ProyectoMapper {
             proyecto.isPagaDobleFeriado(), proyecto.isPagaDobleNoLaborable());
     }
 
-    static ProyectoDto toDetailDto(Proyecto proyecto) {
-        return new ProyectoDto(
-            proyecto.getId(),
-            proyecto.getNombre(),
-            proyecto.getDescripcion(),
-            proyecto.getPresupuestoUsd(),
-            proyecto.getDireccion(),
-            proyecto.getNumeroProyecto(),
-            proyecto.getFechaInicio(),
-            proyecto.getFechaFin(),
-            proyecto.getResponsablesObra(),
-            proyecto.getCategoriasManoObra(),
-            proyecto.getCantidadSectores(),
-            proyecto.getEmpresa(),
-            proyecto.getEmpresaRelacionada() == null ? null : proyecto.getEmpresaRelacionada().getId(),
-            proyecto.getEmpresaRelacionada() == null ? proyecto.getEmpresa() : proyecto.getEmpresaRelacionada().getNombre(),
-            proyecto.getHorasPrevistas(),
-            proyecto.getHorasReales(),
-            proyecto.getPlantas() == null ? List.of() : proyecto.getPlantas().stream().map(ProyectoMapper::toPlantaDto).toList(),
-            proyecto.getRubros() == null ? List.of() : proyecto.getRubros().stream()
-                .sorted(EstructuraRubros.ORDEN_NATURAL)
-                .map(rubro -> toRubroDto(rubro, proyecto.getRubros())).toList(),
-            selectedContractorIds(proyecto),
-            proyecto.getSuperficieCubierta(),
-            proyecto.getSuperficieSemicubierta(),
-            proyecto.getSuperficieDescubierta(),
-            proyecto.getPedidosDeObraDias(),
-            proyecto.getContratos() == null ? List.of() : proyecto.getContratos().stream().map(ProyectoMapper::toContratoDto).toList(),
-            calendarioDe(proyecto)
-        );
+    private static List<PlantaDto> plantasDe(Proyecto proyecto) {
+        var plantas = proyecto.getPlantas();
+        return plantas == null ? List.of() : plantas.stream().map(ProyectoMapper::toPlantaDto).toList();
+    }
+
+    private static List<RubroDto> rubrosDe(Proyecto proyecto) {
+        var rubros = proyecto.getRubros();
+        return rubros == null ? List.of() : rubros.stream()
+            .sorted(EstructuraRubros.ORDEN_NATURAL)
+            .map(rubro -> toRubroDto(rubro, rubros)).toList();
+    }
+
+    private static List<ContratoObraDto> contratosDe(Proyecto proyecto) {
+        var contratos = proyecto.getContratos();
+        return contratos == null ? List.of() : contratos.stream().map(ProyectoMapper::toContratoDto).toList();
     }
 
     private static ContratoObraDto toContratoDto(ContratoObra contrato) {

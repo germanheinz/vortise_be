@@ -51,3 +51,11 @@ El barrido estático del árbol Java principal cubrió 356 archivos y 19.001 lí
 | 8 | `Ingreso` y `CostoIndirecto` tienen forma JPA y código auxiliar muy parecidos. Los DTO de alta y edición también comparten campos. | Mantener significados y tablas. Evaluar limpieza de código repetitivo solo donde reduzca mantenimiento, sin herencia ni cambios de contrato motivados por el parecido. |
 
 El primer corte propuesto abarca validación de fechas y superficies y mapeo de plantas de proyecto. Verificar alta con plantas omitidas, edición con plantas omitidas y vacías, y precedencia de validaciones. Mantener DTO, permisos, transacciones y persistencia. Las coincidencias de redondeo trivial, constructores de inyección y métodos de repositorio se dejan fuera del primer corte.
+
+### Consolidación de ProyectoMapper
+
+Usar una construcción común de `ProyectoDto` con las dos entradas actuales y resolver las colecciones únicamente al solicitar el detalle. Verificar el orden de rubros y el contrato de las colecciones en las dos entradas antes y después.
+
+### Consolidación de subcontratistas de proyecto
+
+Extraer las dos búsquedas comunes de catálogo a una clase de paquete que recibe el repositorio existente. Conservar el origen de IDs y las protecciones específicas dentro de cada caso de uso. Mantener las consultas, transacciones, autorizaciones y constructores existentes.

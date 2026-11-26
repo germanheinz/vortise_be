@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.vortise.gestion.application.dto.CertificadoCrearDto;
@@ -24,6 +25,7 @@ import com.vortise.gestion.application.dto.RestriccionCreateDto;
 import com.vortise.gestion.application.dto.RubroCreateDto;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.port.CurrentIdentity;
+import com.vortise.gestion.domain.model.CatalogoEmpresa;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.model.ObraTarea;
 import com.vortise.gestion.domain.model.Proyecto;
@@ -190,6 +192,7 @@ class RubroEstructuraUseCasesTest {
     private RubroObra root;
     private RubroObra leaf;
     private UpdateProyectoUseCase updateUseCase;
+    private final CatalogoEmpresaRepository catalogosEdicion = mock(CatalogoEmpresaRepository.class);
 
     @BeforeEach void setUpUpdate() {
         project = new Proyecto();
@@ -205,7 +208,7 @@ class RubroEstructuraUseCasesTest {
         when(projects.bloquearPorId(1L)).thenReturn(Optional.of(project));
         when(projects.save(any(Proyecto.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(tasks.findByProyectoId(1L)).thenReturn(List.of());
-        updateUseCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class), mock(CatalogoEmpresaRepository.class),
+        updateUseCase = new UpdateProyectoUseCase(projects, mock(EmpresaRepository.class), catalogosEdicion,
             tasks, restrictions, mock(CurrentIdentity.class), mock(RegistroHorasRepository.class));
     }
 
@@ -264,6 +267,40 @@ class RubroEstructuraUseCasesTest {
     private ProyectoUpdateDto requestWithPlants(List<PlantaCreateDto> plantas) {
         return new ProyectoUpdateDto("Obra", null, null, "Dirección", "OB-1", null, null, null, null, null, null,
                 null, null, null, plantas, null, null);
+    }
+
+    @Test
+    void updateRejectsDuplicateContractorsBeforeCatalogLookup() {
+        var error = assertThrows(SolicitudInvalidaException.class,
+                () -> updateUseCase.execute(1L, requestWithContractors(List.of(81L, 81L))));
+
+        assertEquals("Hay subcontratistas duplicados", error.getMessage());
+        verifyNoInteractions(catalogosEdicion);
+        verify(projects, never()).save(any(Proyecto.class));
+    }
+
+    @Test
+    void updateKeepsImplicitContractorAndProtectsExistingAssignment() {
+        var contratista = mock(CatalogoEmpresa.class);
+        when(contratista.getId()).thenReturn(81L);
+        when(contratista.getEmpresa()).thenReturn(project.getEmpresaRelacionada());
+        when(contratista.getTipo()).thenReturn("subcontratista");
+        when(catalogosEdicion.findById(81L)).thenReturn(Optional.of(contratista));
+        leaf.setSubcontratista(contratista);
+
+        var resultado = updateUseCase.execute(1L, requestWithContractors(null));
+        assertEquals(List.of(81L), resultado.subcontratistaIds());
+        assertSame(contratista, leaf.getSubcontratista());
+
+        var error = assertThrows(SolicitudInvalidaException.class,
+                () -> updateUseCase.execute(1L, requestWithContractors(List.of())));
+        assertEquals("No se puede quitar un subcontratista que sigue asignado a un subrubro", error.getMessage());
+        verify(projects).save(project);
+    }
+
+    private ProyectoUpdateDto requestWithContractors(List<Long> ids) {
+        return new ProyectoUpdateDto("Obra", null, null, "Dirección", "OB-1", null, null, null, null, null,
+                null, null, null, null, null, null, ids);
     }
 
     private void taskOn(RubroObra activity) {

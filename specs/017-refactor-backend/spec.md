@@ -34,3 +34,11 @@ La especificación funcional existente sigue en [Previsto vs. Real](../002-previ
 ## Próximo corte de simplificación de proyectos
 
 Alta y edición conservan sus respuestas y reglas actuales. Las fechas y superficies inválidas se rechazan en el mismo orden y con los mismos errores. Las plantas omitidas en edición se conservan, una lista vacía las elimina y una lista provista se mapea igual que antes. Se preservan la referencia de la colección gestionada, transacciones, autorizaciones y esquema.
+
+### Resumen y detalle de proyectos
+
+Los dos formatos mantienen el contrato actual. El resumen omite la lectura de plantas, rubros, subcontratistas y contratos y devuelve esos campos nulos. El detalle usa listas vacías donde corresponda y ordena los rubros según su código. Ambos conservan el nombre histórico como respaldo cuando falta la empresa relacionada.
+
+### Subcontratistas de proyecto
+
+Alta y edición comparten la resolución de subcontratistas por empresa, tipo y selección. Se conservan el orden y mensaje de cada rechazo, la diferencia entre omitir y vaciar la selección, la selección implícita y el rechazo de quitar un subcontratista todavía asignado.
