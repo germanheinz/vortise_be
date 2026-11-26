@@ -5,7 +5,7 @@ import com.vortise.gestion.application.dto.EmpresaDto;
 import com.vortise.gestion.application.dto.EmpresaResumenDto;
 import com.vortise.gestion.application.dto.RestriccionDto;
 import com.vortise.gestion.application.dto.PaginaDto;
-import com.vortise.gestion.service.ProyectoConsultaService;
+import com.vortise.gestion.service.ProyectoService;
 import com.vortise.gestion.service.EmpresaService;
 import com.vortise.gestion.service.EmpresaConsultaService;
 import com.vortise.gestion.service.RestriccionService;
@@ -29,12 +29,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/empresas")
 public class EmpresaController {
-    private final ProyectoConsultaService proyectos;
+    private final ProyectoService proyectos;
     private final EmpresaService empresas;
     private final EmpresaConsultaService consulta;
     private final RestriccionService restricciones;
 
-    public EmpresaController(EmpresaService empresas, ProyectoConsultaService proyectos,
+    public EmpresaController(EmpresaService empresas, ProyectoService proyectos,
             EmpresaConsultaService consulta, RestriccionService restricciones) {
         this.empresas = empresas;
         this.proyectos = proyectos;

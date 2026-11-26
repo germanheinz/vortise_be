@@ -19,8 +19,7 @@ import com.vortise.gestion.application.dto.ProyectoCreateDto;
 import com.vortise.gestion.application.dto.ProyectoDto;
 import com.vortise.gestion.application.dto.ProyectoUpdateDto;
 import com.vortise.gestion.service.ProyectoAltaService;
-import com.vortise.gestion.service.ProyectoBajaService;
-import com.vortise.gestion.service.ProyectoConsultaService;
+import com.vortise.gestion.service.ProyectoService;
 import com.vortise.gestion.service.ProyectoEdicionService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -40,10 +39,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(value={"/api/proyectos"})
 public class ProyectoController {
-    private final ProyectoConsultaService proyectos;
+    private final ProyectoService proyectos;
     private final ProyectoAltaService altaProyecto;
     private final ProyectoEdicionService edicionProyecto;
-    private final ProyectoBajaService bajaProyecto;
 
     @GetMapping
     public ResponseEntity<List<ProyectoDto>> getAll() {
@@ -77,19 +75,17 @@ public class ProyectoController {
     @DeleteMapping(value="/{id}")
     @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.GERENTE)
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        this.bajaProyecto.execute(id);
+        proyectos.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 
     public ProyectoController(
         ProyectoAltaService altaProyecto,
         ProyectoEdicionService edicionProyecto,
-        ProyectoBajaService bajaProyecto,
-        ProyectoConsultaService proyectos
+        ProyectoService proyectos
     ) {
         this.proyectos = proyectos;
         this.altaProyecto = altaProyecto;
         this.edicionProyecto = edicionProyecto;
-        this.bajaProyecto = bajaProyecto;
     }
 }

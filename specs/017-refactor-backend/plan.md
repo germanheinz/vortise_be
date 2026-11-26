@@ -148,3 +148,12 @@ Integrar la baja en EmpresaService y la inicialización idempotente en EmpresaCo
 ### Retiro de gastos fijos globales
 
 Eliminar clases, configuración, cliente y pruebas exclusivos de la funcionalidad. Mantener la migración histórica y conservar la tabla en el respaldo H2 si existe. El catálogo de suscripción queda fuera de este corte.
+
+### Consolidación de consultas y baja de proyectos
+
+Integrar ProyectoBajaService en ProyectoConsultaService y renombrar el resultado a ProyectoService. Actualizar ambos controllers consumidores y cubrir baja existente y ausencia del proyecto.
+
+- Alta y edición de obra comparten resolución de subcontratistas, actualización de configuración de empresa y asignación de datos básicos. Antes de extraer código, comparar valores por defecto y campos editables. Edición agrega validaciones de certificados y tratamiento de dependencias.
+- CertificadoBloqueos usa los mismos repositorios que CertificadoObraService. Evaluar si conviene compartir consultas del último corte. La regla de bloqueo se usa desde tareas y edición y tiene una transacción de lectura propia.
+- ConfiguracionEmpresaObraService comparte catálogos y categorías con EmpresaConfiguracionService. Su operación por lotes trabaja bajo un bloqueo de empresa y se invoca durante las escrituras de obra. Cualquier traslado debe mantener ese alcance.
+- Mantener las fronteras de sesión y recuperación de contraseña. SesionService coordina apertura, renovación y cierre. RefreshTokenService conserva la persistencia y revocación de familias. PasswordResetTransactions evita que el envío de correo quede dentro de la transacción.

@@ -167,3 +167,9 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] Retirados la pantalla, API, cliente, entidad, repositorios, DTO, política exclusiva y pruebas obsoletas. El respaldo H2 conserva la tabla física si existe.
 - [x] Backend: 15 pruebas con `mvn -Dtest=WriteEndpointsGuardTest,FeatureUnavailableResponseTest,AdminBackupDisabledControllerTest,PostgresMigrationSourceTest,E2eLocalConfigurationTest,ProductionConfigurationTest clean test`. Frontend: 17 pruebas con `node --test tests/asistente-contexto.test.cjs tests/context-queries.test.cjs`. Pasó `git diff --check` en el alcance.
 - [ ] Pendientes integración con Spring y revisión independiente. El catálogo histórico de planes y las migraciones aplicadas conservan sus textos.
+
+### Consolidación de consultas y baja de proyectos
+
+- [x] El pedido de refactor autorizó el candidato ya identificado de baja de proyecto. Se consolidó con las consultas en ProyectoService.
+- [x] Pasaron 42 pruebas con `mvn -Dtest=ProyectoServiceTest,WriteEndpointsGuardTest,CreateProyectoSubcontratistaTest,CalendarioLaboralObraTest,RubroEstructuraUseCasesTest,EmpresaTenantScopeTest clean test`. Pasó `git diff --check`.
+- [ ] Verificación HTTP con Spring y revisión independiente pendientes. Los demás candidatos documentados requieren un alcance aprobado antes de su implementación.

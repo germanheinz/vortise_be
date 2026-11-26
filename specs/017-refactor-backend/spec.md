@@ -100,3 +100,7 @@ Agrupar el ciclo de vida, la configuración y las consultas de empresa en tres s
 ### Retiro de gastos fijos globales
 
 Retirar la pantalla y la API global de gastos fijos. Los costos indirectos de cada obra, su modelo y sus datos mantienen su comportamiento.
+
+### Consolidación de consultas y baja de proyectos
+
+ProyectoService reúne las consultas y la baja. Se conservan las rutas, guardas, errores y límites transaccionales actuales.

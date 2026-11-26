@@ -13,11 +13,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class ProyectoConsultaService {
+public class ProyectoService {
     private final ProyectoRepository projects;
     private final EmpresaRepository companies;
     private final CurrentIdentity identity;
-    public ProyectoConsultaService(ProyectoRepository projects, EmpresaRepository companies, CurrentIdentity identity) {
+    public ProyectoService(ProyectoRepository projects, EmpresaRepository companies, CurrentIdentity identity) {
         this.projects = projects;
         this.companies = companies;
         this.identity = identity;
@@ -53,5 +53,13 @@ public class ProyectoConsultaService {
         return projects.findByEmpresaRelacionadaId(empresaId).stream()
             .map(ProyectoMapper::toSummaryDto)
             .toList();
+    }
+
+    public void eliminar(Long proyectoId) {
+        if (projects.findById(proyectoId).isEmpty()) {
+            throw new RecursoNoEncontradoException("Proyecto no encontrado");
+        }
+
+        projects.deleteById(proyectoId);
     }
 }
