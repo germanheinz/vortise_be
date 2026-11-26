@@ -11,3 +11,9 @@ El objetivo es que cada caso de uso exprese su flujo de negocio y que los cálcu
 - La implementación debe permitir leer el recorrido principal sin recorrer las fórmulas. Los cálculos extraídos se pueden verificar con JUnit sin Spring ni base de datos. El alcance excluye cambios de esquema, dependencias, despliegues y frontend.
 
 La especificación funcional existente sigue en [Previsto vs. Real](../002-previsto-real/spec.md).
+
+## Alta y edición de tareas
+
+- Alta y edición comparten la asignación de campos y el cálculo de cantidad equivalente y porcentaje. Conservan los resultados, nulos, redondeo, errores, mensajes y orden de validación.
+- En edición se mantiene la comprobación de pertenencia a la obra, la autoría para Jefatura y el bloqueo del avance anterior antes de validar el nuevo. Alta conserva fecha y usuario de registro. Edición conserva esos metadatos y los días existentes cuando el DTO los omite.
+- Se preservan los datos derivados del rubro, los subcontratos sin horas, el desencofrado sin cantidad ejecutada y una sola llamada a guardar después de las validaciones.

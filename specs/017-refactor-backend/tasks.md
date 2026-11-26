@@ -7,3 +7,10 @@
 - [ ] Completar revisión independiente y registrar comandos ejecutados, resultados, veredicto y limitaciones aceptadas.
 
 Durante el descubrimiento se observó un diff local en el cálculo de horas previstas a fecha y días del anexo. Se conservó como línea base. Las nuevas pruebas cubren precedencia y desbordamiento de horas previstas a fecha, conservación de días, orden y ausencia de agregado sin cargas. No se inició Spring. La prueba HTTP focalizada usa un perfil con H2 en memoria identificada por UUID, validación previa a la creación del datasource y comprobación JDBC antes de cargar sus fixtures. La aprobación de ejecución sigue pendiente. La revisión de los contextos adicionales de `mvn verify` también sigue pendiente.
+
+## Alta y edición de tareas
+
+- [x] Localizada la duplicación en la asignación de campos y en el cálculo de métricas. Revisada la cobertura existente de pertenencia, horas, días, desencofrado y subcontratos.
+- [x] Segundo corte aprobado mediante «IMPLEMENTA» el 26 de noviembre de 2026. Alcance local en `gestion_be`: `CreateObraTareaUseCase.java`, prueba de caracterización en `PrevistoRealUseCaseTest.java` y este registro. Implementada la extracción y comprobados el orden de ambos bloqueos antes de guardar y la conservación de fecha y autor de registro.
+- [x] Ejecutado antes y después `mvn -Dtest=PrevistoRealUseCaseTest,PrevistoRealCalculatorTest,CertificadoObraUseCaseTest test` desde `gestion_be` con Java 21 y objetivo Java 17. En ambas ejecuciones pasaron 40 pruebas, sin fallos, errores ni omisiones. `git diff --check` pasó.
+- [ ] Verificación con Spring y revisión independiente pendientes. La aprobación de implementación no cubre pruebas con contexto, operaciones sobre datos persistentes ni escrituras remotas.

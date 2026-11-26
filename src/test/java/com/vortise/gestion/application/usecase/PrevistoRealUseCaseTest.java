@@ -184,6 +184,32 @@ class PrevistoRealUseCaseTest {
         var saved = new CreateObraTareaUseCase(tasks,projects).execute(1L,dto(10L));
         assertEquals(10L,saved.rubroId()); assertEquals("m3",saved.unidad()); assertEquals("Hormigón",saved.rubro());
     }
+    @Test
+    void editChecksPreviousAdvanceThenNewAdvanceAndPreservesRegistration() {
+        var bloqueos = mock(CertificadoBloqueos.class);
+        var service = new CreateObraTareaUseCase(tasks, projects, bloqueos, null);
+        var existing = task(1, 10L, 6);
+        var actividadAnterior = existing.getActividad();
+        var fechaAnterior = LocalDate.of(2026, 10, 10);
+        var fechaRegistro = fechaAnterior.atTime(10, 30);
+        existing.setFecha(fechaAnterior);
+        existing.setRegistradoEn(fechaRegistro);
+        existing.setRegistradoPorUsuarioId(42L);
+        when(tasks.findById(1L)).thenReturn(Optional.of(existing));
+        when(tasks.save(existing)).thenReturn(existing);
+        var datos = dto(10L);
+
+        service.update(1L, 1L, datos);
+
+        var orden = inOrder(bloqueos, tasks);
+        orden.verify(bloqueos).validarAvance(1L, actividadAnterior, fechaAnterior);
+        orden.verify(bloqueos).validarAvance(1L, activity, datos.fecha());
+        orden.verify(tasks).save(existing);
+        verify(tasks, times(1)).save(any());
+        assertEquals(fechaRegistro, existing.getRegistradoEn());
+        assertEquals(42L, existing.getRegistradoPorUsuarioId());
+    }
+
     @Test void rejectsUpdatingTaskFromAnotherProject() {
         var other = new Proyecto(); other.setId(2L);
         var t = task(1,10L,6); t.setProyecto(other);
