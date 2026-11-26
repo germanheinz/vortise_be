@@ -4,7 +4,6 @@ import com.vortise.gestion.domain.model.RolEmpresa;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +15,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class ClerkUserSyncService {
     private static final Logger log = LoggerFactory.getLogger(ClerkUserSyncService.class);
     
@@ -25,6 +23,11 @@ public class ClerkUserSyncService {
     
     @Value("${app.clerk.enabled:false}")
     private boolean clerkEnabled;
+
+    public ClerkUserSyncService(UsuarioEmpresaRepository usuarioRepository, EmpresaRepository empresaRepository) {
+        this.usuarioRepository = usuarioRepository;
+        this.empresaRepository = empresaRepository;
+    }
 
     @Transactional
     public UsuarioEmpresa sincronizarDesdeClerk(String clerkUserId, String email) {
@@ -54,19 +57,16 @@ public class ClerkUserSyncService {
 
         // 3. No existe: crear nuevo usuario
         log.info("Creating new Clerk user for email: {}", email);
-        UsuarioEmpresa nuevoUsuario = new UsuarioEmpresa();
-        nuevoUsuario.setEmail(email);
+        
+        // Asignar empresa default (PLATFORM)
+        var empresaDefault = empresaRepository.findByIdentificacionFiscal("PLATFORM-0001")
+            .orElseThrow(() -> new RuntimeException("PLATFORM empresa no encontrada"));
+        
+        UsuarioEmpresa nuevoUsuario = new UsuarioEmpresa(empresaDefault, email, email.split("@")[0], "", RolEmpresa.CONSULTA);
         nuevoUsuario.setClerkUserId(clerkUserId);
-        nuevoUsuario.setNombre(email.split("@")[0]);
-        nuevoUsuario.setRol(RolEmpresa.CONSULTA);
         nuevoUsuario.setActivo(true);
         nuevoUsuario.setMigradoAClerk(true);
         nuevoUsuario.setTieneLogin(true);
-        
-        // Asignar empresa default (PLATFORM)
-        var empresaDefault = empresaRepository.findByCodigoEmpresa("PLATFORM-0001")
-            .orElseThrow(() -> new RuntimeException("PLATFORM empresa no encontrada"));
-        nuevoUsuario.setEmpresa(empresaDefault);
         
         return usuarioRepository.save(nuevoUsuario);
     }

@@ -3,7 +3,6 @@ package com.vortise.gestion.infrastructure.security;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import com.vortise.gestion.service.ClerkUserSyncService;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +17,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Component
-@RequiredArgsConstructor
 public class ClerkTokenValidator extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(ClerkTokenValidator.class);
     private final UsuarioEmpresaRepository usuarioRepository;
@@ -26,6 +24,11 @@ public class ClerkTokenValidator extends OncePerRequestFilter {
 
     @Value("${app.clerk.enabled:false}")
     private boolean clerkEnabled;
+
+    public ClerkTokenValidator(UsuarioEmpresaRepository usuarioRepository, ClerkUserSyncService clerkSync) {
+        this.usuarioRepository = usuarioRepository;
+        this.clerkSync = clerkSync;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)

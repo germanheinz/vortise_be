@@ -46,7 +46,9 @@ public class JwtService {
             .claim("superAdmin", superAdmin)
             .claim("sessionVersion", sessionVersion);
         if (obras != null && !obras.isEmpty()) builder.claim("obras", obras.stream().sorted().toList());
-        return builder.issuedAt(now).expiration(new Date(now.getTime() + expirationMs)).signWith(signingKey).compact();
+        String token = builder.issuedAt(now).expiration(new Date(now.getTime() + expirationMs)).signWith(signingKey).compact();
+        System.err.println("DEBUG: Generated JWT token for " + email + " -> " + (token != null ? "OK (" + token.length() + " chars)" : "NULL"));
+        return token;
     }
 
     public long getExpirationMs() { return expirationMs; }

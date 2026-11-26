@@ -5,17 +5,22 @@ import com.vortise.gestion.dto.InvitacionValidaDto;
 import com.vortise.gestion.domain.model.UsuarioEmpresa;
 import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import com.vortise.gestion.service.ClerkUserSyncService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/invitacion")
-@RequiredArgsConstructor
 public class InvitacionController {
     private final UsuarioEmpresaRepository usuarioRepository;
     private final ClerkUserSyncService clerkSync;
+
+    @Autowired
+    public InvitacionController(UsuarioEmpresaRepository usuarioRepository, ClerkUserSyncService clerkSync) {
+        this.usuarioRepository = usuarioRepository;
+        this.clerkSync = clerkSync;
+    }
 
     @GetMapping("/validar")
     public ResponseEntity<InvitacionValidaDto> validarCodigo(@RequestParam String codigo) {
