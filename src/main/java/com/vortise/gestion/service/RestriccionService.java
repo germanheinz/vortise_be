@@ -1,28 +1,29 @@
 package com.vortise.gestion.service;
 
-import com.vortise.gestion.application.helper.RestriccionPlanning;
-import com.vortise.gestion.application.helper.RestriccionResumenGerencial;
-import com.vortise.gestion.application.helper.RestriccionResumenGerencial.Filtro;
-import com.vortise.gestion.application.helper.RestriccionResumenGerencial.Respuesta;
-import com.vortise.gestion.application.helper.RestriccionVinculoEstructura;
-import com.vortise.gestion.application.mapper.RestriccionMapper;
-import com.vortise.gestion.application.dto.RestriccionCreateDto;
 import com.vortise.gestion.application.dto.RestriccionComentarioCreateDto;
 import com.vortise.gestion.application.dto.RestriccionComentarioDto;
+import com.vortise.gestion.application.dto.RestriccionCreateDto;
 import com.vortise.gestion.application.dto.RestriccionDto;
+import com.vortise.gestion.application.dto.RestriccionUpdateDto;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
+import com.vortise.gestion.application.exception.ReglaDeEstadoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
+import com.vortise.gestion.application.helper.RestriccionPlanning;
+import com.vortise.gestion.application.helper.RestriccionResumenGerencial.Filtro;
+import com.vortise.gestion.application.helper.RestriccionResumenGerencial.Respuesta;
+import com.vortise.gestion.application.helper.RestriccionResumenGerencial;
+import com.vortise.gestion.application.helper.RestriccionVinculoEstructura;
+import com.vortise.gestion.application.mapper.RestriccionMapper;
+import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RestriccionComentario;
 import com.vortise.gestion.domain.model.RestriccionObra;
 import com.vortise.gestion.domain.model.RubroObra;
+import com.vortise.gestion.domain.repository.EmpresaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
 import com.vortise.gestion.domain.repository.RestriccionComentarioRepository;
 import com.vortise.gestion.domain.repository.RestriccionObraRepository;
 import com.vortise.gestion.domain.repository.RubroObraRepository;
-import com.vortise.gestion.application.dto.RestriccionUpdateDto;
-import com.vortise.gestion.application.exception.ReglaDeEstadoException;
-import com.vortise.gestion.application.port.CurrentIdentity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -40,14 +41,17 @@ public class RestriccionService {
     private final RubroObraRepository rubroRepository;
     private final RestriccionComentarioRepository comentarioRepository;
     private final CurrentIdentity identity;
+    private final EmpresaRepository empresaRepository;
 
     public RestriccionService(RestriccionObraRepository restriccionRepository, ProyectoRepository proyectoRepository,
-            RubroObraRepository rubroRepository, CurrentIdentity identity, RestriccionComentarioRepository comentarioRepository) {
+            RubroObraRepository rubroRepository, CurrentIdentity identity, RestriccionComentarioRepository comentarioRepository,
+            EmpresaRepository empresaRepository) {
         this.restriccionRepository = restriccionRepository;
         this.proyectoRepository = proyectoRepository;
         this.rubroRepository = rubroRepository;
         this.identity = identity;
         this.comentarioRepository = comentarioRepository;
+        this.empresaRepository = empresaRepository;
     }
 
     public RestriccionDto crear(Long proyectoId, RestriccionCreateDto dto) {
@@ -203,5 +207,12 @@ public class RestriccionService {
             .stream()
             .map(RestriccionMapper::toComentarioDto)
             .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RestriccionDto> listarPorEmpresa(Long empresaId) {
+        identity.requireEmpresa(empresaId);
+        if (empresaRepository.findById(empresaId).isEmpty()) throw new RecursoNoEncontradoException("Empresa no encontrada");
+        return restriccionRepository.findByProyectoEmpresaRelacionadaIdOrderByIdAsc(empresaId).stream().map(RestriccionMapper::toDto).toList();
     }
 }

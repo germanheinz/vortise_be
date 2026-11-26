@@ -23,11 +23,11 @@ public class RegistroService {
     private final PasswordEncoder passwordEncoder;
     private final AutenticacionService autenticacion;
 
-    private final EmpresaInicializacionService inicializar;
+    private final EmpresaConfiguracionService configuracion;
 
     public RegistroService(EmpresaRepository empresas, UsuarioEmpresaRepository usuarios, PasswordEncoder passwordEncoder,
-            AutenticacionService autenticacion, EmpresaInicializacionService inicializar) {
-        this.empresas = empresas; this.usuarios = usuarios; this.passwordEncoder = passwordEncoder; this.autenticacion = autenticacion; this.inicializar = inicializar;
+            AutenticacionService autenticacion, EmpresaConfiguracionService configuracion) {
+        this.empresas = empresas; this.usuarios = usuarios; this.passwordEncoder = passwordEncoder; this.autenticacion = autenticacion; this.configuracion = configuracion;
     }
 
     @Transactional
@@ -43,7 +43,7 @@ public class RegistroService {
             passwordEncoder.encode(request.password()), RolEmpresa.ADMINISTRADOR));
         empresa.setCreadoPorUsuarioId(usuario.getId());
         empresas.save(empresa);
-        inicializar.execute(empresa.getId());
+        configuracion.inicializar(empresa.getId());
         return autenticacion.sesion(usuario);
     }
 }

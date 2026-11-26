@@ -24,7 +24,7 @@ import org.springframework.security.access.AccessDeniedException;
 class UpdateRestriccionJefeRulesTest {
     private final RestriccionObraRepository repository = mock(RestriccionObraRepository.class);
     private final CurrentIdentity identity = mock(CurrentIdentity.class);
-    private final RestriccionService useCase = new RestriccionService(repository, null, mock(RubroObraRepository.class), identity, null);
+    private final RestriccionService useCase = new RestriccionService(repository, null, mock(RubroObraRepository.class), identity, null, null);
     private RestriccionObra restriction;
 
     @BeforeEach

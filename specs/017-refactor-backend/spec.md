@@ -92,3 +92,7 @@ Eliminar la carga, consulta y eliminación de la foto de perfil propia. Mantener
 ### Consolidación de restricciones
 
 Unificar los servicios de restricciones, comentarios y consulta gerencial detrás de RestriccionService. Preservar las nueve rutas HTTP, sus guardas, datos, orden y transacciones. El resumen conserva el corte, la zona horaria y el límite de detalle vigente.
+
+### Consolidación de servicios de empresa
+
+Agrupar el ciclo de vida, la configuración y las consultas de empresa en tres servicios. La consulta de restricciones por empresa pertenece a RestriccionService. Mantener rutas, permisos, transacciones y respuestas existentes.

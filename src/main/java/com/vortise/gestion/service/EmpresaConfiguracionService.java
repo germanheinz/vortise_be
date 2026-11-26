@@ -24,11 +24,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class EmpresaConfiguracionService {
+    private record Unidad(String codigo, String nombre) { }
+    private record Categoria(String nombre, boolean habilitada) { }
+    private static final List<Unidad> UNIDADES = List.of(new Unidad("ML", "Metro lineal"),
+        new Unidad("M2", "Metro cuadrado"), new Unidad("M3", "Metro cubico"),
+        new Unidad("GLOBAL", "Global"), new Unidad("MES", "Mes"));
+    private static final List<Categoria> CATEGORIAS = List.of(new Categoria("OFICIAL", true),
+        new Categoria("AYUDANTE", true), new Categoria("OFICIAL_ESPECIALIZADO", false),
+        new Categoria("MEDIO_OFICIAL", false));
+
     private final EmpresaRepository empresaRepository;
     private final ResponsableEmpresaRepository responsableRepository;
     private final UnidadMetricaEmpresaRepository unidadRepository;
@@ -198,5 +208,22 @@ public class EmpresaConfiguracionService {
 
     private CategoriaManoObraEmpresaDto toDto(CategoriaManoObraEmpresa item) {
         return new CategoriaManoObraEmpresaDto(item.getId(), item.getNombre(), item.getCostoHora(), item.isHabilitada());
+    }
+
+    @Transactional
+    public void inicializar(Long empresaId) {
+        Empresa empresa = lockEmpresa(empresaId);
+        if (empresa.isConfiguracionInicializada()) return;
+        Set<String> existentes = unidadRepository.findByEmpresaId(empresaId).stream()
+            .map(UnidadMetricaEmpresa::getCodigo).collect(Collectors.toSet());
+        UNIDADES.stream().filter(u -> !existentes.contains(u.codigo()))
+            .forEach(u -> unidadRepository.save(new UnidadMetricaEmpresa(empresa, u.codigo(), u.nombre())));
+        Set<String> nombres = categoriaManoObraRepository.findByEmpresaId(empresaId).stream()
+            .map(CategoriaManoObraEmpresa::getNombre).collect(Collectors.toSet());
+        CATEGORIAS.stream().filter(c -> !nombres.contains(c.nombre()))
+            .forEach(c -> categoriaManoObraRepository.save(new CategoriaManoObraEmpresa(empresa, c.nombre(), null, c.habilitada())));
+        empresa.inicializarCalendarioLaboral();
+        empresa.marcarConfiguracionInicializada();
+        empresaRepository.save(empresa);
     }
 }

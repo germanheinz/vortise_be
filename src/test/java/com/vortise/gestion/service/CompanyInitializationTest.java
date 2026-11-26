@@ -35,15 +35,15 @@ class CompanyInitializationTest {
         Empresa company = company();
         UnidadMetricaEmpresa custom = new UnidadMetricaEmpresa(company, "ML", "Custom name");
         when(units.findByEmpresaId(1L)).thenReturn(List.of(custom));
-        var useCase = new EmpresaInicializacionService(companies, units, categories);
-        useCase.execute(1L);
+        var useCase = new EmpresaConfiguracionService(companies, mock(ResponsableEmpresaRepository.class), units, mock(CatalogoEmpresaRepository.class), categories);
+        useCase.inicializar(1L);
         assertTrue(company.isConfiguracionInicializada());
         assertEquals("Custom name", custom.getNombre());
         verify(units, times(4)).save(any()); verify(categories, times(4)).save(any()); assertNotNull(company.getCalendarioLaboral());
         clearInvocations(units, categories);
         // An intentional deletion after preparation must not be silently undone.
         when(units.findByEmpresaId(1L)).thenReturn(List.of());
-        useCase.execute(1L);
+        useCase.inicializar(1L);
         verifyNoInteractions(units, categories);
     }
     @Test void editingCalendarKeepsItsIdAndUpdatesOnlyTheOwningCompany() {

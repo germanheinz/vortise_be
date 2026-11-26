@@ -153,3 +153,10 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] RestriccionController depende de RestriccionService. El cálculo gerencial se prueba como función sin Spring.
 - [x] Pasaron 49 pruebas con `mvn -Dtest=RestriccionAltaTest,RestriccionEdicionTest,UpdateRestriccionJefeRulesTest,RestriccionResumenGerencialTest,RubroEstructuraUseCasesTest,WriteEndpointsGuardTest test`. Pasó `git diff --check`.
 - [ ] Verificación HTTP con Spring y revisión independiente pendientes.
+
+### Consolidación de servicios de empresa
+
+- [x] «implementa» autorizó la consolidación de los cuatro grupos propuestos en el backend local.
+- [x] Retirados cinco servicios y creado EmpresaConsultaService. Las 27 rutas de ambos controllers conservan sus declaraciones HTTP y guardas, comparadas con HEAD.
+- [x] Pasaron 43 pruebas con `mvn -Dtest=CompanyInitializationTest,EmpresaTenantScopeTest,EmpresaResumenUseCasesTest,EmpresaDashboardObrasUseCaseTest,RegistroServiceTest,RestriccionAltaTest,RestriccionEdicionTest,UpdateRestriccionJefeRulesTest,WriteEndpointsGuardTest clean test`. Pasó `git diff --check`.
+- [ ] Integración con contexto de Spring y revisión independiente pendientes.

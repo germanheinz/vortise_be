@@ -1,17 +1,19 @@
 package com.vortise.gestion.service;
 
-import com.vortise.gestion.service.EmpresaService;
+import com.vortise.gestion.application.exception.ConflictoEstadoException;
 import com.vortise.gestion.application.dto.EmpresaCreateDto;
 import com.vortise.gestion.application.dto.EmpresaDto;
 import com.vortise.gestion.domain.model.Empresa;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
 import com.vortise.gestion.infrastructure.security.CurrentTenantService;
+import com.vortise.gestion.domain.repository.ProyectoRepository;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -22,11 +24,24 @@ class EmpresaTenantScopeTest {
     private final EmpresaRepository empresas = mock(EmpresaRepository.class);
     private final CurrentTenantService tenant = mock(CurrentTenantService.class);
 
+    private final ProyectoRepository proyectos = mock(ProyectoRepository.class);
+    private final EmpresaService service = new EmpresaService(empresas, tenant,
+        mock(EmpresaConfiguracionService.class), proyectos, null, null, null, null, null);
+
+    @Test
+    void companyWithWorksCannotBeDeleted() {
+        when(empresas.findById(1L)).thenReturn(Optional.of(company(1L, "Own")));
+        when(proyectos.countByEmpresaRelacionadaId(1L)).thenReturn(1L);
+
+        assertThrows(ConflictoEstadoException.class, () -> service.eliminar(1L));
+        verify(empresas, never()).deleteById(1L);
+    }
+
     @Test
     void superAdminListsAllCompanies() {
         when(tenant.isSuperAdmin()).thenReturn(true);
         when(empresas.findAll()).thenReturn(List.of(company(1L, "A"), company(2L, "B"), company(3L, "C")));
-        assertEquals(List.of("A", "B", "C"), names(new EmpresaService(empresas, tenant, mock(EmpresaInicializacionService.class)).listar()));
+        assertEquals(List.of("A", "B", "C"), names(service.listar()));
     }
 
     @Test
@@ -37,7 +52,7 @@ class EmpresaTenantScopeTest {
         Empresa own = company(1L, "Own");
         when(empresas.findById(1L)).thenReturn(Optional.of(own));
         when(empresas.findByCreadoPorUsuarioId(7L)).thenReturn(List.of(own, company(4L, "Created")));
-        assertEquals(List.of("Own", "Created"), names(new EmpresaService(empresas, tenant, mock(EmpresaInicializacionService.class)).listar()));
+        assertEquals(List.of("Own", "Created"), names(service.listar()));
         verify(empresas, never()).findAll();
     }
 
@@ -45,7 +60,7 @@ class EmpresaTenantScopeTest {
     void nonAdminListsOwnCompanyOnly() {
         when(tenant.empresaId()).thenReturn(1L);
         when(empresas.findById(1L)).thenReturn(Optional.of(company(1L, "Own")));
-        assertEquals(List.of("Own"), names(new EmpresaService(empresas, tenant, mock(EmpresaInicializacionService.class)).listar()));
+        assertEquals(List.of("Own"), names(service.listar()));
         verify(empresas, never()).findByCreadoPorUsuarioId(any());
         verify(empresas, never()).findAll();
     }
@@ -55,7 +70,7 @@ class EmpresaTenantScopeTest {
         when(tenant.usuarioId()).thenReturn(7L);
         when(empresas.findByNombreIgnoreCase("Nueva")).thenReturn(Optional.empty());
         when(empresas.save(any(Empresa.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        new EmpresaService(empresas, tenant, mock(EmpresaInicializacionService.class)).create(new EmpresaCreateDto("Nueva", null));
+        service.create(new EmpresaCreateDto("Nueva", null));
         verify(empresas).save(org.mockito.ArgumentMatchers.argThat(empresa -> Long.valueOf(7L).equals(empresa.getCreadoPorUsuarioId())));
     }
 

@@ -23,8 +23,8 @@ class EmpresaResumenUseCasesTest {
     private final RegistroHorasRepository horas = mock(RegistroHorasRepository.class);
     private final ObraTareaRepository tareas = mock(ObraTareaRepository.class);
     private final CurrentIdentity identity = mock(CurrentIdentity.class);
-    private final EmpresaResumenService resumen = new EmpresaResumenService(empresas, proyectos, restricciones, horas, tareas, identity);
-    private final EmpresaRestriccionesService listado = new EmpresaRestriccionesService(empresas, restricciones, identity);
+    private final EmpresaConsultaService resumen = new EmpresaConsultaService(empresas, proyectos, restricciones, null, identity, horas, tareas);
+    private final RestriccionService listado = new RestriccionService(restricciones, proyectos, null, identity, null, empresas);
 
     private static EmpresaConteoProjection row(long empresaId, long cantidad) {
         return new EmpresaConteoProjection() {
@@ -60,7 +60,7 @@ class EmpresaResumenUseCasesTest {
         when(restricciones.contarPorEmpresaRelacionada(Set.of(1L))).thenReturn(List.of(row(1L, 37)));
         when(horas.sumHorasPorEmpresaRelacionada(1L)).thenReturn(812.5);
         when(tareas.findConActividadByEmpresaRelacionadaId(1L)).thenReturn(List.of(task(1, 10., null), task(2, 5., null), task(3, 12., null)));
-        var result = resumen.execute(1L);
+        var result = resumen.resumen(1L);
         assertEquals(1L, result.empresaId());
         assertEquals(4, result.obras());
         assertEquals(37, result.restricciones());
@@ -76,7 +76,7 @@ class EmpresaResumenUseCasesTest {
         when(proyectos.contarPorEmpresaRelacionada(any())).thenReturn(List.of());
         when(restricciones.contarPorEmpresaRelacionada(any())).thenReturn(List.of());
         when(tareas.findConActividadByEmpresaRelacionadaId(1L)).thenReturn(List.of(task(1, 5., 100.), task(2, 10., 0.)));
-        var result = resumen.execute(1L);
+        var result = resumen.resumen(1L);
         assertEquals(1, result.cargasCumplidas(), "stored 100% with half the real quantity is not complete; stored 0% with full quantity is");
         assertEquals(ObraTareaMapper.toDto(task(2, 10., 0.)).porcentajeCumplimiento() >= 100.0, true);
     }
@@ -88,7 +88,7 @@ class EmpresaResumenUseCasesTest {
         when(restricciones.contarPorEmpresaRelacionada(Set.of(1L))).thenReturn(List.of());
         when(horas.sumHorasPorEmpresaRelacionada(1L)).thenReturn(null);
         when(tareas.findConActividadByEmpresaRelacionadaId(1L)).thenReturn(List.of());
-        var result = resumen.execute(1L);
+        var result = resumen.resumen(1L);
         assertEquals(0, result.obras() + result.restricciones() + result.cargasVinculadas() + result.cargasCumplidas());
         assertEquals(0.0, result.horasRegistradas());
     }
@@ -96,16 +96,16 @@ class EmpresaResumenUseCasesTest {
     @Test
     void deniedCompanyReadsNothing() {
         doThrow(new AccessDeniedException("No tienes acceso a esta empresa")).when(identity).requireEmpresa(2L);
-        assertThrows(AccessDeniedException.class, () -> resumen.execute(2L));
-        assertThrows(AccessDeniedException.class, () -> listado.execute(2L));
+        assertThrows(AccessDeniedException.class, () -> resumen.resumen(2L));
+        assertThrows(AccessDeniedException.class, () -> listado.listarPorEmpresa(2L));
         verifyNoInteractions(empresas, proyectos, restricciones, horas, tareas);
     }
 
     @Test
     void missingAccessibleCompanyIsNotFound() {
         when(empresas.findById(1L)).thenReturn(Optional.empty());
-        assertThrows(RecursoNoEncontradoException.class, () -> resumen.execute(1L));
-        assertThrows(RecursoNoEncontradoException.class, () -> listado.execute(1L));
+        assertThrows(RecursoNoEncontradoException.class, () -> resumen.resumen(1L));
+        assertThrows(RecursoNoEncontradoException.class, () -> listado.listarPorEmpresa(1L));
         verifyNoInteractions(proyectos, restricciones, horas, tareas);
     }
 
@@ -114,7 +114,7 @@ class EmpresaResumenUseCasesTest {
         companyExists();
         var first = restriction(11L, 5L, "Obra A", "Planos"); var second = restriction(12L, 6L, "Obra B", "Acopio");
         when(restricciones.findByProyectoEmpresaRelacionadaIdOrderByIdAsc(1L)).thenReturn(List.of(first, second));
-        var result = listado.execute(1L);
+        var result = listado.listarPorEmpresa(1L);
         assertEquals(List.of(11L, 12L), result.stream().map(item -> item.id()).toList());
         assertEquals(List.of(5L, 6L), result.stream().map(item -> item.proyectoId()).toList());
         assertEquals(List.of("Obra A", "Obra B"), result.stream().map(item -> item.proyectoNombre()).toList());

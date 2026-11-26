@@ -7,26 +7,33 @@ import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.mapper.EmpresaMapper;
 import com.vortise.gestion.application.port.CurrentIdentity;
-import com.vortise.gestion.service.EmpresaInicializacionService;
 import com.vortise.gestion.domain.model.Empresa;
+import com.vortise.gestion.domain.repository.CatalogoEmpresaRepository;
+import com.vortise.gestion.domain.repository.CategoriaManoObraEmpresaRepository;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
+import com.vortise.gestion.domain.repository.ProyectoRepository;
+import com.vortise.gestion.domain.repository.ResponsableEmpresaRepository;
+import com.vortise.gestion.domain.repository.UnidadMetricaEmpresaRepository;
+import com.vortise.gestion.domain.repository.UsuarioEmpresaRepository;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class EmpresaService {
     private final EmpresaRepository empresaRepository;
     private final CurrentIdentity currentTenant;
+    private final EmpresaConfiguracionService configuracion;
+    private final ProyectoRepository proyectoRepository;
+    private final UsuarioEmpresaRepository usuarioEmpresaRepository;
+    private final ResponsableEmpresaRepository responsableEmpresaRepository;
+    private final UnidadMetricaEmpresaRepository unidadMetricaEmpresaRepository;
+    private final CatalogoEmpresaRepository catalogoEmpresaRepository;
+    private final CategoriaManoObraEmpresaRepository categoriaManoObraEmpresaRepository;
 
-    private final EmpresaInicializacionService inicializar;
-
-    public EmpresaService(EmpresaRepository empresaRepository, CurrentIdentity currentTenant, EmpresaInicializacionService inicializar) {
-        this.empresaRepository = empresaRepository;
-        this.currentTenant = currentTenant;
-        this.inicializar = inicializar;
-    }
 
     @Transactional
     public EmpresaDto create(EmpresaCreateDto dto) {
@@ -35,7 +42,7 @@ public class EmpresaService {
         Empresa empresa = new Empresa(dto.nombre().trim(), normalize(dto.identificacionFiscal()));
         empresa.setCreadoPorUsuarioId(currentTenant.usuarioId());
         Empresa saved = empresaRepository.save(empresa);
-        inicializar.execute(saved.getId());
+        configuracion.inicializar(saved.getId());
         return EmpresaMapper.toDto(saved);
     }
 
@@ -98,5 +105,28 @@ public class EmpresaService {
     public EmpresaDto obtener(Long id) {
         return EmpresaMapper.toDto(empresaRepository.findById(id)
             .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada")));
+    }
+
+    @Transactional
+    public void eliminar(Long id) {
+        if (empresaRepository.findById(id).isEmpty()) {
+            throw new RecursoNoEncontradoException("Empresa no encontrada");
+        }
+        if (proyectoRepository.countByEmpresaRelacionadaId(id) > 0) {
+            throw new ConflictoEstadoException("No se puede eliminar una empresa que tiene obras asociadas");
+        }
+
+        var usuarios = usuarioEmpresaRepository.findByEmpresaId(id);
+        if (usuarios.stream().anyMatch(usuario -> usuario.isColaborador()
+                || !usuarioEmpresaRepository.findByInvitanteId(usuario.getId()).isEmpty())) {
+            throw new ConflictoEstadoException("No se puede eliminar una empresa con accesos de equipo asignados.");
+        }
+        usuarioEmpresaRepository.findByEmpresaId(id).forEach(usuario -> usuarioEmpresaRepository.deleteById(usuario.getId()));
+        responsableEmpresaRepository.findByEmpresaId(id).forEach(item -> responsableEmpresaRepository.deleteById(item.getId()));
+        unidadMetricaEmpresaRepository.findByEmpresaId(id).forEach(item -> unidadMetricaEmpresaRepository.deleteById(item.getId()));
+        catalogoEmpresaRepository.findByEmpresaId(id).forEach(item -> catalogoEmpresaRepository.deleteById(item.getId()));
+        categoriaManoObraEmpresaRepository.findByEmpresaId(id).forEach(item -> categoriaManoObraEmpresaRepository.deleteById(item.getId()));
+
+        empresaRepository.deleteById(id);
     }
 }

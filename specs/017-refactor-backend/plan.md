@@ -140,3 +140,7 @@ La revisión de servicios deja estos candidatos para cambios separados:
 | ObraTareaService y PrevistoRealService | Considerar compartir consultas de cargas. | El cálculo también alimenta el dashboard de empresa. Mantener su transacción de lectura y la separación de validaciones de escritura. |
 | PasswordResetTransactions | Mantener el bean dedicado. | Los límites de emisión y confirmación dependen del proxy transaccional, y el envío de correo ocurre fuera de esa frontera. |
 | Servicios de facturación e invitaciones | Mantener los servicios actuales. | Preservar los consumidores compartidos de lectura, el tratamiento de webhooks y las reglas distintas por tipo de invitación. |
+
+### Consolidación de servicios de empresa
+
+Integrar la baja en EmpresaService y la inicialización idempotente en EmpresaConfiguracionService. Reunir los dos informes en EmpresaConsultaService con la validación de empresa compartida. Mover el listado de restricciones con su guarda y transacción de lectura. Mantener los DTO y el esquema.

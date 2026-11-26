@@ -6,7 +6,6 @@ import com.vortise.gestion.application.dto.CategoriaManoObraEmpresaDto;
 import com.vortise.gestion.application.dto.ResponsableEmpresaDto;
 import com.vortise.gestion.application.dto.UnidadMetricaEmpresaDto;
 import com.vortise.gestion.service.EmpresaConfiguracionService;
-import com.vortise.gestion.service.EmpresaInicializacionService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -27,17 +26,14 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'JEFE_DE_OBRA', 'CONSULTA', 'RESPONSABLE', 'COLABORADOR')")
 public class EmpresaConfiguracionController {
     private final EmpresaConfiguracionService useCase;
-    private final EmpresaInicializacionService inicializar;
-
-    public EmpresaConfiguracionController(EmpresaConfiguracionService useCase,
-            EmpresaInicializacionService inicializar) {
-        this.useCase = useCase; this.inicializar = inicializar;
+    public EmpresaConfiguracionController(EmpresaConfiguracionService useCase) {
+        this.useCase = useCase;
     }
 
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PostMapping("/inicializar")
     public ResponseEntity<Void> inicializar(@PathVariable Long empresaId) {
-        inicializar.execute(empresaId);
+        useCase.inicializar(empresaId);
         return ResponseEntity.noContent().build();
     }
 

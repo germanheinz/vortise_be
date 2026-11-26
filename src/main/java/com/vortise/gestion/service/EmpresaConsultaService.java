@@ -1,14 +1,19 @@
 package com.vortise.gestion.service;
 
-import com.vortise.gestion.application.helper.PrevistoRealCalculator;
 import com.vortise.gestion.application.dto.EmpresaDashboardObrasDto;
+import com.vortise.gestion.application.dto.EmpresaResumenDto;
 import com.vortise.gestion.application.exception.RecursoNoEncontradoException;
+import com.vortise.gestion.application.helper.PrevistoRealCalculator;
+import com.vortise.gestion.application.mapper.ObraTareaMapper;
 import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RestriccionObra;
 import com.vortise.gestion.domain.model.RubroObra;
+import com.vortise.gestion.domain.repository.EmpresaConteoProjection;
 import com.vortise.gestion.domain.repository.EmpresaRepository;
+import com.vortise.gestion.domain.repository.ObraTareaRepository;
 import com.vortise.gestion.domain.repository.ProyectoRepository;
+import com.vortise.gestion.domain.repository.RegistroHorasRepository;
 import com.vortise.gestion.domain.repository.RestriccionObraRepository;
 import com.vortise.gestion.domain.rule.EstructuraRubros;
 import java.util.Comparator;
@@ -23,7 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
-public class EmpresaDashboardObrasService {
+public class EmpresaConsultaService {
+    private static final double CUMPLIDA = 100.0;
     private static final Set<String> CERRADAS = Set.of("RESUELTO", "RESUELTA", "LIBERADO");
     private static final String SUBCONTRATO = "SUBCONTRATO";
     private final EmpresaRepository empresas;
@@ -31,18 +37,22 @@ public class EmpresaDashboardObrasService {
     private final RestriccionObraRepository restricciones;
     private final PrevistoRealService previstoReal;
     private final CurrentIdentity identity;
+    private final RegistroHorasRepository horas;
+    private final ObraTareaRepository tareas;
 
-    public EmpresaDashboardObrasService(EmpresaRepository empresas, ProyectoRepository proyectos,
-            RestriccionObraRepository restricciones, PrevistoRealService previstoReal, CurrentIdentity identity) {
+    public EmpresaConsultaService(EmpresaRepository empresas, ProyectoRepository proyectos,
+            RestriccionObraRepository restricciones, PrevistoRealService previstoReal, CurrentIdentity identity,
+            RegistroHorasRepository horas, ObraTareaRepository tareas) {
         this.empresas = empresas; this.proyectos = proyectos; this.restricciones = restricciones;
         this.previstoReal = previstoReal; this.identity = identity;
+        this.horas = horas;
+        this.tareas = tareas;
     }
 
-    public EmpresaDashboardObrasDto execute(Long empresaId) {
-        identity.requireEmpresa(empresaId);
-        if (empresas.findById(empresaId).isEmpty()) throw new RecursoNoEncontradoException("Empresa no encontrada");
+    public EmpresaDashboardObrasDto dashboardObras(Long empresaId) {
+        validarEmpresa(empresaId);
         Map<Long, Long> activas = restricciones.findByProyectoEmpresaRelacionadaIdOrderByIdAsc(empresaId).stream()
-            .filter(EmpresaDashboardObrasService::activa)
+            .filter(EmpresaConsultaService::activa)
             .collect(Collectors.groupingBy(r -> r.getProyecto().getId(), Collectors.counting()));
         var obras = proyectos.findByEmpresaRelacionadaId(empresaId).stream()
             .sorted(Comparator.comparing(Proyecto::getId))
@@ -55,7 +65,7 @@ public class EmpresaDashboardObrasService {
         var proyecto = proyectos.findById(proyectoId).orElseThrow(() -> new RecursoNoEncontradoException("Obra no encontrada"));
         if (proyecto.getEmpresaRelacionada() == null) throw new RecursoNoEncontradoException("Obra no encontrada");
         identity.requireEmpresa(proyecto.getEmpresaRelacionada().getId());
-        long activas = restricciones.findByProyectoId(proyectoId).stream().filter(EmpresaDashboardObrasService::activa).count();
+        long activas = restricciones.findByProyectoId(proyectoId).stream().filter(EmpresaConsultaService::activa).count();
         return obra(proyecto, activas);
     }
 
@@ -102,5 +112,27 @@ public class EmpresaDashboardObrasService {
         if (monto == null || costo == null || costo <= 0) return null;
         double value = monto / costo * 100;
         return Double.isFinite(value) ? value : null;
+    }
+
+    public EmpresaResumenDto resumen(Long empresaId) {
+        validarEmpresa(empresaId);
+        Set<Long> ids = Set.of(empresaId);
+        Double totalHoras = horas.sumHorasPorEmpresaRelacionada(empresaId);
+        var vinculadas = tareas.findConActividadByEmpresaRelacionadaId(empresaId);
+        // Same rule the task list shows: the persisted percentage is ignored when the task has an activity.
+        long cumplidas = vinculadas.stream().map(ObraTareaMapper::toDto)
+            .filter(dto -> dto.porcentajeCumplimiento() != null && dto.porcentajeCumplimiento() >= CUMPLIDA).count();
+        return new EmpresaResumenDto(empresaId, count(proyectos.contarPorEmpresaRelacionada(ids), empresaId),
+            count(restricciones.contarPorEmpresaRelacionada(ids), empresaId), totalHoras == null ? 0.0 : totalHoras,
+            vinculadas.size(), cumplidas);
+    }
+
+    private static long count(List<EmpresaConteoProjection> rows, Long empresaId) {
+        return rows.stream().filter(row -> empresaId.equals(row.getEmpresaId())).mapToLong(EmpresaConteoProjection::getCantidad).sum();
+    }
+
+    private void validarEmpresa(Long empresaId) {
+        identity.requireEmpresa(empresaId);
+        if (empresas.findById(empresaId).isEmpty()) throw new RecursoNoEncontradoException("Empresa no encontrada");
     }
 }

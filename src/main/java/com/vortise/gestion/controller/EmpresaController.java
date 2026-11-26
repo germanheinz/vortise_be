@@ -5,11 +5,12 @@ import com.vortise.gestion.application.dto.EmpresaDto;
 import com.vortise.gestion.application.dto.EmpresaResumenDto;
 import com.vortise.gestion.application.dto.RestriccionDto;
 import com.vortise.gestion.application.dto.PaginaDto;
-import com.vortise.gestion.service.EmpresaBajaService;
-import com.vortise.gestion.service.EmpresaResumenService;
-import com.vortise.gestion.service.EmpresaRestriccionesService;
 import com.vortise.gestion.service.ProyectoConsultaService;
 import com.vortise.gestion.service.EmpresaService;
+import com.vortise.gestion.service.EmpresaConsultaService;
+import com.vortise.gestion.service.RestriccionService;
+import com.vortise.gestion.application.dto.ProyectoDto;
+import com.vortise.gestion.application.dto.EmpresaDashboardObrasDto;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -30,21 +31,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class EmpresaController {
     private final ProyectoConsultaService proyectos;
     private final EmpresaService empresas;
-    private final EmpresaBajaService bajaEmpresa;
-    private final EmpresaResumenService resumen;
-    private final EmpresaRestriccionesService restriccionesEmpresa;
-    private final com.vortise.gestion.service.EmpresaDashboardObrasService dashboardObras;
+    private final EmpresaConsultaService consulta;
+    private final RestriccionService restricciones;
 
-    public EmpresaController(EmpresaService empresas, EmpresaBajaService bajaEmpresa,
-            ProyectoConsultaService proyectos,
-            EmpresaResumenService resumen, EmpresaRestriccionesService restriccionesEmpresa,
-            com.vortise.gestion.service.EmpresaDashboardObrasService dashboardObras) {
-        this.dashboardObras = dashboardObras;
-        this.proyectos = proyectos;
-        this.resumen = resumen;
-        this.restriccionesEmpresa = restriccionesEmpresa;
+    public EmpresaController(EmpresaService empresas, ProyectoConsultaService proyectos,
+            EmpresaConsultaService consulta, RestriccionService restricciones) {
         this.empresas = empresas;
-        this.bajaEmpresa = bajaEmpresa;
+        this.proyectos = proyectos;
+        this.consulta = consulta;
+        this.restricciones = restricciones;
     }
 
     @GetMapping
@@ -58,7 +53,7 @@ public class EmpresaController {
     }
 
     @GetMapping("/{id}/obras/pagina")
-    public ResponseEntity<PaginaDto<com.vortise.gestion.application.dto.ProyectoDto>> getPagina(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
+    public ResponseEntity<PaginaDto<ProyectoDto>> getPagina(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "25") int size,
             @RequestParam(defaultValue = "") String q) {
         return ResponseEntity.ok(proyectos.paginar(id, q, page, size));
@@ -66,21 +61,21 @@ public class EmpresaController {
 
     @GetMapping("/{id}/resumen")
     public ResponseEntity<EmpresaResumenDto> getResumen(@PathVariable Long id) {
-        return ResponseEntity.ok(resumen.execute(id));
+        return ResponseEntity.ok(consulta.resumen(id));
     }
 
     @GetMapping("/{id}/dashboard-obras")
-    public ResponseEntity<com.vortise.gestion.application.dto.EmpresaDashboardObrasDto> getDashboardObras(@PathVariable Long id) {
-        return ResponseEntity.ok(dashboardObras.execute(id));
+    public ResponseEntity<EmpresaDashboardObrasDto> getDashboardObras(@PathVariable Long id) {
+        return ResponseEntity.ok(consulta.dashboardObras(id));
     }
 
     @GetMapping("/{id}/restricciones")
     public ResponseEntity<List<RestriccionDto>> getRestricciones(@PathVariable Long id) {
-        return ResponseEntity.ok(restriccionesEmpresa.execute(id));
+        return ResponseEntity.ok(restricciones.listarPorEmpresa(id));
     }
 
     @GetMapping("/{id}/obras")
-    public ResponseEntity<List<com.vortise.gestion.application.dto.ProyectoDto>> getObras(@PathVariable Long id) {
+    public ResponseEntity<List<ProyectoDto>> getObras(@PathVariable Long id) {
         return ResponseEntity.ok(proyectos.listarResumenesPorEmpresa(id));
     }
 
@@ -99,7 +94,7 @@ public class EmpresaController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        bajaEmpresa.execute(id);
+        empresas.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 }

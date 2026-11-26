@@ -27,7 +27,7 @@ class RegistroServiceTest {
     private final UsuarioEmpresaRepository usuarios = mock(UsuarioEmpresaRepository.class);
     private final PasswordEncoder encoder = mock(PasswordEncoder.class);
     private final AutenticacionService autenticacion = mock(AutenticacionService.class);
-    private final RegistroService useCase = new RegistroService(empresas, usuarios, encoder, autenticacion, mock(EmpresaInicializacionService.class));
+    private final RegistroService useCase = new RegistroService(empresas, usuarios, encoder, autenticacion, mock(EmpresaConfiguracionService.class));
     private final RegistroRequestDto request = new RegistroRequestDto(" Nueva Constructora ", " Ana ", " Ana@Example.invalid ", "password123");
 
     @BeforeEach

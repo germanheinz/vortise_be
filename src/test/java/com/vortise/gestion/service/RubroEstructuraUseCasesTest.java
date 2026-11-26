@@ -555,7 +555,7 @@ class RubroEstructuraUseCasesTest {
         when(projectsMock.findById(1L)).thenReturn(Optional.of(p));
         for (RubroObra rubro : p.getRubros()) when(rubrosMock.findById(rubro.getId())).thenReturn(Optional.of(rubro));
         when(restrictionsMock.save(any(RestriccionObra.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        var useCase = new RestriccionService(restrictionsMock, projectsMock, rubrosMock, null, null);
+        var useCase = new RestriccionService(restrictionsMock, projectsMock, rubrosMock, null, null, null);
 
         var onGroup = useCase.crear(1L, restrictionRequest(2L));
         assertEquals(2L, onGroup.rubroId());

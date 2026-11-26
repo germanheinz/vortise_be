@@ -1,7 +1,7 @@
 package com.vortise.gestion.infrastructure.web;
 
 import com.vortise.gestion.service.EmpresaConfiguracionService;
-import com.vortise.gestion.service.EmpresaInicializacionService;
+import com.vortise.gestion.service.EmpresaConfiguracionService;
 import com.vortise.gestion.service.RegistroHorasService;
 import com.vortise.gestion.service.UsuarioEmpresaService;
 import com.vortise.gestion.service.EmpresaService;
@@ -50,7 +50,7 @@ class Quality14PostgresTest {
     @MockitoSpyBean ProyectoRepository projects;
     @Autowired RegistroHorasRepository records;
     @Autowired RegistroHorasService ledger;
-    @Autowired EmpresaInicializacionService initialize;
+    @Autowired EmpresaConfiguracionService initialize;
     @Autowired EmpresaConfiguracionService configuration;
     @Autowired EmpresaService companyEditor;
     @Autowired UsuarioEmpresaService users;
@@ -132,7 +132,7 @@ class Quality14PostgresTest {
     }
     @Test void concurrentInitializationIsUniqueAndIdempotent() throws Exception {
         Long id = company(5);
-        race(() -> { initialize.execute(id); return true; }, () -> { initialize.execute(id); return true; });
+        race(() -> { initialize.inicializar(id); return true; }, () -> { initialize.inicializar(id); return true; });
         assertEquals(5, units.findByEmpresaId(id).size());
         assertEquals(4, categories.findByEmpresaId(id).size());
         assertNotNull(companies.findById(id).orElseThrow().getCalendarioLaboral());
@@ -188,7 +188,7 @@ class Quality14PostgresTest {
             UsuarioEmpresa creator = new UsuarioEmpresa(company, UUID.randomUUID()+"@example.invalid", "Creator", "not-a-login-password", RolEmpresa.ADMINISTRADOR);
             em.persist(creator); em.flush();
             company.setCreadoPorUsuarioId(creator.getId());
-            initialize.execute(id);
+            initialize.inicializar(id);
             assertEquals(creator.getId(), company.getCreadoPorUsuarioId());
             return creator.getId();
         });
@@ -207,18 +207,18 @@ class Quality14PostgresTest {
                 try { assertTrue(prepared.await(20, TimeUnit.SECONDS)); }
                 catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw new IllegalStateException(interrupted); }
                 if (rename) companyEditor.update(id, new EmpresaCreateDto("Renamed " + UUID.randomUUID(), null));
-                else initialize.execute(id);
+                else initialize.inicializar(id);
             }));
             Future<?> preparer = pool.submit(() -> {
                 try { assertTrue(cached.await(5, TimeUnit.SECONDS)); }
                 catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw new IllegalStateException(interrupted); }
-                initialize.execute(id);
+                initialize.inicializar(id);
                 Long unit = units.findByEmpresaId(id).stream().filter(u -> "ML".equals(u.getCodigo())).findFirst().orElseThrow().getId();
                 configuration.deleteUnidad(id, unit);
                 prepared.countDown();
             });
             preparer.get(30, TimeUnit.SECONDS); staleReader.get(30, TimeUnit.SECONDS);
-            initialize.execute(id);
+            initialize.inicializar(id);
             assertEquals(4, units.findByEmpresaId(id).size());
         } finally { prepared.countDown(); pool.shutdownNow(); assertTrue(pool.awaitTermination(10, TimeUnit.SECONDS)); }
     }
