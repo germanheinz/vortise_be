@@ -1,6 +1,5 @@
 package com.vortise.gestion.application.usecase;
 
-import com.vortise.gestion.application.dto.PlantaCreateDto;
 import com.vortise.gestion.application.dto.ProyectoDto;
 import com.vortise.gestion.application.dto.ProyectoUpdateDto;
 import com.vortise.gestion.application.dto.RubroCreateDto;
@@ -9,7 +8,6 @@ import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.application.port.CurrentIdentity;
 import com.vortise.gestion.domain.model.CatalogoEmpresa;
 import com.vortise.gestion.domain.model.ContratoObra;
-import com.vortise.gestion.domain.model.Planta;
 import com.vortise.gestion.domain.model.Proyecto;
 import com.vortise.gestion.domain.model.RubroObra;
 import com.vortise.gestion.domain.model.TipoNodoRubro;
@@ -67,8 +65,8 @@ public class UpdateProyectoUseCase {
 
     @SuppressWarnings("null")
     public ProyectoDto execute(Long proyectoId, ProyectoUpdateDto dto) {
-        validateDates(dto);
-        validateSurfaces(dto.superficieCubierta(), dto.superficieSemicubierta(), dto.superficieDescubierta());
+        DatosProyecto.validarFechas(dto.fechaInicio(), dto.fechaFin());
+        DatosProyecto.validarSuperficies(dto.superficieCubierta(), dto.superficieSemicubierta(), dto.superficieDescubierta());
         if (dto.actualizarPedidosDeObraDias() && dto.pedidosDeObraDias() != null && dto.pedidosDeObraDias() < 0) {
             throw new SolicitudInvalidaException("Pedidos de obra debe ser un entero no negativo");
         }
@@ -133,7 +131,7 @@ public class UpdateProyectoUseCase {
         }
         if (dto.plantas() != null) {
             proyecto.getPlantas().clear();
-            proyecto.getPlantas().addAll(mapPlantas(dto.plantas(), proyecto));
+            proyecto.getPlantas().addAll(DatosProyecto.mapearPlantas(dto.plantas(), proyecto));
         }
 
         if (proyecto.getRubros() == null) {
@@ -195,12 +193,6 @@ public class UpdateProyectoUseCase {
         return ProyectoMapper.toDetailDto(saved);
     }
 
-    private void validateDates(ProyectoUpdateDto dto) {
-        if (dto.fechaInicio() != null && dto.fechaFin() != null && dto.fechaFin().isBefore(dto.fechaInicio())) {
-            throw new SolicitudInvalidaException("La fecha de fin debe ser posterior al inicio de la obra");
-        }
-    }
-
     private List<Long> applyCompanyChanges(Long empresaId, ProyectoUpdateDto dto) {
         if (cambiosEmpresa != null) {
             return cambiosEmpresa.execute(empresaId, dto.costosManoObraModificados(), dto.contratistasObra());
@@ -210,34 +202,6 @@ public class UpdateProyectoUseCase {
             throw new IllegalStateException("No está configurado el guardado empresarial del asistente de obra");
         }
         return List.of();
-    }
-
-    private void validateSurfaces(Double... surfaces) {
-        for (Double surface : surfaces) {
-            if (surface != null && (!Double.isFinite(surface) || surface < 0)) {
-                throw new SolicitudInvalidaException("Las superficies generales deben ser números no negativos");
-            }
-        }
-    }
-
-    private List<Planta> mapPlantas(List<PlantaCreateDto> plantas, Proyecto proyecto) {
-        if (plantas == null) {
-            return new ArrayList<>();
-        }
-
-        List<Planta> result = new ArrayList<>();
-        for (PlantaCreateDto plantaDto : plantas) {
-            Planta planta = new Planta();
-            planta.setProyecto(proyecto);
-            planta.setNivel(plantaDto.nivel());
-            planta.setSuperficie(plantaDto.superficie());
-            planta.setSupCubierta(plantaDto.supCubierta());
-            planta.setSupDescubierta(plantaDto.supDescubierta());
-            planta.setSupCalculada(plantaDto.supCalculada());
-            planta.setCoefPlantaTipo(plantaDto.coefPlantaTipo());
-            result.add(planta);
-        }
-        return result;
     }
 
     private List<RubroObra> mapRubros(List<RubroCreateDto> rubros, Proyecto proyecto, java.util.Set<Long> linkedIds,

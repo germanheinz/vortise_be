@@ -30,3 +30,7 @@ La especificación funcional existente sigue en [Previsto vs. Real](../002-previ
 - En edición se preserva el respaldo persistido de filas históricas. Cuando una tarea sin rubro se vincula por primera vez, la respuesta pasa a usar el mismo cálculo de lectura que usa hoy una tarea vinculada.
 - El generador demo conserva el reconocimiento de cargas antiguas, su idempotencia y los totales de los registros horarios de resumen. Los valores necesarios para calcular esos resúmenes pueden mantenerse en memoria durante la generación.
 - Se conservan las columnas para leer datos históricos y mantener la compatibilidad de formato de los respaldos. La verificación compara las respuestas y los resúmenes antes y después del cambio.
+
+## Próximo corte de simplificación de proyectos
+
+Alta y edición conservan sus respuestas y reglas actuales. Las fechas y superficies inválidas se rechazan en el mismo orden y con los mismos errores. Las plantas omitidas en edición se conservan, una lista vacía las elimina y una lista provista se mapea igual que antes. Se preservan la referencia de la colección gestionada, transacciones, autorizaciones y esquema.

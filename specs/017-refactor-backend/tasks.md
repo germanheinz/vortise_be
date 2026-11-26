@@ -29,3 +29,10 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] Corte aprobado mediante «IMPLEMENTA» el 26 de noviembre de 2026 e implementado. Archivos de código: `CreateObraTareaUseCase.java`, `DemoOperationalSeed.java` y sus pruebas unitarias. Quedan fuera migraciones, escrituras sobre datos existentes, frontend y ejecución con Spring.
 - [x] Ejecutado `mvn -Dtest=PrevistoRealUseCaseTest,PrevistoRealCalculatorTest,EmpresaResumenUseCasesTest,DemoOperationalSeedTest test` desde `gestion_be` con Java 21 y objetivo Java 17. Pasaron 44 pruebas de caracterización antes del cambio y 45 en la última ejecución, sin fallos, errores ni omisiones. Las pruebas cubren respuesta, escritura y edición, respaldo previo, rechazo de cantidad inválida y totales demo. `git diff --check` pasó.
 - [ ] Quedan pendientes la verificación HTTP con Spring, el ciclo completo de Maven y la revisión independiente.
+
+## Inventario general y siguiente corte
+
+- [x] Barrido estático de las fuentes Java principales y revisión dirigida de consumidores, tests y mappings de los candidatos.
+- [x] Corte aprobado mediante «IMPLEMENTALO» el 26 de noviembre de 2026. Implementado localmente en `CreateProyectoUseCase.java`, `UpdateProyectoUseCase.java`, `DatosProyecto.java` y `RubroEstructuraUseCasesTest.java`. El alcance excluye cambios de esquema, datos persistentes, contextos Spring y escrituras remotas.
+- [x] `mvn -Dtest=CreateProyectoSubcontratistaTest,RubroEstructuraUseCasesTest,ProyectoMapperTest test` ejecutado desde `gestion_be`, con Java 21 y objetivo Java 17. Pasaron 30 pruebas antes y después, sin fallos, errores ni omisiones. Las pruebas nuevas cubren la precedencia de validaciones y el tratamiento de plantas en alta y edición. `git diff --check` pasó.
+- [ ] Verificación de integración y revisión independiente pendientes.

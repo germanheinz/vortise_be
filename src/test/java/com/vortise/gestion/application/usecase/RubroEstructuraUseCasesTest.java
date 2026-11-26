@@ -15,6 +15,8 @@ import static org.mockito.Mockito.when;
 import com.vortise.gestion.application.dto.CertificadoCrearDto;
 import com.vortise.gestion.application.dto.CertificadoFilaDto;
 import com.vortise.gestion.application.dto.ObraTareaCreateDto;
+import com.vortise.gestion.application.dto.PlantaCreateDto;
+import com.vortise.gestion.application.dto.PlantaDto;
 import com.vortise.gestion.application.dto.ProyectoCreateDto;
 import com.vortise.gestion.application.dto.ProyectoUpdateDto;
 import com.vortise.gestion.application.dto.RegistroHorasCreateDto;
@@ -210,6 +212,58 @@ class RubroEstructuraUseCasesTest {
     private ProyectoUpdateDto updateRequest(RubroCreateDto... rubros) {
         return new ProyectoUpdateDto("Obra", null, null, "Dirección", "OB-1", null, null, null, null, null, null, null, null, null,
             List.of(), java.util.Arrays.asList(rubros), null);
+    }
+
+    @Test
+    void createUsesEmptyPlantsWhenOmitted() {
+        var resultado = createUseCase().execute(createRequest(List.of()));
+
+        assertEquals(List.of(), resultado.plantas());
+        var guardado = ArgumentCaptor.forClass(Proyecto.class);
+        verify(projects).save(guardado.capture());
+        assertTrue(guardado.getValue().getPlantas().isEmpty());
+    }
+
+    @Test
+    void updateMapsPlantsAndDistinguishesOmittedFromEmpty() {
+        var datos = new PlantaCreateDto("PB", 80., 60., 20., 70., 1.);
+        project.setPlantas(new ArrayList<>());
+        var coleccion = project.getPlantas();
+        var resultado = updateUseCase.execute(1L, requestWithPlants(List.of(datos)));
+        assertEquals(List.of(new PlantaDto(null, 1L, "PB", 80., 60., 20., 70., 1.)), resultado.plantas());
+        assertSame(project, coleccion.get(0).getProyecto());
+
+        var planta = coleccion.get(0);
+        updateUseCase.execute(1L, requestWithPlants(null));
+        assertSame(coleccion, project.getPlantas());
+        assertSame(planta, coleccion.get(0));
+
+        updateUseCase.execute(1L, requestWithPlants(List.of()));
+        assertSame(coleccion, project.getPlantas());
+        assertTrue(coleccion.isEmpty());
+    }
+
+    @Test
+    void createAndUpdateValidateDatesBeforeSurfaces() {
+        var inicio = LocalDate.of(2026, 4, 10);
+        var alta = createUseCase();
+        for (var fin : List.of(inicio.minusDays(1), inicio)) {
+            String esperado = fin.isBefore(inicio)
+                    ? "La fecha de fin debe ser posterior al inicio de la obra"
+                    : "Las superficies generales deben ser números no negativos";
+            var crear = new ProyectoCreateDto("Obra", null, null, null, null, inicio, fin, null, null, null,
+                    EMPRESA_ID, null, null, null, null, null, null, -1., null, null, null, null);
+            var editar = new ProyectoUpdateDto("Obra", null, null, null, null, inicio, fin, null, null, null,
+                    null, null, null, null, null, null, null, -1., null, null, true, null, null);
+            assertEquals(esperado, assertThrows(SolicitudInvalidaException.class, () -> alta.execute(crear)).getMessage());
+            assertEquals(esperado, assertThrows(SolicitudInvalidaException.class, () -> updateUseCase.execute(1L, editar)).getMessage());
+        }
+        verify(projects, never()).save(any(Proyecto.class));
+    }
+
+    private ProyectoUpdateDto requestWithPlants(List<PlantaCreateDto> plantas) {
+        return new ProyectoUpdateDto("Obra", null, null, "Dirección", "OB-1", null, null, null, null, null, null,
+                null, null, null, plantas, null, null);
     }
 
     private void taskOn(RubroObra activity) {
