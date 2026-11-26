@@ -157,3 +157,7 @@ Integrar ProyectoBajaService en ProyectoConsultaService y renombrar el resultado
 - CertificadoBloqueos usa los mismos repositorios que CertificadoObraService. Evaluar si conviene compartir consultas del último corte. La regla de bloqueo se usa desde tareas y edición y tiene una transacción de lectura propia.
 - ConfiguracionEmpresaObraService comparte catálogos y categorías con EmpresaConfiguracionService. Su operación por lotes trabaja bajo un bloqueo de empresa y se invoca durante las escrituras de obra. Cualquier traslado debe mantener ese alcance.
 - Mantener las fronteras de sesión y recuperación de contraseña. SesionService coordina apertura, renovación y cierre. RefreshTokenService conserva la persistencia y revocación de familias. PasswordResetTransactions evita que el envío de correo quede dentro de la transacción.
+
+### Alta y datos comunes de proyecto
+
+Mover el alta a ProyectoService con su transacción y bloqueo de empresa. Compartir la asignación de superficies y calendario en DatosProyecto. Mantener la edición en su servicio porque coordina bloqueos de certificados y dependencias de rubros, tareas y horas.

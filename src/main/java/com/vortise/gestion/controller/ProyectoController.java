@@ -18,7 +18,6 @@ import com.vortise.gestion.application.dto.PaginaDto;
 import com.vortise.gestion.application.dto.ProyectoCreateDto;
 import com.vortise.gestion.application.dto.ProyectoDto;
 import com.vortise.gestion.application.dto.ProyectoUpdateDto;
-import com.vortise.gestion.service.ProyectoAltaService;
 import com.vortise.gestion.service.ProyectoService;
 import com.vortise.gestion.service.ProyectoEdicionService;
 import jakarta.validation.Valid;
@@ -40,7 +39,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value={"/api/proyectos"})
 public class ProyectoController {
     private final ProyectoService proyectos;
-    private final ProyectoAltaService altaProyecto;
     private final ProyectoEdicionService edicionProyecto;
 
     @GetMapping
@@ -63,7 +61,7 @@ public class ProyectoController {
     @PostMapping
     @org.springframework.security.access.prepost.PreAuthorize(com.vortise.gestion.infrastructure.security.Guards.SOLO_ADMINISTRADOR)
     public ResponseEntity<ProyectoDto> create(@Valid @RequestBody ProyectoCreateDto dto) {
-        return ResponseEntity.status((HttpStatusCode)HttpStatus.CREATED).body(this.altaProyecto.execute(dto));
+        return ResponseEntity.status((HttpStatusCode)HttpStatus.CREATED).body(proyectos.crear(dto));
     }
 
     @PutMapping(value="/{id}")
@@ -80,12 +78,10 @@ public class ProyectoController {
     }
 
     public ProyectoController(
-        ProyectoAltaService altaProyecto,
         ProyectoEdicionService edicionProyecto,
         ProyectoService proyectos
     ) {
         this.proyectos = proyectos;
-        this.altaProyecto = altaProyecto;
         this.edicionProyecto = edicionProyecto;
     }
 }

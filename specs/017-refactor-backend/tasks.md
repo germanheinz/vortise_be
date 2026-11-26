@@ -173,3 +173,9 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] El pedido de refactor autorizó el candidato ya identificado de baja de proyecto. Se consolidó con las consultas en ProyectoService.
 - [x] Pasaron 42 pruebas con `mvn -Dtest=ProyectoServiceTest,WriteEndpointsGuardTest,CreateProyectoSubcontratistaTest,CalendarioLaboralObraTest,RubroEstructuraUseCasesTest,EmpresaTenantScopeTest clean test`. Pasó `git diff --check`.
 - [ ] Verificación HTTP con Spring y revisión independiente pendientes. Los demás candidatos documentados requieren un alcance aprobado antes de su implementación.
+
+### Alta y datos comunes de proyecto
+
+- [x] «mismo patron» autorizó continuar la consolidación de proyectos. Alta movida a ProyectoService; superficies y calendario explícito compartidos con edición.
+- [x] Pasaron 37 pruebas con `mvn -Dtest=ProyectoServiceTest,WriteEndpointsGuardTest,CreateProyectoSubcontratistaTest,CalendarioLaboralObraTest,RubroEstructuraUseCasesTest clean test`. Pasó `git diff --check`.
+- [ ] Pendientes integración con Spring y revisión independiente.

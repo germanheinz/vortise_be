@@ -104,3 +104,7 @@ Retirar la pantalla y la API global de gastos fijos. Los costos indirectos de ca
 ### Consolidación de consultas y baja de proyectos
 
 ProyectoService reúne las consultas y la baja. Se conservan las rutas, guardas, errores y límites transaccionales actuales.
+
+### Alta y datos comunes de proyecto
+
+ProyectoService incorpora el alta. Alta y edición comparten la asignación de superficies y calendario explícito, conservando las reglas de cuándo se asignan y los límites transaccionales.

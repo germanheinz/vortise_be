@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 class ProyectoServiceTest {
     private final ProyectoRepository proyectos = mock(ProyectoRepository.class);
-    private final ProyectoService service = new ProyectoService(proyectos, null, null);
+    private final ProyectoService service = new ProyectoService(proyectos, null, null, null, null);
 
     @Test
     void eliminaUnProyectoExistente() {

@@ -20,7 +20,7 @@ class CreateProyectoSubcontratistaTest {
     private ProyectoRepository proyectos;
     private CatalogoEmpresaRepository catalogos;
     private Empresa empresa;
-    private ProyectoAltaService useCase;
+    private ProyectoService useCase;
 
     @BeforeEach
     void setUp() {
@@ -33,7 +33,7 @@ class CreateProyectoSubcontratistaTest {
         CurrentTenantService tenant = mock(CurrentTenantService.class);
         ConfiguracionEmpresaObraService cambiosEmpresa = mock(ConfiguracionEmpresaObraService.class);
         when(cambiosEmpresa.execute(any(), any(), any())).thenReturn(List.of());
-        useCase = new ProyectoAltaService(proyectos, empresas, catalogos, tenant, cambiosEmpresa);
+        useCase = new ProyectoService(proyectos, empresas, catalogos, tenant, cambiosEmpresa);
     }
 
     @Test
@@ -43,7 +43,7 @@ class CreateProyectoSubcontratistaTest {
         CatalogoEmpresa foreign = subcontractor(otherEmpresa, "SUBCONTRATISTA");
         when(catalogos.findById(81L)).thenReturn(Optional.of(foreign));
 
-        assertThrows(IllegalArgumentException.class, () -> useCase.execute(request(List.of(81L))));
+        assertThrows(IllegalArgumentException.class, () -> useCase.crear(request(List.of(81L))));
         verify(proyectos, never()).save(any(Proyecto.class));
     }
 
@@ -52,13 +52,13 @@ class CreateProyectoSubcontratistaTest {
         CatalogoEmpresa wrongType = subcontractor(empresa, "CLIENTE");
         when(catalogos.findById(82L)).thenReturn(Optional.of(wrongType));
 
-        assertThrows(IllegalArgumentException.class, () -> useCase.execute(request(List.of(82L))));
+        assertThrows(IllegalArgumentException.class, () -> useCase.crear(request(List.of(82L))));
         verify(proyectos, never()).save(any(Proyecto.class));
     }
 
     @Test
     void rejectsDuplicateSelectedIdsBeforeLookingUpCatalogEntries() {
-        assertThrows(IllegalArgumentException.class, () -> useCase.execute(request(List.of(83L, 83L))));
+        assertThrows(IllegalArgumentException.class, () -> useCase.crear(request(List.of(83L, 83L))));
 
         verifyNoInteractions(catalogos);
         verify(proyectos, never()).save(any(Proyecto.class));
@@ -71,7 +71,7 @@ class CreateProyectoSubcontratistaTest {
             null, null, null, null, 2, EMPRESA_ID, null, null, null, List.of(), List.of(), List.of(),
             120.0, 35.0, 45.0, null, null);
 
-        var saved = useCase.execute(request);
+        var saved = useCase.crear(request);
 
         assertEquals(120.0, saved.superficieCubierta());
         assertEquals(35.0, saved.superficieSemicubierta());
@@ -85,7 +85,7 @@ class CreateProyectoSubcontratistaTest {
             null, null, null, null, 2, EMPRESA_ID, null, null, null, List.of(), List.of(), List.of(),
             null, null, null, null, null, 30);
 
-        var saved = useCase.execute(request);
+        var saved = useCase.crear(request);
 
         assertEquals(30, saved.pedidosDeObraDias());
     }

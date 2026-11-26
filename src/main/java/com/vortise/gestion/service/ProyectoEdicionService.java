@@ -101,14 +101,10 @@ public class ProyectoEdicionService {
         proyecto.setCantidadSectores(dto.cantidadSectores());
         if (dto.actualizarPedidosDeObraDias()) proyecto.setPedidosDeObraDias(dto.pedidosDeObraDias());
         if (dto.calendarioLaboral() != null) {
-            var calendario = dto.calendarioLaboral();
-            proyecto.setCalendarioLaboral(calendario.trabajaSabado(), calendario.trabajaDomingo(),
-                calendario.pagaDobleFeriado(), calendario.pagaDobleNoLaborable());
+            DatosProyecto.aplicarCalendario(proyecto, dto.calendarioLaboral());
         }
         if (dto.actualizarSuperficiesGenerales()) {
-            proyecto.setSuperficieCubierta(dto.superficieCubierta());
-            proyecto.setSuperficieSemicubierta(dto.superficieSemicubierta());
-            proyecto.setSuperficieDescubierta(dto.superficieDescubierta());
+            DatosProyecto.aplicarSuperficies(proyecto, dto.superficieCubierta(), dto.superficieSemicubierta(), dto.superficieDescubierta());
         }
         proyecto.setEmpresa(dto.empresa());
         if (dto.empresaId() != null) {

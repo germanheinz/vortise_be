@@ -27,7 +27,7 @@ class CalendarioLaboralObraTest {
     private static final Long EMPRESA_ID = 7L;
     private ProyectoRepository proyectos;
     private Empresa empresa;
-    private ProyectoAltaService create;
+    private ProyectoService create;
 
     @BeforeEach
     void setUp() {
@@ -39,7 +39,7 @@ class CalendarioLaboralObraTest {
         var cambios = mock(ConfiguracionEmpresaObraService.class);
         when(cambios.execute(any(), any(), any())).thenReturn(List.of());
         when(proyectos.save(any(Proyecto.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        create = new ProyectoAltaService(proyectos, empresas, mock(CatalogoEmpresaRepository.class), mock(CurrentIdentity.class), cambios);
+        create = new ProyectoService(proyectos, empresas, mock(CatalogoEmpresaRepository.class), mock(CurrentIdentity.class), cambios);
     }
 
     @Test
@@ -49,7 +49,7 @@ class CalendarioLaboralObraTest {
         company.setTrabajaDomingo(true);
         company.setPagaDobleFeriado(true);
 
-        var saved = create.execute(request(null));
+        var saved = create.crear(request(null));
 
         assertEquals(new CalendarioObraDto(false, true, true, false), saved.calendarioLaboral());
     }
@@ -60,7 +60,7 @@ class CalendarioLaboralObraTest {
         company.setTrabajaDomingo(true);
         var requested = new CalendarioObraDto(false, false, false, true);
 
-        var saved = create.execute(request(requested));
+        var saved = create.crear(request(requested));
 
         assertEquals(requested, saved.calendarioLaboral());
     }

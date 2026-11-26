@@ -85,7 +85,7 @@ class RubroEstructuraUseCasesTest {
 
     private ProyectoRepository projects = mock(ProyectoRepository.class);
 
-    private ProyectoAltaService createUseCase() {
+    private ProyectoService createUseCase() {
         EmpresaRepository companies = mock(EmpresaRepository.class);
         Empresa company = mock(Empresa.class);
         when(company.getId()).thenReturn(EMPRESA_ID);
@@ -93,7 +93,7 @@ class RubroEstructuraUseCasesTest {
         var changes = mock(ConfiguracionEmpresaObraService.class);
         when(changes.execute(any(), any(), any())).thenReturn(List.of());
         when(projects.save(any(Proyecto.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        return new ProyectoAltaService(projects, companies, mock(CatalogoEmpresaRepository.class), mock(CurrentIdentity.class), changes);
+        return new ProyectoService(projects, companies, mock(CatalogoEmpresaRepository.class), mock(CurrentIdentity.class), changes);
     }
 
     private ProyectoCreateDto createRequest(List<RubroCreateDto> rubros) {
@@ -102,7 +102,7 @@ class RubroEstructuraUseCasesTest {
     }
 
     @Test void createsTheThreeVariantsInTheSameObraWithoutDataOnGroupingNodes() {
-        var result = createUseCase().execute(createRequest(List.of(
+        var result = createUseCase().crear(createRequest(List.of(
             row(null, "1", null, "RUBRO", "RUBRO_SUBRUBRO", "Estructura", 99.0, "m2"),
             row(null, "1.1", "1", "SUBRUBRO", null, "Losas", 10.0, "m2"),
             row(null, "2", null, "RUBRO", "RUBRO_NIVEL_SUBRUBRO", "Hormigón", 99.0, "m3"),
@@ -155,11 +155,11 @@ class RubroEstructuraUseCasesTest {
 
     @Test void createRejectsInvalidTreesWithoutSaving() {
         var useCase = createUseCase();
-        assertThrows(SolicitudInvalidaException.class, () -> useCase.execute(createRequest(List.of(
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.crear(createRequest(List.of(
             row(null, "1", null, "RUBRO", null, "A", null, null), row(null, "1.1", "9", "SUBRUBRO", null, "B", 1.0, "m")))));
-        assertThrows(SolicitudInvalidaException.class, () -> useCase.execute(createRequest(List.of(
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.crear(createRequest(List.of(
             row(null, "1", null, "RUBRO", null, "A", null, null), row(null, "1", null, "RUBRO", null, "B", null, null)))));
-        assertThrows(SolicitudInvalidaException.class, () -> useCase.execute(createRequest(List.of(
+        assertThrows(SolicitudInvalidaException.class, () -> useCase.crear(createRequest(List.of(
             row(null, "1", null, "RUBRO", "RUBRO_SUBRUBRO", "A", null, null), row(null, "1.1", "1", "NIVEL", null, "B", 1.0, "m")))));
         verify(projects, never()).save(any(Proyecto.class));
     }
@@ -170,7 +170,7 @@ class RubroEstructuraUseCasesTest {
         RubroCreateDto leaf = new RubroCreateDto("5001", "Hormigón", "PB", null, "Fundación", 10.0, "m3", null, null, "PROPIA", null,
             null, null, null, null, null, false, null, null, null);
 
-        var result = createUseCase().execute(createRequest(List.of(leaf, root)));
+        var result = createUseCase().crear(createRequest(List.of(leaf, root)));
 
         ArgumentCaptor<Proyecto> saved = ArgumentCaptor.forClass(Proyecto.class);
         verify(projects).save(saved.capture());
@@ -220,7 +220,7 @@ class RubroEstructuraUseCasesTest {
 
     @Test
     void createUsesEmptyPlantsWhenOmitted() {
-        var resultado = createUseCase().execute(createRequest(List.of()));
+        var resultado = createUseCase().crear(createRequest(List.of()));
 
         assertEquals(List.of(), resultado.plantas());
         var guardado = ArgumentCaptor.forClass(Proyecto.class);
@@ -259,7 +259,7 @@ class RubroEstructuraUseCasesTest {
                     EMPRESA_ID, null, null, null, null, null, null, -1., null, null, null, null);
             var editar = new ProyectoUpdateDto("Obra", null, null, null, null, inicio, fin, null, null, null,
                     null, null, null, null, null, null, null, -1., null, null, true, null, null);
-            assertEquals(esperado, assertThrows(SolicitudInvalidaException.class, () -> alta.execute(crear)).getMessage());
+            assertEquals(esperado, assertThrows(SolicitudInvalidaException.class, () -> alta.crear(crear)).getMessage());
             assertEquals(esperado, assertThrows(SolicitudInvalidaException.class, () -> updateUseCase.execute(1L, editar)).getMessage());
         }
         verify(projects, never()).save(any(Proyecto.class));

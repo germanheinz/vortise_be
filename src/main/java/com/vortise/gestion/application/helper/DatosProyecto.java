@@ -1,5 +1,6 @@
 package com.vortise.gestion.application.helper;
 
+import com.vortise.gestion.application.dto.CalendarioObraDto;
 import com.vortise.gestion.application.dto.PlantaCreateDto;
 import com.vortise.gestion.application.exception.SolicitudInvalidaException;
 import com.vortise.gestion.domain.model.Planta;
@@ -24,6 +25,17 @@ public final class DatosProyecto {
                 throw new SolicitudInvalidaException("Las superficies generales deben ser números no negativos");
             }
         }
+    }
+
+    public static void aplicarSuperficies(Proyecto proyecto, Double cubierta, Double semicubierta, Double descubierta) {
+        proyecto.setSuperficieCubierta(cubierta);
+        proyecto.setSuperficieSemicubierta(semicubierta);
+        proyecto.setSuperficieDescubierta(descubierta);
+    }
+
+    public static void aplicarCalendario(Proyecto proyecto, CalendarioObraDto calendario) {
+        proyecto.setCalendarioLaboral(calendario.trabajaSabado(), calendario.trabajaDomingo(),
+            calendario.pagaDobleFeriado(), calendario.pagaDobleNoLaborable());
     }
 
     public static List<Planta> mapearPlantas(List<PlantaCreateDto> plantas, Proyecto proyecto) {
