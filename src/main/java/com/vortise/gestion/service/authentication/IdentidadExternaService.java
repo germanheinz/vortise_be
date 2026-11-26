@@ -1,12 +1,12 @@
 package com.vortise.gestion.service.authentication;
 
+import com.vortise.gestion.application.helper.Emails;
 import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.application.exception.AccesoDenegadoException;
 import com.vortise.gestion.application.port.IdentidadExternaVerificador.IdentidadVerificada;
 import com.vortise.gestion.model.UsuarioEmpresa;
 import com.vortise.gestion.repository.UsuarioEmpresaRepository;
 import java.time.Instant;
-import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -40,7 +40,7 @@ public class IdentidadExternaService {
     }
 
     private UsuarioEmpresa vincularPorEmail(IdentidadVerificada identidad) {
-        String email = identidad.email().trim().toLowerCase(Locale.ROOT);
+        String email = Emails.normalizar(identidad.email());
         UsuarioEmpresa usuario = usuarios.findByEmail(email)
             .filter(candidato -> candidato.getClerkUserId() == null)
             .orElseThrow(AccesoDenegadoException::cuentaNoRegistrada);

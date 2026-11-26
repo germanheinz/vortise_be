@@ -1,5 +1,6 @@
 package com.vortise.gestion.controller;
 
+import com.vortise.gestion.infrastructure.security.Guards;
 import com.vortise.gestion.application.dto.EmpresaCreateDto;
 import com.vortise.gestion.application.dto.EmpresaDto;
 import com.vortise.gestion.application.dto.EmpresaResumenDto;
@@ -80,19 +81,19 @@ public class EmpresaController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize(Guards.SOLO_ADMINISTRADOR)
     public ResponseEntity<EmpresaDto> create(@Valid @RequestBody EmpresaCreateDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(empresas.create(dto));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize(Guards.SOLO_ADMINISTRADOR)
     public ResponseEntity<EmpresaDto> update(@PathVariable Long id, @Valid @RequestBody EmpresaCreateDto dto) {
         return ResponseEntity.ok(empresas.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize(Guards.SOLO_ADMINISTRADOR)
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         empresas.eliminar(id);
         return ResponseEntity.noContent().build();

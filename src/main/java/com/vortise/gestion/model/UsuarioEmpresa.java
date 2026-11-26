@@ -37,10 +37,6 @@ public class UsuarioEmpresa {
     private String clerkUserId;
     @Column(name = "tiene_login")
     private boolean tieneLogin = false;
-    @Column(name = "codigo_invitacion", unique = true)
-    private String codigoInvitacion;
-    @Column(name = "invitacion_expira_en")
-    private Instant invitacionExpiraEn;
     @Column(name = "migrado_a_clerk")
     private boolean migradoAClerk = false;
     @jakarta.persistence.ElementCollection
@@ -82,8 +78,6 @@ public class UsuarioEmpresa {
     public long getSessionVersion() { return sessionVersion; }
     public String getClerkUserId() { return clerkUserId; }
     public boolean getTieneLogin() { return tieneLogin; }
-    public String getCodigoInvitacion() { return codigoInvitacion; }
-    public Instant getInvitacionExpiraEn() { return invitacionExpiraEn; }
     public boolean isMigradoAClerk() { return migradoAClerk; }
     /** New identity/restored identity must not reuse generations from previously signed JWTs. */
     public static long nuevaGeneracionSesion() { return SESSION_GENERATIONS.nextLong(1, Long.MAX_VALUE / 2); }
@@ -97,8 +91,6 @@ public class UsuarioEmpresa {
     public void setEmail(String value) { email = value; }
     public void setClerkUserId(String value) { clerkUserId = value; }
     public void setTieneLogin(boolean value) { tieneLogin = value; }
-    public void setCodigoInvitacion(String value) { codigoInvitacion = value; }
-    public void setInvitacionExpiraEn(Instant value) { invitacionExpiraEn = value; }
     public void setMigradoAClerk(boolean value) { migradoAClerk = value; }
 
     /** Credentials live in the external identity provider; no password ever matches this value. */

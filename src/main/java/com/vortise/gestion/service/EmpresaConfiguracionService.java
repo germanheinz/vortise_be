@@ -1,5 +1,7 @@
 package com.vortise.gestion.service;
 
+import static com.vortise.gestion.application.helper.RecursosDeEmpresa.propio;
+
 import com.vortise.gestion.application.dto.CalendarioLaboralEmpresaDto;
 import com.vortise.gestion.application.dto.CatalogoEmpresaDto;
 import com.vortise.gestion.application.dto.CategoriaManoObraEmpresaDto;
@@ -65,8 +67,7 @@ public class EmpresaConfiguracionService {
     public ResponsableEmpresaDto saveResponsable(Long empresaId, ResponsableEmpresaDto dto) {
         Empresa empresa = lockEmpresa(empresaId);
         ResponsableEmpresa responsable = dto.id() == null ? new ResponsableEmpresa(empresa, dto.rol().trim(), dto.nombre().trim(), dto.email(), dto.telefono(), normalize(dto.area()))
-            : responsableRepository.findById(dto.id()).orElseThrow(() -> new RecursoNoEncontradoException("Responsable no encontrado"));
-        if (!responsable.getEmpresa().getId().equals(empresaId)) throw new SolicitudInvalidaException("El responsable no pertenece a la empresa");
+            : propio(responsableRepository.findById(dto.id()), empresaId, "Responsable no encontrado", "El responsable no pertenece a la empresa");
         responsable.setRol(dto.rol().trim());
         responsable.setNombre(dto.nombre().trim());
         responsable.setEmail(normalize(dto.email()));
@@ -78,8 +79,7 @@ public class EmpresaConfiguracionService {
     @Transactional
     public void deleteResponsable(Long empresaId, Long id) {
         lockEmpresa(empresaId);
-        ResponsableEmpresa responsable = responsableRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Responsable no encontrado"));
-        if (!responsable.getEmpresa().getId().equals(empresaId)) throw new SolicitudInvalidaException("El responsable no pertenece a la empresa");
+        propio(responsableRepository.findById(id), empresaId, "Responsable no encontrado", "El responsable no pertenece a la empresa");
         responsableRepository.deleteById(id);
     }
 
@@ -94,8 +94,7 @@ public class EmpresaConfiguracionService {
         Empresa empresa = lockEmpresa(empresaId);
         String nombre = dto.nombre().trim();
         UnidadMetricaEmpresa unidad = dto.id() == null ? new UnidadMetricaEmpresa(empresa, resolveUnidadCodigo(empresaId, dto.codigo(), nombre), nombre)
-            : unidadRepository.findById(dto.id()).orElseThrow(() -> new RecursoNoEncontradoException("Unidad no encontrada"));
-        if (!unidad.getEmpresa().getId().equals(empresaId)) throw new SolicitudInvalidaException("La unidad no pertenece a la empresa");
+            : propio(unidadRepository.findById(dto.id()), empresaId, "Unidad no encontrada", "La unidad no pertenece a la empresa");
         if (dto.id() != null && dto.codigo() != null && !dto.codigo().isBlank()) unidad.setCodigo(dto.codigo().trim().toUpperCase(Locale.ROOT));
         unidad.setNombre(nombre);
         return toDto(unidadRepository.save(unidad));
@@ -122,8 +121,7 @@ public class EmpresaConfiguracionService {
     @Transactional
     public void deleteUnidad(Long empresaId, Long id) {
         lockEmpresa(empresaId);
-        UnidadMetricaEmpresa unidad = unidadRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Unidad no encontrada"));
-        if (!unidad.getEmpresa().getId().equals(empresaId)) throw new SolicitudInvalidaException("La unidad no pertenece a la empresa");
+        propio(unidadRepository.findById(id), empresaId, "Unidad no encontrada", "La unidad no pertenece a la empresa");
         unidadRepository.deleteById(id);
     }
 
@@ -137,8 +135,7 @@ public class EmpresaConfiguracionService {
     public CatalogoEmpresaDto saveCatalogo(Long empresaId, CatalogoEmpresaDto dto) {
         Empresa empresa = lockEmpresa(empresaId);
         CatalogoEmpresa item = dto.id() == null ? new CatalogoEmpresa(empresa, dto.tipo().trim().toUpperCase(), dto.codigo().trim(), dto.nombre().trim())
-            : catalogoRepository.findById(dto.id()).orElseThrow(() -> new RecursoNoEncontradoException("Catalogo no encontrado"));
-        if (!item.getEmpresa().getId().equals(empresaId)) throw new SolicitudInvalidaException("El catalogo no pertenece a la empresa");
+            : propio(catalogoRepository.findById(dto.id()), empresaId, "Catalogo no encontrado", "El catalogo no pertenece a la empresa");
         item.setCodigo(dto.codigo().trim());
         item.setNombre(dto.nombre().trim());
         return toDto(catalogoRepository.save(item));
@@ -147,8 +144,7 @@ public class EmpresaConfiguracionService {
     @Transactional
     public void deleteCatalogo(Long empresaId, Long id) {
         lockEmpresa(empresaId);
-        CatalogoEmpresa item = catalogoRepository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Catalogo no encontrado"));
-        if (!item.getEmpresa().getId().equals(empresaId)) throw new SolicitudInvalidaException("El catalogo no pertenece a la empresa");
+        CatalogoEmpresa item = propio(catalogoRepository.findById(id), empresaId, "Catalogo no encontrado", "El catalogo no pertenece a la empresa");
         if ("SUBCONTRATISTA".equalsIgnoreCase(item.getTipo())
                 && (catalogoRepository.existsInSelectedProjects(id) || catalogoRepository.existsAssignedToActivity(id))) {
             throw new ConflictoEstadoException("No se puede eliminar el subcontratista mientras esté seleccionado en una obra o asignado a un subrubro");
@@ -198,9 +194,8 @@ public class EmpresaConfiguracionService {
     @Transactional
     public CategoriaManoObraEmpresaDto saveCategoriaManoObra(Long empresaId, Long id, CategoriaManoObraEmpresaDto dto) {
         lockEmpresa(empresaId);
-        CategoriaManoObraEmpresa categoria = categoriaManoObraRepository.findById(id)
-            .orElseThrow(() -> new RecursoNoEncontradoException("Categoría no encontrada"));
-        if (!categoria.getEmpresa().getId().equals(empresaId)) throw new SolicitudInvalidaException("La categoría no pertenece a la empresa");
+        CategoriaManoObraEmpresa categoria = propio(categoriaManoObraRepository.findById(id), empresaId,
+            "Categoría no encontrada", "La categoría no pertenece a la empresa");
         categoria.setCostoHora(dto.costoHora());
         categoria.setHabilitada(dto.habilitada());
         return toDto(categoriaManoObraRepository.save(categoria));

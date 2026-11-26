@@ -41,9 +41,6 @@ public interface SuscripcionRepository {
     @Query("select max(s.actualizadoEn) from Suscripcion s left join s.usuario u left join s.empresa e where (u is null or u.superAdmin = false) and (:empresaInternaId is null or e.id is null or e.id <> :empresaInternaId)")
     java.time.Instant ultimaActualizacionSuperAdmin(@Param("empresaInternaId") Long empresaInternaId);
 
-    @EntityGraph(attributePaths = "plan")
-    java.util.Optional<Suscripcion> findFirstByEmpresaId(Long empresaId);
-
     @Query("select s.empresa.id as empresaId, p.codigo as planCodigo, s.estado as estado from Suscripcion s left join s.plan p where s.empresa.id in :empresaIds")
     List<SuperAdminSuscripcionEmpresaProjection> buscarResumenEmpresaSuperAdmin(@Param("empresaIds") Collection<Long> empresaIds);
 
@@ -63,6 +60,5 @@ public interface SuscripcionRepository {
     Optional<Suscripcion> findByEmpresaId(Long empresaId);
     Optional<Suscripcion> findByStripeSubscriptionId(String stripeSubscriptionId);
     Optional<Suscripcion> findByStripeCustomerId(String stripeCustomerId);
-    List<Suscripcion> findByUsuario_Empresa_Id(Long empresaId);
     Suscripcion save(Suscripcion suscripcion);
 }

@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "categorias_mano_obra_empresa", uniqueConstraints = @jakarta.persistence.UniqueConstraint(columnNames = {"empresa_id", "nombre"}))
-public class CategoriaManoObraEmpresa {
+public class CategoriaManoObraEmpresa implements RecursoDeEmpresa {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "empresa_id", nullable = false)

@@ -1,5 +1,6 @@
 package com.vortise.gestion.service.authentication;
 
+import com.vortise.gestion.application.helper.Emails;
 import com.vortise.gestion.service.EmpresaConfiguracionService;
 import com.vortise.gestion.application.helper.PasswordPolicy;
 import com.vortise.gestion.application.dto.LoginResponseDto;
@@ -38,21 +39,21 @@ public class RegistroService {
         PasswordPolicy.validate(request.password());
         String password = passwordEncoder.encode(request.password());
         return crearEmpresaConAdministrador(request.empresaNombre(), request.email(),
-            empresa -> new UsuarioEmpresa(empresa, normalizar(request.email()), request.nombre().trim(), password, RolEmpresa.ADMINISTRADOR));
+            empresa -> new UsuarioEmpresa(empresa, Emails.normalizar(request.email()), request.nombre().trim(), password, RolEmpresa.ADMINISTRADOR));
     }
 
     @Transactional
     public LoginResponseDto registrarConIdentidad(RegistroConIdentidadDto request, IdentidadVerificada identidad) {
         if (usuarios.findByClerkUserId(identidad.sujeto()).isPresent()) throw new SolicitudInvalidaException(MENSAJE_DUPLICADO);
         return crearEmpresaConAdministrador(request.empresaNombre(), identidad.email(),
-            empresa -> UsuarioEmpresa.conIdentidadExterna(empresa, normalizar(identidad.email()), request.nombre().trim(),
+            empresa -> UsuarioEmpresa.conIdentidadExterna(empresa, Emails.normalizar(identidad.email()), request.nombre().trim(),
                 RolEmpresa.ADMINISTRADOR, identidad.sujeto()));
     }
 
     private LoginResponseDto crearEmpresaConAdministrador(String nombreEmpresa, String email,
             java.util.function.Function<Empresa, UsuarioEmpresa> administrador) {
         String empresaNombre = nombreEmpresa.trim();
-        if (usuarios.findByEmail(normalizar(email)).isPresent() || empresas.findByNombreIgnoreCase(empresaNombre).isPresent()) {
+        if (usuarios.findByEmail(Emails.normalizar(email)).isPresent() || empresas.findByNombreIgnoreCase(empresaNombre).isPresent()) {
             throw new SolicitudInvalidaException(MENSAJE_DUPLICADO);
         }
         Empresa empresa = empresas.save(new Empresa(empresaNombre, null));
@@ -61,9 +62,5 @@ public class RegistroService {
         empresas.save(empresa);
         configuracion.inicializar(empresa.getId());
         return autenticacion.sesion(usuario);
-    }
-
-    private static String normalizar(String email) {
-        return email.trim().toLowerCase(java.util.Locale.ROOT);
     }
 }

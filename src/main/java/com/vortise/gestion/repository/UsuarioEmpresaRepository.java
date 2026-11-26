@@ -20,7 +20,6 @@ public interface UsuarioEmpresaRepository {
         long contarActivosSuperAdmin(@Param("empresaInternaId") Long empresaInternaId);
         @Query("select count(u) from UsuarioEmpresa u where u.superAdmin = false and u.activo = false and (:empresaInternaId is null or u.empresa.id <> :empresaInternaId)")
         long contarInactivosSuperAdmin(@Param("empresaInternaId") Long empresaInternaId);
-    long countByEmpresaIdAndActivoTrueAndSuperAdminFalse(Long empresaId);
 
     @Query("select u.empresa.id as empresaId, count(u) as cantidad from UsuarioEmpresa u where u.superAdmin = false and u.empresa.id in :empresaIds group by u.empresa.id")
     List<EmpresaConteoProjection> contarUsuariosPorEmpresa(@Param("empresaIds") Collection<Long> empresaIds);
@@ -43,7 +42,6 @@ public interface UsuarioEmpresaRepository {
     Optional<UsuarioEmpresa> bloquearPorId(@Param("id") Long id);
     @Query("select distinct u from UsuarioEmpresa u left join u.empresasAsignadas a where u.empresa.id = :empresaId or a = :empresaId")
     List<UsuarioEmpresa> findByEmpresaId(@Param("empresaId") Long empresaId);
-    long countByEmpresaId(Long empresaId);
     long countByInvitanteIdAndActivoTrue(Long invitanteId);
     List<UsuarioEmpresa> findByInvitanteId(Long invitanteId);
     long countByEmpresaIdAndActivoTrue(Long empresaId);

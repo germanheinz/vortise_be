@@ -1,5 +1,6 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.application.helper.Emails;
 import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import com.vortise.gestion.service.pagos.SuscripcionConsultaService;
 import com.vortise.gestion.application.helper.PasswordPolicy;
@@ -47,12 +48,12 @@ public class UsuarioEmpresaService {
         Empresa empresa = lockEmpresa(empresaId);
         if (dto.rol() == com.vortise.gestion.model.RolEmpresa.COLABORADOR) throw new SolicitudInvalidaException("Usá una invitación para crear colaboradores.");
         PasswordPolicy.validate(dto.password());
-        usuarioRepository.findByEmail(dto.email().trim().toLowerCase(java.util.Locale.ROOT)).ifPresent(existing -> { throw new SolicitudInvalidaException("Ya existe un usuario con ese email"); });
+        usuarioRepository.findByEmail(Emails.normalizar(dto.email())).ifPresent(existing -> { throw new SolicitudInvalidaException("Ya existe un usuario con ese email"); });
         long activos = usuarioRepository.countByEmpresaIdAndActivoTrue(empresaId);
         if (activos >= empresa.getLimiteUsuarios()) {
             throw new ConflictoEstadoException("Se alcanzó el límite de " + empresa.getLimiteUsuarios() + " usuarios para esta empresa");
         }
-        return toDto(usuarioRepository.save(new UsuarioEmpresa(empresa, dto.email().trim().toLowerCase(java.util.Locale.ROOT), dto.nombre().trim(), passwordEncoder.encode(dto.password()), dto.rol())));
+        return toDto(usuarioRepository.save(new UsuarioEmpresa(empresa, Emails.normalizar(dto.email()), dto.nombre().trim(), passwordEncoder.encode(dto.password()), dto.rol())));
     }
     @Transactional
     public UsuarioEmpresaDto update(Long empresaId, Long id, UsuarioEmpresaUpdateDto dto) {

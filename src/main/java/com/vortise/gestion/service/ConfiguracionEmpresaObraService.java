@@ -1,5 +1,6 @@
 package com.vortise.gestion.service;
 
+import com.vortise.gestion.application.helper.RecursosDeEmpresa;
 import com.vortise.gestion.application.exception.OperacionNoPermitidaException;
 import com.vortise.gestion.application.dto.CategoriaManoObraCostoDto;
 import com.vortise.gestion.application.dto.SubcontratistaObraDto;
@@ -60,11 +61,8 @@ public class ConfiguracionEmpresaObraService {
             if (costo != null && (!Double.isFinite(costo) || costo < 0)) {
                 throw new SolicitudInvalidaException("El valor hora debe ser un número no negativo");
             }
-            CategoriaManoObraEmpresa categoria = categorias.findById(cambio.id())
-                .orElseThrow(() -> new RecursoNoEncontradoException("Categoría de mano de obra no encontrada"));
-            if (!empresaId.equals(categoria.getEmpresa().getId())) {
-                throw new SolicitudInvalidaException("La categoría de mano de obra no pertenece a la empresa");
-            }
+            CategoriaManoObraEmpresa categoria = RecursosDeEmpresa.propio(categorias.findById(cambio.id()), empresaId,
+                "Categoría de mano de obra no encontrada", "La categoría de mano de obra no pertenece a la empresa");
             categoria.setCostoHora(costo);
             categorias.save(categoria);
         }

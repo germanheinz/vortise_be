@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "unidades_metricas_empresa", uniqueConstraints = @jakarta.persistence.UniqueConstraint(columnNames = {"empresa_id", "codigo"}))
-public class UnidadMetricaEmpresa {
+public class UnidadMetricaEmpresa implements RecursoDeEmpresa {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

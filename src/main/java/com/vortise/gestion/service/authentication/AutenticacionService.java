@@ -7,6 +7,7 @@ import com.vortise.gestion.application.dto.LoginRequestDto;
 import com.vortise.gestion.application.dto.LoginResponseDto;
 import com.vortise.gestion.application.dto.MeDto;
 import com.vortise.gestion.application.port.CurrentIdentity;
+import com.vortise.gestion.model.Empresa;
 import com.vortise.gestion.model.RolEmpresa;
 import com.vortise.gestion.model.Suscripcion;
 import com.vortise.gestion.model.UsuarioEmpresa;

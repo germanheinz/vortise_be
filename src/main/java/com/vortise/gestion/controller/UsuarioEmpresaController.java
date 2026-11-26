@@ -1,5 +1,6 @@
 package com.vortise.gestion.controller;
 
+import com.vortise.gestion.infrastructure.security.Guards;
 import com.vortise.gestion.application.dto.UsuarioEmpresaDto;
 import com.vortise.gestion.application.dto.UsuarioEmpresaUpdateDto;
 import com.vortise.gestion.service.UsuarioEmpresaService;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/empresas/{empresaId}/usuarios")
-@PreAuthorize("hasRole('ADMINISTRADOR')")
+@PreAuthorize(Guards.SOLO_ADMINISTRADOR)
 public class UsuarioEmpresaController {
     private final UsuarioEmpresaService useCase;
     public UsuarioEmpresaController(UsuarioEmpresaService useCase) { this.useCase = useCase; }

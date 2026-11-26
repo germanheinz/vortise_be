@@ -1,5 +1,6 @@
 package com.vortise.gestion.controller.pagos;
 
+import com.vortise.gestion.infrastructure.security.Guards;
 import com.vortise.gestion.application.dto.CheckoutRequestDto;
 import com.vortise.gestion.application.dto.MisSuscripcionesDto;
 import com.vortise.gestion.application.dto.PlanSuscripcionDto;
@@ -47,7 +48,7 @@ public class SuscripcionController {
 
     /** Company ownership is enforced by TenantAccessInterceptor on /api/empresas/**. */
     @GetMapping("/empresas/{empresaId}/suscripcion")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize(Guards.SOLO_ADMINISTRADOR)
     public ResponseEntity<SuscripcionResumenDto> empresa(@PathVariable Long empresaId) {
         return consulta.resumenEmpresa(empresaId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }

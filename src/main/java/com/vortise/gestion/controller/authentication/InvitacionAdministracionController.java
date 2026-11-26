@@ -30,19 +30,19 @@ public class InvitacionAdministracionController {
     }
 
     @GetMapping(INVITACIONES_EQUIPO)
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize(Guards.SOLO_ADMINISTRADOR)
     public InvitacionesDto.Equipo listarEquipo() {
         return equipo.listar();
     }
 
     @PostMapping(INVITACIONES_EQUIPO)
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize(Guards.SOLO_ADMINISTRADOR)
     public ResponseEntity<InvitacionesDto.Creada> crearEquipo(@Valid @RequestBody InvitacionesDto.Crear dto) {
         return ResponseEntity.status(201).body(equipo.crear(dto));
     }
 
     @DeleteMapping(INVITACIONES_EQUIPO + "/{id}")
-    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PreAuthorize(Guards.SOLO_ADMINISTRADOR)
     public ResponseEntity<Void> revocarEquipo(@PathVariable Long id) {
         equipo.revocar(id);
         return ResponseEntity.noContent().build();

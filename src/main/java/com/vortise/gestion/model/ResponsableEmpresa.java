@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "responsables_empresa")
-public class ResponsableEmpresa {
+public class ResponsableEmpresa implements RecursoDeEmpresa {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
