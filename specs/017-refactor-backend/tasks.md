@@ -22,3 +22,10 @@ Durante el descubrimiento se observó un diff local en el cálculo de horas prev
 - [x] Detectada una dependencia directa del valor persistido en `DemoOperationalSeed`: suma la cantidad prevista de las tareas para generar registros horarios y consulta el porcentaje para identificar fixtures. La caracterización debe incluir ese flujo antes de cambiar escrituras.
 - [x] Verificación sin Spring ni base antes y después con `mvn -Dtest=PrevistoRealUseCaseTest,PrevistoRealCalculatorTest,EmpresaResumenUseCasesTest,DemoOperationalSeedTest test` desde `gestion_be`. Pasaron 43 pruebas en ambas ejecuciones, sin fallos, errores ni omisiones, con Java 21 y objetivo Java 17. Las nuevas pruebas cubren recálculo al editar el presupuesto, nulidad con horas incompletas y respaldo para tareas sin vínculo o con rubro ausente. `git diff --check` pasó.
 - [ ] Verificación HTTP y revisión independiente pendientes. La eliminación de columnas o el cambio de escritura se evalúa en un corte posterior.
+
+## Retiro gradual de escrituras duplicadas
+
+- [x] Revisadas las escrituras de API y del generador demo, el bloqueo de borrado de rubros con tareas en la edición de proyecto y el respaldo lógico H2. El respaldo usa metadatos y compara la huella del esquema al importar.
+- [x] Corte aprobado mediante «IMPLEMENTA» el 26 de noviembre de 2026 e implementado. Archivos de código: `CreateObraTareaUseCase.java`, `DemoOperationalSeed.java` y sus pruebas unitarias. Quedan fuera migraciones, escrituras sobre datos existentes, frontend y ejecución con Spring.
+- [x] Ejecutado `mvn -Dtest=PrevistoRealUseCaseTest,PrevistoRealCalculatorTest,EmpresaResumenUseCasesTest,DemoOperationalSeedTest test` desde `gestion_be` con Java 21 y objetivo Java 17. Pasaron 44 pruebas de caracterización antes del cambio y 45 en la última ejecución, sin fallos, errores ni omisiones. Las pruebas cubren respuesta, escritura y edición, respaldo previo, rechazo de cantidad inválida y totales demo. `git diff --check` pasó.
+- [ ] Quedan pendientes la verificación HTTP con Spring, el ciclo completo de Maven y la revisión independiente.

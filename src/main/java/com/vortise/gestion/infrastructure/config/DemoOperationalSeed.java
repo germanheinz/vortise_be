@@ -78,6 +78,7 @@ final class DemoOperationalSeed {
             double actualHours = Math.min(hours,count * capacity);
             double quantity = actualHours / (plannedHours / r.getCantidad() * HOURS_FACTOR[i]);
             var generated = new ArrayList<ObraTarea>();
+            double[] cantidadesEquivalentes = new double[count];
             for (int d = 0; d < count; d++) {
                 var task = d < legacy.size() ? legacy.get(d) : new ObraTarea();
                 task.setProyecto(p); task.setActividad(r);
@@ -90,8 +91,10 @@ final class DemoOperationalSeed {
                 task.setHorasAyudantes(actualHours/count * r.getHorasAyudantesPrevistas()/plannedHours);
                 var metrics = PrevistoRealCalculator.calculate(r.getCantidad(),r.getHorasOficialesPrevistas(),r.getHorasAyudantesPrevistas(),
                     task.getCantidadReal(),task.getHorasOficiales(),task.getHorasAyudantes(),null,null,dailyHours);
-                task.setCantidadPrevista(metrics.cantidadEquivalente());
-                task.setPorcentajeCumplimiento(Math.round(task.getCantidadReal()/metrics.cantidadEquivalente()*10000.)/100.);
+                cantidadesEquivalentes[d] = metrics.cantidadEquivalente();
+                if (d < legacy.size()) {
+                    task.setPorcentajeCumplimiento(null);
+                }
                 boolean meets = HOURS_FACTOR[i] <= 1;
                 task.setCumplimiento(meets ? "SI" : "NO");
                 task.setCausaNoCumplimiento(meets ? null : "Falta de materiales");
@@ -101,7 +104,7 @@ final class DemoOperationalSeed {
                 if (!legacy.contains(task)) p.getObraTareas().add(task);
                 generated.add(task);
             }
-            completeHourSummaries(p,r,generated,i);
+            completeHourSummaries(p, r, generated, cantidadesEquivalentes, i);
             changed = true;
         }
         changed |= completeRestrictions(p);
@@ -130,7 +133,8 @@ final class DemoOperationalSeed {
         return changed;
     }
 
-    private static void completeHourSummaries(Proyecto p, RubroObra r, List<ObraTarea> tasks, int index) {
+    private static void completeHourSummaries(Proyecto p, RubroObra r, List<ObraTarea> tasks,
+            double[] cantidadesEquivalentes, int index) {
         var existing = p.getRegistrosHoras().stream().filter(h -> Objects.equals(r.getnRubro(),h.getNumeroRubro())
             && Objects.equals(r.getRubro(),h.getRubro()) && Objects.equals(r.getSubRubro(),h.getSubRubro())).toList();
         double[] oldTotals = {6430,4890,2890,6960,4560,3320};
@@ -151,7 +155,9 @@ final class DemoOperationalSeed {
         int groups = Math.min(4,tasks.size());
         if (!existing.isEmpty() && groups != 4) return;
         for (int g = 0; g < groups; g++) {
-            var group = tasks.subList(g*tasks.size()/groups,(g+1)*tasks.size()/groups);
+            int desde = g * tasks.size() / groups;
+            int hasta = (g + 1) * tasks.size() / groups;
+            var group = tasks.subList(desde, hasta);
             var h = existing.isEmpty() ? new RegistroHoras() : existing.get(g);
             h.setProyecto(p); h.setNumeroRubro(r.getnRubro()); h.setRubro(r.getRubro()); h.setSubRubro(r.getSubRubro());
             h.setResponsable("Javier Ramos"); h.setEtapa("Seguimiento de cuadrilla");
@@ -161,7 +167,7 @@ final class DemoOperationalSeed {
             h.setHorasAyudantes(group.stream().mapToDouble(ObraTarea::getHorasAyudantes).sum());
             h.setHoras(h.getHorasOficiales()+h.getHorasAyudantes());
             h.setCantidadReal(group.stream().mapToDouble(ObraTarea::getCantidadReal).sum());
-            h.setCantidadPrevista(group.stream().mapToDouble(ObraTarea::getCantidadPrevista).sum());
+            h.setCantidadPrevista(Arrays.stream(cantidadesEquivalentes, desde, hasta).sum());
             h.setHorasPrevistas(h.getCantidadReal()*(r.getHorasOficialesPrevistas()+r.getHorasAyudantesPrevistas())/r.getCantidad());
             h.setDescripcion(MARKER+"RESUMEN:"+r.getnRubro()+":"+g+" · resumen de HH de cuadrilla, no carga adicional del cronograma");
             if (existing.isEmpty()) p.getRegistrosHoras().add(h);

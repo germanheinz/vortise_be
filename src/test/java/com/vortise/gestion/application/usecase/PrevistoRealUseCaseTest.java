@@ -218,6 +218,55 @@ class PrevistoRealUseCaseTest {
         verify(tasks,never()).save(any());
     }
     @Test
+    void createAndEditReturnDerivedProgressForLinkedLoads() {
+        activity.setCantidad(20.);
+        activity.setHorasOficialesPrevistas(100.);
+        activity.setHorasAyudantesPrevistas(100.);
+        when(tasks.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        var service = new CreateObraTareaUseCase(tasks, projects);
+
+        var datos = new ObraTareaCreateDto("Carga", null, null, "m2", "Hormigón", 90.,
+                null, null, null, 100., 80., 99., 6., null, null, LocalDate.of(2026, 10, 14), 10L);
+
+        var creada = service.execute(1L, datos);
+        assertEquals(18., creada.cantidadPrevista());
+        assertEquals(33.33, creada.porcentajeCumplimiento());
+        var guardada = org.mockito.ArgumentCaptor.forClass(ObraTarea.class);
+        verify(tasks).save(guardada.capture());
+        assertNull(guardada.getValue().getCantidadPrevista());
+        assertNull(guardada.getValue().getPorcentajeCumplimiento());
+
+        var historica = task(1, null, 6);
+        historica.setCantidadPrevista(8.);
+        historica.setPorcentajeCumplimiento(75.);
+        when(tasks.findById(1L)).thenReturn(Optional.of(historica));
+        var editada = service.update(1L, 1L, datos);
+        assertEquals(10L, editada.rubroId());
+        assertEquals(18., editada.cantidadPrevista());
+        assertEquals(33.33, editada.porcentajeCumplimiento());
+        assertEquals(8., historica.getCantidadPrevista());
+        assertEquals(75., historica.getPorcentajeCumplimiento());
+
+        var vinculada = guardada.getValue();
+        vinculada.setId(2L);
+        when(tasks.findById(2L)).thenReturn(Optional.of(vinculada));
+        assertEquals(18., service.update(1L, 2L, datos).cantidadPrevista());
+        assertNull(vinculada.getCantidadPrevista());
+        assertNull(vinculada.getPorcentajeCumplimiento());
+    }
+
+    @Test
+    void stillRejectsAnInvalidPreviewQuantity() {
+        var datos = new ObraTareaCreateDto("Carga", null, null, "m2", "Hormigón", null,
+                null, null, null, 100., 80., -1., 6., null, null, LocalDate.of(2026, 10, 14), 10L);
+        var service = new CreateObraTareaUseCase(tasks, projects);
+
+        var error = assertThrows(SolicitudInvalidaException.class, () -> service.execute(1L, datos));
+        assertEquals("Cantidad prevista inválida", error.getMessage());
+        verify(tasks, never()).save(any());
+    }
+
+    @Test
     void listingRecalculatesLinkedProgressAfterBudgetChanges() {
         activity.setCantidad(20.);
         activity.setHorasOficialesPrevistas(100.);

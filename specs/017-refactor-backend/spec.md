@@ -23,3 +23,10 @@ La especificación funcional existente sigue en [Previsto vs. Real](../002-previ
 - Conservar petición y respuesta de alta, edición y listado de tareas, incluidos los campos que el asistente de carga envía como vista previa. Conservar errores de validación, redondeo, nulos y resultados después de editar el presupuesto de un rubro.
 - Las tareas vinculadas presentan las métricas derivadas del rubro y las horas de la carga. Las tareas antiguas sin rubro resoluble conservan el respaldo almacenado.
 - Conservar etiquetas registradas e historial de reportes. Mantener separados los totales de registro horario y de avance hasta confirmar su relación operativa.
+
+### Retiro gradual de escrituras duplicadas
+
+- Las nuevas tareas vinculadas creadas por API conservan la respuesta actual y se guardan sin cantidad prevista ni porcentaje de cumplimiento materializados. Se mantienen los campos de petición y las validaciones actuales.
+- En edición se preserva el respaldo persistido de filas históricas. Cuando una tarea sin rubro se vincula por primera vez, la respuesta pasa a usar el mismo cálculo de lectura que usa hoy una tarea vinculada.
+- El generador demo conserva el reconocimiento de cargas antiguas, su idempotencia y los totales de los registros horarios de resumen. Los valores necesarios para calcular esos resúmenes pueden mantenerse en memoria durante la generación.
+- Se conservan las columnas para leer datos históricos y mantener la compatibilidad de formato de los respaldos. La verificación compara las respuestas y los resúmenes antes y después del cambio.

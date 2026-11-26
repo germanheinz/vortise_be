@@ -57,7 +57,9 @@ class DemoOperationalSeedTest {
                 assertFalse(t.getFecha().isBefore(r.getFechaInicioPlanificada())); assertFalse(t.getFecha().isAfter(p.getFechaFin()));
                 assertNotEquals(DayOfWeek.SATURDAY,t.getFecha().getDayOfWeek()); assertNotEquals(DayOfWeek.SUNDAY,t.getFecha().getDayOfWeek());
                 assertTrue(t.getHorasOficiales()+t.getHorasAyudantes()<=r.getCantidadPersonas()*8+1e-8);
-                assertTrue(t.getCantidadReal()>0); assertNotNull(t.getDescripcion()); assertNotNull(t.getPorcentajeCumplimiento());
+                assertTrue(t.getCantidadReal()>0); assertNotNull(t.getDescripcion());
+                assertNull(t.getCantidadPrevista());
+                assertNull(t.getPorcentajeCumplimiento());
                 assertEquals(r.getUnidad(),t.getUnidad()); assertEquals(r.getNivel(),t.getNivel());
                 q+=t.getCantidadReal();of+=t.getHorasOficiales();ay+=t.getHorasAyudantes();
             }
@@ -95,6 +97,20 @@ class DemoOperationalSeedTest {
         assertEquals(p.getObraTareas().stream().mapToDouble(t->t.getHorasOficiales()+t.getHorasAyudantes()).sum(),p.getHorasReales(),1e-7);
         assertEquals(p.getHorasReales(),p.getRegistrosHoras().stream().mapToDouble(RegistroHoras::getHoras).sum(),1e-7);
         assertEquals(p.getObraTareas().stream().mapToDouble(ObraTarea::getCantidadReal).sum(),p.getRegistrosHoras().stream().mapToDouble(RegistroHoras::getCantidadReal).sum(),1e-7);
+        for (var rubro : p.getRubros()) {
+            double cantidadEquivalente = p.getObraTareas().stream()
+                    .filter(tarea -> rubro.getId().equals(tarea.getRubroId()))
+                    .mapToDouble(tarea -> PrevistoRealCalculator.calculate(
+                            rubro.getCantidad(), rubro.getHorasOficialesPrevistas(), rubro.getHorasAyudantesPrevistas(),
+                            tarea.getCantidadReal(), tarea.getHorasOficiales(), tarea.getHorasAyudantes(),
+                            null, null, 8.).cantidadEquivalente())
+                    .sum();
+            double cantidadResumida = p.getRegistrosHoras().stream()
+                    .filter(registro -> rubro.getnRubro().equals(registro.getNumeroRubro()))
+                    .mapToDouble(RegistroHoras::getCantidadPrevista)
+                    .sum();
+            assertEquals(cantidadEquivalente, cantidadResumida, 1e-7);
+        }
         assertTrue(p.getRegistrosHoras().stream().allMatch(h->h.getFin().isAfter(h.getInicio())));
     }
     @Test void editedLegacyComplianceIsNotReplaced() {

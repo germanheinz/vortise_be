@@ -71,13 +71,11 @@ public class CreateObraTareaUseCase {
         tarea.setSector(dto.sector());
         tarea.setUnidad(dto.unidad());
         tarea.setRubro(dto.rubro());
-        tarea.setPorcentajeCumplimiento(dto.porcentajeCumplimiento());
         tarea.setCumplimiento(dto.cumplimiento());
         tarea.setCausaNoCumplimiento(dto.causaNoCumplimiento());
         tarea.setComentario(dto.comentario());
         tarea.setHorasOficiales(controlaHoras(tarea.getProyecto(), dto) ? dto.horasOficiales() : null);
         tarea.setHorasAyudantes(controlaHoras(tarea.getProyecto(), dto) ? dto.horasAyudantes() : null);
-        tarea.setCantidadPrevista(dto.cantidadPrevista());
         tarea.setCantidadReal(dto.cantidadReal());
         tarea.setDesencofrado(Boolean.TRUE.equals(dto.desencofrado()));
         tarea.setMedidaCorrectiva(dto.medidaCorrectiva());
@@ -86,10 +84,10 @@ public class CreateObraTareaUseCase {
         if (dto.dias() != null || tarea.getId() == null) {
             tarea.setDias(dto.dias());
         }
-        aplicarDatosDelRubroYAvance(tarea, dto.rubroId());
+        aplicarEtiquetasDelRubro(tarea, dto.rubroId());
     }
 
-    private static void aplicarDatosDelRubroYAvance(ObraTarea tarea, Long rubroId) {
+    private static void aplicarEtiquetasDelRubro(ObraTarea tarea, Long rubroId) {
         var actividad = tarea.getProyecto().getRubros().stream()
                 .filter(rubro -> rubroId.equals(rubro.getId()))
                 .findFirst()
@@ -97,14 +95,6 @@ public class CreateObraTareaUseCase {
         tarea.setRubro(actividad.getRubro());
         tarea.setUnidad(actividad.getUnidad());
         tarea.setNivel(actividad.getTipoNodo() == TipoNodoRubro.NIVEL ? EstructuraRubros.nombreDe(actividad) : actividad.getNivel());
-        var indicadores = PrevistoRealCalculator.calculate(
-                actividad.getCantidad(), actividad.getHorasOficialesPrevistas(), actividad.getHorasAyudantesPrevistas(),
-                tarea.getCantidadReal(), tarea.getHorasOficiales(), tarea.getHorasAyudantes(), null, null, null);
-        Double cantidadEquivalente = indicadores.cantidadEquivalente();
-        tarea.setCantidadPrevista(cantidadEquivalente);
-        tarea.setPorcentajeCumplimiento(cantidadEquivalente != null && cantidadEquivalente > 0 && tarea.getCantidadReal() != null
-                ? round(tarea.getCantidadReal() / cantidadEquivalente * 100)
-                : null);
     }
 
     /** The obra does not control labor hours of subcontracted activities. */
@@ -154,6 +144,4 @@ public class CreateObraTareaUseCase {
         if (bloqueos != null) bloqueos.validarAvance(tarea.getProyecto().getId(), rubro, dto.fecha());
         tarea.setActividad(rubro);
     }
-
-    private static double round(double value) { return Math.round(value * 100.0) / 100.0; }
 }
