@@ -1,7 +1,9 @@
 # Backend Agent Instructions
 
+Shared project rules apply: read [the constitution](../docs/product/constitution.md) and [tech stack](../docs/product/tech-stack.md) in the governance repo (sibling folder `../docs/product/`). The constitution prevails in case of conflict.
+
 ## Stack
-Java 17, Spring Boot 3.2, Maven, Spring MVC, Spring Data JPA, Spring Security, JWT and H2.
+Java 17, Spring Boot 4.1.2, Maven, Spring MVC, Spring Data JPA, Spring Security, Flyway, Stripe and Clerk-based authentication (verified Clerk session token exchanged for the backend's own cookie session). PostgreSQL in staging/production; H2 only for local and tests. Check `pom.xml` for current versions.
 
 ## Architecture
 The codebase uses domain, application and infrastructure packages, with partial ports-and-adapters conventions.
@@ -20,7 +22,7 @@ Prefer existing use cases, repository abstractions and DTO conventions. Avoid in
 ## Persistence
 - Do not modify tracked database files.
 - Do not introduce destructive schema changes without explicit approval.
-- Do not assume schema migrations are versioned; no migration framework was identified during discovery.
+- Schema changes go through versioned Flyway migrations in `src/main/resources/db/migration`; never edit an applied migration.
 
 ## Verification
 - Inspect Maven configuration before choosing build and test commands.

@@ -5,12 +5,12 @@
 - [x] Discovery de autenticación actual, sesión por cookies, invitaciones, registro, super admin y código Clerk previo.
 - [x] Decisiones de producto confirmadas por el usuario (2026-11-26): intercambio de sesión, solo Clerk, registro con Clerk, Google, super admin vinculado.
 - [x] Spec y plan aprobados por el usuario (2026-11-26). Alcance: implementación BE019/FE041 y tests unitarios sin contexto.
-- [ ] Tests HTTP y `mvn verify`: **no autorizados** (2026-11-26); pendientes de aprobación.
+- [x] Tests HTTP y `mvn verify`: autorizados por el usuario el 2026-11-27 (H2 en memoria aislada; sin tocar `./data`).
 - [x] Implementación (2026-11-26).
 - [x] Tests unitarios sin contexto: 51/51 (ver evidencia).
-- [ ] Tests HTTP y `mvn verify` (no autorizados).
+- [x] Tests HTTP (`ClerkAuthHttpTest`, 8/8) y `mvn verify` (2026-11-27): ver evidencia.
 - [x] Revisión independiente de seguridad (2026-11-26): sin hallazgos de severidad alta.
-- [ ] Cierre (pendiente de tests HTTP, `mvn verify` y prueba manual).
+- [ ] Cierre (pendiente de la prueba manual con Clerk de desarrollo).
 
 ## Revisión independiente
 
@@ -54,9 +54,15 @@ Cambios relevantes:
 - Eliminados: `ClerkJwtInterceptor`, `ClerkTokenValidator`, `ClerkConfig`, `ClerkUserSyncService`, `InvitacionController` (`/api/invitacion/**`) y sus DTO.
 - `SuperAdminSeeder` sin contraseña utilizable cuando el login por contraseña está apagado.
 
+## Evidencia de verificación (2026-11-27)
+
+- `mvn -B -Dtest=ClerkAuthHttpTest test`: 8 tests, 0 fallos. Verificador de Clerk reemplazado por un doble de prueba y login por contraseña apagado, como en producción. Cubre `/auth/clerk/sesion` (vinculación por email verificado, 401, `CUENTA_NO_REGISTRADA`, cuenta ya vinculada a otra identidad), `/auth/clerk/registro` (201, email tomado de la identidad, repetición 400, validación), 401 sin credencial en ambas `aceptar-clerk` y `410 LOGIN_CON_CONTRASENA_DESACTIVADO`.
+- `mvn -B verify`: BUILD SUCCESS, 737 tests, 0 fallos, 0 errores, 29 omitidos (PostgreSQL optativos y casos habituales de la línea base).
+- No cubierto por HTTP: el flujo completo de aceptación de invitaciones con identidad (cubierto solo por tests unitarios de servicio).
+
 ## Pendientes
 
-- Tests HTTP de los endpoints nuevos con un verificador falso y `mvn verify` (requieren aprobación).
+- Prueba manual con Clerk de desarrollo.
 - Las columnas `codigo_invitacion` e `invitacion_expira_en` quedan sin uso; eliminarlas requiere una migración aparte.
 
 ## Evidencia previa (cambios ya aplicados en esta sesión)
